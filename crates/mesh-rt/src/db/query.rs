@@ -388,6 +388,22 @@ pub extern "C" fn mesh_query_order_by(
     }
 }
 
+/// Add a raw ORDER BY expression (no quoting).
+///
+/// `Query.order_by_raw(q, "random()")` -> new Query with ORDER BY random()
+#[no_mangle]
+pub extern "C" fn mesh_query_order_by_raw(q: *mut u8, expression: *mut u8) -> *mut u8 {
+    unsafe {
+        let new_q = clone_query(q);
+        let expr_str = mesh_str_ref(expression);
+        let raw_order = format!("RAW:{}", expr_str);
+        let raw_mesh = rust_str_to_mesh(&raw_order);
+        let of = query_get(new_q, SLOT_ORDER);
+        query_set(new_q, SLOT_ORDER, mesh_list_append(of, raw_mesh as u64));
+        new_q
+    }
+}
+
 /// Set the LIMIT for the query.
 ///
 /// `Query.limit(q, 10)` -> new Query with LIMIT 10
@@ -445,6 +461,22 @@ pub extern "C" fn mesh_query_group_by(q: *mut u8, field: *mut u8) -> *mut u8 {
         let new_q = clone_query(q);
         let gf = query_get(new_q, SLOT_GROUP);
         query_set(new_q, SLOT_GROUP, mesh_list_append(gf, field as u64));
+        new_q
+    }
+}
+
+/// Add a raw GROUP BY expression (no quoting).
+///
+/// `Query.group_by_raw(q, "date_trunc('hour', received_at)")` -> new Query with raw GROUP BY
+#[no_mangle]
+pub extern "C" fn mesh_query_group_by_raw(q: *mut u8, expression: *mut u8) -> *mut u8 {
+    unsafe {
+        let new_q = clone_query(q);
+        let expr_str = mesh_str_ref(expression);
+        let raw_group = format!("RAW:{}", expr_str);
+        let raw_mesh = rust_str_to_mesh(&raw_group);
+        let gf = query_get(new_q, SLOT_GROUP);
+        query_set(new_q, SLOT_GROUP, mesh_list_append(gf, raw_mesh as u64));
         new_q
     }
 }

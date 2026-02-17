@@ -112,6 +112,52 @@ unsafe fn query_get_int(q: *mut u8, slot: usize) -> i64 {
     *(q.add(slot * 8) as *mut i64)
 }
 
+// ── Placeholder renumbering helper ───────────────────────────────────
+
+/// Renumber $N placeholders in a SQL fragment.
+/// E.g., with start_idx=4: "$1" -> "$4", "$2" -> "$5"
+/// Also replaces `?` with next sequential $N.
+/// Returns (renumbered_sql, number_of_params_consumed).
+fn renumber_placeholders(sql: &str, start_idx: usize) -> (String, usize) {
+    let mut result = String::with_capacity(sql.len());
+    let mut max_placeholder = 0usize;
+    let mut question_count = 0usize;
+    let chars: Vec<char> = sql.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '?' {
+            let new_idx = start_idx + question_count;
+            result.push_str(&format!("${}", new_idx));
+            question_count += 1;
+            i += 1;
+        } else if chars[i] == '$' && i + 1 < chars.len() && chars[i + 1].is_ascii_digit() {
+            // Parse the number after $
+            let mut num_str = String::new();
+            let mut j = i + 1;
+            while j < chars.len() && chars[j].is_ascii_digit() {
+                num_str.push(chars[j]);
+                j += 1;
+            }
+            if let Ok(n) = num_str.parse::<usize>() {
+                if n > max_placeholder {
+                    max_placeholder = n;
+                }
+                let new_idx = start_idx + n - 1; // $1 -> $start_idx, $2 -> $start_idx+1
+                result.push_str(&format!("${}", new_idx));
+            } else {
+                result.push('$');
+                result.push_str(&num_str);
+            }
+            i = j;
+        } else {
+            result.push(chars[i]);
+            i += 1;
+        }
+    }
+    let params_consumed = if question_count > 0 { question_count } else { max_placeholder };
+    (result, params_consumed)
+}
+
 // ── Comprehensive SQL Builder ────────────────────────────────────────
 
 /// Read all 13 slots of a Query struct and produce a complete SELECT SQL
@@ -229,25 +275,16 @@ fn build_select_sql_from_parts(
                 continue;
             }
             if let Some(raw) = clause.strip_prefix("RAW:") {
-                // Raw WHERE clause: emit verbatim, replace ? with $N
-                let mut raw_sql = String::new();
-                let q_count = raw.chars().filter(|&c| c == '?').count();
-                for ch in raw.chars() {
-                    if ch == '?' {
-                        raw_sql.push_str(&format!("${}", param_idx));
-                        if wp_idx < where_params.len() {
-                            params.push(where_params[wp_idx].clone());
-                            wp_idx += 1;
-                        }
-                        param_idx += 1;
-                    } else {
-                        raw_sql.push(ch);
+                // Raw WHERE clause: emit verbatim, replace ? and $N with renumbered $N
+                let (renumbered, consumed) = renumber_placeholders(raw, param_idx);
+                conditions.push(renumbered);
+                for _ in 0..consumed {
+                    if wp_idx < where_params.len() {
+                        params.push(where_params[wp_idx].clone());
+                        wp_idx += 1;
                     }
+                    param_idx += 1;
                 }
-                if q_count == 0 {
-                    // No params needed -- just emit the clause
-                }
-                conditions.push(raw_sql);
             } else if let Some(space_pos) = clause.find(' ') {
                 let col = &clause[..space_pos];
                 let op = clause[space_pos + 1..].trim();
@@ -337,7 +374,13 @@ fn build_select_sql_from_parts(
 
     // GROUP BY clause
     if !group_fields.is_empty() {
-        let cols: Vec<String> = group_fields.iter().map(|f| quote_ident(f)).collect();
+        let cols: Vec<String> = group_fields.iter().map(|f| {
+            if let Some(raw) = f.strip_prefix("RAW:") {
+                raw.to_string() // emit verbatim
+            } else {
+                quote_ident(f)
+            }
+        }).collect();
         sql.push_str(&format!(" GROUP BY {}", cols.join(", ")));
     }
 
@@ -355,19 +398,11 @@ fn build_select_sql_from_parts(
         }
     }
 
-    // Fragment injection (raw SQL appended)
+    // Fragment injection (raw SQL appended, with $N renumbering)
     for frag in fragment_parts {
-        // Replace ? with $N for each fragment parameter placeholder
-        let mut frag_sql = String::new();
-        for ch in frag.chars() {
-            if ch == '?' {
-                frag_sql.push_str(&format!("${}", param_idx));
-                param_idx += 1;
-            } else {
-                frag_sql.push(ch);
-            }
-        }
-        sql.push_str(&format!(" {}", frag_sql));
+        let (renumbered, consumed) = renumber_placeholders(frag, param_idx);
+        sql.push_str(&format!(" {}", renumbered));
+        param_idx += consumed;
     }
     for p in fragment_params {
         params.push(p.clone());
@@ -379,7 +414,9 @@ fn build_select_sql_from_parts(
         let orders: Vec<String> = order_fields
             .iter()
             .map(|o| {
-                if let Some(space_pos) = o.rfind(' ') {
+                if let Some(raw) = o.strip_prefix("RAW:") {
+                    raw.to_string() // emit verbatim
+                } else if let Some(space_pos) = o.rfind(' ') {
                     let col = &o[..space_pos];
                     let dir = &o[space_pos + 1..];
                     format!("{} {}", quote_ident(col), dir)
@@ -487,21 +524,16 @@ fn build_count_sql_from_parts(
                 continue;
             }
             if let Some(raw) = clause.strip_prefix("RAW:") {
-                // Raw WHERE clause: emit verbatim, replace ? with $N
-                let mut raw_sql = String::new();
-                for ch in raw.chars() {
-                    if ch == '?' {
-                        raw_sql.push_str(&format!("${}", param_idx));
-                        if wp_idx < where_params.len() {
-                            params.push(where_params[wp_idx].clone());
-                            wp_idx += 1;
-                        }
-                        param_idx += 1;
-                    } else {
-                        raw_sql.push(ch);
+                // Raw WHERE clause: emit verbatim, replace ? and $N with renumbered $N
+                let (renumbered, consumed) = renumber_placeholders(raw, param_idx);
+                conditions.push(renumbered);
+                for _ in 0..consumed {
+                    if wp_idx < where_params.len() {
+                        params.push(where_params[wp_idx].clone());
+                        wp_idx += 1;
                     }
+                    param_idx += 1;
                 }
-                conditions.push(raw_sql);
             } else if let Some(space_pos) = clause.find(' ') {
                 let col = &clause[..space_pos];
                 let op = clause[space_pos + 1..].trim();
@@ -580,7 +612,13 @@ fn build_count_sql_from_parts(
 
     // GROUP BY clause
     if !group_fields.is_empty() {
-        let cols: Vec<String> = group_fields.iter().map(|f| quote_ident(f)).collect();
+        let cols: Vec<String> = group_fields.iter().map(|f| {
+            if let Some(raw) = f.strip_prefix("RAW:") {
+                raw.to_string()
+            } else {
+                quote_ident(f)
+            }
+        }).collect();
         sql.push_str(&format!(" GROUP BY {}", cols.join(", ")));
     }
 
@@ -598,18 +636,11 @@ fn build_count_sql_from_parts(
         }
     }
 
-    // Fragment injection
+    // Fragment injection (raw SQL appended, with $N renumbering)
     for frag in fragment_parts {
-        let mut frag_sql = String::new();
-        for ch in frag.chars() {
-            if ch == '?' {
-                frag_sql.push_str(&format!("${}", param_idx));
-                param_idx += 1;
-            } else {
-                frag_sql.push(ch);
-            }
-        }
-        sql.push_str(&format!(" {}", frag_sql));
+        let (renumbered, consumed) = renumber_placeholders(frag, param_idx);
+        sql.push_str(&format!(" {}", renumbered));
+        param_idx += consumed;
     }
     for p in fragment_params {
         params.push(p.clone());
@@ -680,21 +711,16 @@ fn build_exists_sql_from_parts(
                 continue;
             }
             if let Some(raw) = clause.strip_prefix("RAW:") {
-                // Raw WHERE clause: emit verbatim, replace ? with $N
-                let mut raw_sql = String::new();
-                for ch in raw.chars() {
-                    if ch == '?' {
-                        raw_sql.push_str(&format!("${}", param_idx));
-                        if wp_idx < where_params.len() {
-                            params.push(where_params[wp_idx].clone());
-                            wp_idx += 1;
-                        }
-                        param_idx += 1;
-                    } else {
-                        raw_sql.push(ch);
+                // Raw WHERE clause: emit verbatim, replace ? and $N with renumbered $N
+                let (renumbered, consumed) = renumber_placeholders(raw, param_idx);
+                conditions.push(renumbered);
+                for _ in 0..consumed {
+                    if wp_idx < where_params.len() {
+                        params.push(where_params[wp_idx].clone());
+                        wp_idx += 1;
                     }
+                    param_idx += 1;
                 }
-                conditions.push(raw_sql);
             } else if let Some(space_pos) = clause.find(' ') {
                 let col = &clause[..space_pos];
                 let op = clause[space_pos + 1..].trim();
@@ -2253,6 +2279,124 @@ mod tests {
             "SELECT * FROM \"users\" AND custom_fn($1)"
         );
         assert_eq!(params, vec!["test_val"]);
+    }
+
+    // ── Phase 106 Plan 02: Fragment $N renumbering and raw ORDER BY/GROUP BY ──
+
+    #[test]
+    fn test_fragment_dollar_renumbering() {
+        // Fragment with $1 after 2 WHERE params should renumber $1 -> $3
+        let (sql, params) = build_select_sql_from_parts(
+            "users", &[],
+            &["email =".into(), "active =".into()],
+            &["alice@example.com".into(), "true".into()],
+            &[], -1, -1, &[], &[], &[], &[],
+            &["AND password_hash = crypt($1, password_hash)".into()],
+            &["secret".into()],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"users\" WHERE \"email\" = $1 AND \"active\" = $2 AND password_hash = crypt($3, password_hash)"
+        );
+        assert_eq!(params, vec!["alice@example.com", "true", "secret"]);
+    }
+
+    #[test]
+    fn test_where_raw_dollar_renumbering() {
+        // where_raw with $1 after 1 WHERE param should renumber $1 -> $2
+        let (sql, params) = build_select_sql_from_parts(
+            "users", &[],
+            &["active =".into(), "RAW:email ILIKE $1".into()],
+            &["true".into(), "%@example.com".into()],
+            &[], -1, -1, &[], &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"users\" WHERE \"active\" = $1 AND email ILIKE $2"
+        );
+        assert_eq!(params, vec!["true", "%@example.com"]);
+    }
+
+    #[test]
+    fn test_order_by_raw() {
+        let (sql, params) = build_select_sql_from_parts(
+            "events", &[], &[], &[],
+            &["RAW:random()".into()],
+            -1, -1, &[], &[], &[], &[], &[], &[],
+        );
+        assert_eq!(sql, "SELECT * FROM \"events\" ORDER BY random()");
+        assert!(params.is_empty());
+    }
+
+    #[test]
+    fn test_group_by_raw() {
+        let (sql, params) = build_select_sql_from_parts(
+            "events", &[], &[], &[], &[], -1, -1, &[],
+            &["RAW:date_trunc('hour', received_at)".into()],
+            &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"events\" GROUP BY date_trunc('hour', received_at)"
+        );
+        assert!(params.is_empty());
+    }
+
+    #[test]
+    fn test_fragment_with_pg_crypt() {
+        // crypt($1, gen_salt('bf')) with offset=1 -> crypt($1, gen_salt('bf'))
+        let (sql, params) = build_select_sql_from_parts(
+            "users", &[], &[], &[], &[], -1, -1, &[], &[], &[], &[],
+            &["AND password_hash = crypt($1, gen_salt('bf'))".into()],
+            &["secret123".into()],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"users\" AND password_hash = crypt($1, gen_salt('bf'))"
+        );
+        assert_eq!(params, vec!["secret123"]);
+    }
+
+    #[test]
+    fn test_fragment_with_jsonb() {
+        // metadata @> $1::jsonb after 1 WHERE param
+        let (sql, params) = build_select_sql_from_parts(
+            "events", &[],
+            &["project_id =".into()],
+            &["abc".into()],
+            &[], -1, -1, &[], &[], &[], &[],
+            &["AND metadata @> $1::jsonb".into()],
+            &[r#"{"env":"production"}"#.into()],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"events\" WHERE \"project_id\" = $1 AND metadata @> $2::jsonb"
+        );
+        assert_eq!(params, vec!["abc", r#"{"env":"production"}"#]);
+    }
+
+    #[test]
+    fn test_mixed_fragments_and_where() {
+        // Full query: WHERE + where_raw + fragment with correct numbering
+        let (sql, params) = build_select_sql_from_parts(
+            "events", &[],
+            &[
+                "project_id =".into(),
+                "RAW:received_at > now() - interval '24 hours'".into(),
+            ],
+            &["abc".into()],
+            &["RAW:date_trunc('hour', received_at)".into()],
+            -1, -1, &[],
+            &["RAW:date_trunc('hour', received_at)".into()],
+            &[], &[],
+            &["AND tags @> $1::jsonb".into()],
+            &[r#"{"env":"prod"}"#.into()],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"events\" WHERE \"project_id\" = $1 AND received_at > now() - interval '24 hours' GROUP BY date_trunc('hour', received_at) AND tags @> $2::jsonb ORDER BY date_trunc('hour', received_at)"
+        );
+        assert_eq!(params, vec!["abc", r#"{"env":"prod"}"#]);
     }
 
     #[test]
