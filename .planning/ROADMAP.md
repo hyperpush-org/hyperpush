@@ -224,7 +224,9 @@ Plans:
   2. A Mesh program can write a left join and rows with no match on the joined side return NULL/None values for joined columns
   3. A Mesh program can chain multiple joins in a single query (e.g., issues JOIN projects JOIN organizations) and all three tables' columns are accessible in select/where
   4. E2E test: a query joining two tables returns rows with fields from both tables correctly mapped to Mesh structs or maps
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 107-01-PLAN.md -- Add Query.join_as with alias support, unit tests for all join variants, and E2E tests for inner/left/multi/alias joins
 
 ### Phase 108: Aggregations
 **Goal**: Mesh programs can compute aggregate statistics -- counts, sums, averages, min/max -- with grouping and filtered aggregation via having clauses
