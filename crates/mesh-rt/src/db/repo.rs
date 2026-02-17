@@ -236,16 +236,29 @@ fn build_select_sql_from_parts(
     // FROM clause
     sql.push_str(&format!(" FROM {}", quote_ident(source)));
 
-    // JOIN clauses (format: "TYPE:table:on_clause")
+    // JOIN clauses (format: "TYPE:table:on_clause" or "ALIAS:TYPE:table:alias:on_clause")
     for join in join_clauses {
-        let parts: Vec<&str> = join.splitn(3, ':').collect();
-        if parts.len() == 3 {
-            sql.push_str(&format!(
-                " {} JOIN {} ON {}",
-                parts[0],
-                quote_ident(parts[1]),
-                parts[2]
-            ));
+        if let Some(rest) = join.strip_prefix("ALIAS:") {
+            let parts: Vec<&str> = rest.splitn(4, ':').collect();
+            if parts.len() == 4 {
+                sql.push_str(&format!(
+                    " {} JOIN {} {} ON {}",
+                    parts[0],          // join type (INNER, LEFT)
+                    quote_ident(parts[1]),  // table name
+                    parts[2],          // alias (unquoted)
+                    parts[3]           // on clause
+                ));
+            }
+        } else {
+            let parts: Vec<&str> = join.splitn(3, ':').collect();
+            if parts.len() == 3 {
+                sql.push_str(&format!(
+                    " {} JOIN {} ON {}",
+                    parts[0],
+                    quote_ident(parts[1]),
+                    parts[2]
+                ));
+            }
         }
     }
 
@@ -485,16 +498,29 @@ fn build_count_sql_from_parts(
 
     sql.push_str(&format!("SELECT COUNT(*) FROM {}", quote_ident(source)));
 
-    // JOIN clauses
+    // JOIN clauses (format: "TYPE:table:on_clause" or "ALIAS:TYPE:table:alias:on_clause")
     for join in join_clauses {
-        let parts: Vec<&str> = join.splitn(3, ':').collect();
-        if parts.len() == 3 {
-            sql.push_str(&format!(
-                " {} JOIN {} ON {}",
-                parts[0],
-                quote_ident(parts[1]),
-                parts[2]
-            ));
+        if let Some(rest) = join.strip_prefix("ALIAS:") {
+            let parts: Vec<&str> = rest.splitn(4, ':').collect();
+            if parts.len() == 4 {
+                sql.push_str(&format!(
+                    " {} JOIN {} {} ON {}",
+                    parts[0],
+                    quote_ident(parts[1]),
+                    parts[2],
+                    parts[3]
+                ));
+            }
+        } else {
+            let parts: Vec<&str> = join.splitn(3, ':').collect();
+            if parts.len() == 3 {
+                sql.push_str(&format!(
+                    " {} JOIN {} ON {}",
+                    parts[0],
+                    quote_ident(parts[1]),
+                    parts[2]
+                ));
+            }
         }
     }
 
@@ -672,16 +698,29 @@ fn build_exists_sql_from_parts(
 
     inner_sql.push_str(&format!("SELECT 1 FROM {}", quote_ident(source)));
 
-    // JOIN clauses
+    // JOIN clauses (format: "TYPE:table:on_clause" or "ALIAS:TYPE:table:alias:on_clause")
     for join in join_clauses {
-        let parts: Vec<&str> = join.splitn(3, ':').collect();
-        if parts.len() == 3 {
-            inner_sql.push_str(&format!(
-                " {} JOIN {} ON {}",
-                parts[0],
-                quote_ident(parts[1]),
-                parts[2]
-            ));
+        if let Some(rest) = join.strip_prefix("ALIAS:") {
+            let parts: Vec<&str> = rest.splitn(4, ':').collect();
+            if parts.len() == 4 {
+                inner_sql.push_str(&format!(
+                    " {} JOIN {} {} ON {}",
+                    parts[0],
+                    quote_ident(parts[1]),
+                    parts[2],
+                    parts[3]
+                ));
+            }
+        } else {
+            let parts: Vec<&str> = join.splitn(3, ':').collect();
+            if parts.len() == 3 {
+                inner_sql.push_str(&format!(
+                    " {} JOIN {} ON {}",
+                    parts[0],
+                    quote_ident(parts[1]),
+                    parts[2]
+                ));
+            }
         }
     }
 
@@ -2703,5 +2742,78 @@ mod tests {
         assert_eq!(sql, "\"name\" = $1");
         assert_eq!(params, vec!["Alice"]);
         assert_eq!(next, 2);
+    }
+
+    // ── Phase 107 Plan 01: JOIN alias support and comprehensive join tests ──
+
+    #[test]
+    fn test_select_with_left_join() {
+        let (sql, _) = build_select_sql_from_parts(
+            "users", &[], &[], &[], &[], -1, -1,
+            &["LEFT:profiles:profiles.user_id = users.id".into()],
+            &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"users\" LEFT JOIN \"profiles\" ON profiles.user_id = users.id"
+        );
+    }
+
+    #[test]
+    fn test_select_with_multi_join() {
+        let (sql, _) = build_select_sql_from_parts(
+            "issues", &[], &[], &[], &[], -1, -1,
+            &[
+                "INNER:projects:projects.id = issues.project_id".into(),
+                "INNER:organizations:organizations.id = projects.org_id".into(),
+            ],
+            &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"issues\" INNER JOIN \"projects\" ON projects.id = issues.project_id INNER JOIN \"organizations\" ON organizations.id = projects.org_id"
+        );
+    }
+
+    #[test]
+    fn test_select_with_alias_join() {
+        let (sql, _) = build_select_sql_from_parts(
+            "issues", &[], &[], &[], &[], -1, -1,
+            &["ALIAS:INNER:projects:p:p.id = issues.project_id".into()],
+            &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"issues\" INNER JOIN \"projects\" p ON p.id = issues.project_id"
+        );
+    }
+
+    #[test]
+    fn test_select_with_multi_alias_join() {
+        let (sql, _) = build_select_sql_from_parts(
+            "alerts", &[], &[], &[], &[], -1, -1,
+            &[
+                "ALIAS:INNER:alert_rules:r:r.id = alerts.rule_id".into(),
+                "ALIAS:INNER:projects:p:p.id = alerts.project_id".into(),
+            ],
+            &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"alerts\" INNER JOIN \"alert_rules\" r ON r.id = alerts.rule_id INNER JOIN \"projects\" p ON p.id = alerts.project_id"
+        );
+    }
+
+    #[test]
+    fn test_select_with_left_alias_join() {
+        let (sql, _) = build_select_sql_from_parts(
+            "users", &[], &[], &[], &[], -1, -1,
+            &["ALIAS:LEFT:profiles:p:p.user_id = users.id".into()],
+            &[], &[], &[], &[], &[],
+        );
+        assert_eq!(
+            sql,
+            "SELECT * FROM \"users\" LEFT JOIN \"profiles\" p ON p.user_id = users.id"
+        );
     }
 }

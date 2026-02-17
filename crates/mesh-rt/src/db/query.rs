@@ -452,6 +452,32 @@ pub extern "C" fn mesh_query_join(
     }
 }
 
+/// Add a JOIN clause with table alias.
+///
+/// `Query.join_as(q, :inner, "projects", "p", "p.id = issues.project_id")` -> INNER JOIN projects p ON ...
+#[no_mangle]
+pub extern "C" fn mesh_query_join_as(
+    q: *mut u8,
+    join_type: *mut u8,
+    table: *mut u8,
+    alias: *mut u8,
+    on_clause: *mut u8,
+) -> *mut u8 {
+    unsafe {
+        let new_q = clone_query(q);
+        let jt_str = mesh_str_ref(join_type);
+        let tbl_str = mesh_str_ref(table);
+        let alias_str = mesh_str_ref(alias);
+        let on_str = mesh_str_ref(on_clause);
+        let jt_sql = atom_to_join_type(jt_str);
+        let join = format!("ALIAS:{}:{}:{}:{}", jt_sql, tbl_str, alias_str, on_str);
+        let join_mesh = rust_str_to_mesh(&join);
+        let jc = query_get(new_q, SLOT_JOIN);
+        query_set(new_q, SLOT_JOIN, mesh_list_append(jc, join_mesh as u64));
+        new_q
+    }
+}
+
 /// Add a GROUP BY field.
 ///
 /// `Query.group_by(q, :category)` -> new Query with GROUP BY category
