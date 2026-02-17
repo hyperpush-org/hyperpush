@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** v11.0 Query Builder -- Phase 106 (Advanced WHERE Operators and Raw SQL Fragments)
+**Current focus:** v11.0 Query Builder -- Phase 107 (next)
 
 ## Current Position
 
-Phase: 106 of 114 (Advanced WHERE Operators and Raw SQL Fragments)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-17 -- Completed 106-01 (Advanced WHERE operators)
+Phase: 107 of 114 (next phase in v11.0 roadmap)
+Plan: 1 of N in current phase
+Status: Ready
+Last activity: 2026-02-17 -- Completed 106-02 (Fragment renumbering and raw ORDER BY/GROUP BY)
 
-Progress: [█░░░░░░░░░] 5% (v11.0)
+Progress: [█░░░░░░░░░] 10% (v11.0)
 
 ## Performance Metrics
 
 **All-time Totals:**
-- Plans completed: 311
-- Phases completed: 105
+- Plans completed: 313
+- Phases completed: 106
 - Milestones shipped: 20 (v1.0-v10.1)
 - Lines of Rust: ~98,850
 - Lines of website: ~5,500
@@ -36,6 +36,7 @@ Progress: [█░░░░░░░░░] 5% (v11.0)
 | 105.1 | 01   | 17min    | 2     | 5     |
 | 105.1 | 03   | 9min     | 2     | 2     |
 | 106   | 01   | 8min     | 2     | 8     |
+| 106   | 02   | 8min     | 2     | 8     |
 
 ## Accumulated Context
 
@@ -50,6 +51,8 @@ Recent decisions affecting current work:
 - Phase 105.1: EventProcessor service call SIGSEGV persists -- needs dedicated investigation
 - [Phase 106]: OR clause encoding uses OR:field1,field2,...:N format with field names embedded in clause string
 - [Phase 106]: ILIKE added as atom_to_sql_op mapping -- no new function needed, works via existing where_op
+- [Phase 106]: Unified renumber_placeholders helper handles both ? and $N styles in a single pass
+- [Phase 106]: RAW: prefix reused for ORDER BY and GROUP BY raw expressions, consistent with existing pattern
 
 ### Roadmap Evolution
 
@@ -66,6 +69,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 106-01-PLAN.md (Advanced WHERE operators)
+Stopped at: Completed 106-02-PLAN.md (Fragment renumbering and raw ORDER BY/GROUP BY) -- Phase 106 complete
 Resume file: None
-Next action: Execute 106-02-PLAN.md
+Next action: Plan Phase 107
