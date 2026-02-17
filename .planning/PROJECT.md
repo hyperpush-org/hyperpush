@@ -4,22 +4,25 @@
 
 Mesh is a programming language that combines Elixir/Ruby-style expressive syntax with static Hindley-Milner type inference and BEAM-style concurrency (actors, supervision trees, fault tolerance), compiled via LLVM to native single-binary executables. The compiler is written in Rust. v1.0-v1.9 built a complete language: compiler pipeline, actor runtime, trait system, module system, loops, stdlib, and developer tooling. v2.0 added database drivers and JSON serde. v3.0 made Mesh production-ready: TLS encryption for PostgreSQL and HTTPS, connection pooling with health checks, panic-safe database transactions, and automatic struct-to-row mapping via `deriving(Row)`. v4.0 added WebSocket support with RFC 6455 protocol, actor-per-connection model, TLS (wss://), heartbeat, fragmentation, and rooms/channels. v5.0 added distributed actors: location-transparent PIDs, TLS-encrypted inter-node connections with cookie auth and mesh formation, transparent remote send, remote process/node monitoring with fault propagation, remote spawn via function name registry, global process registry, and cross-node WebSocket rooms and supervision trees -- all with zero new crate dependencies. v6.0 added a documentation website with VitePress, custom syntax highlighting, 9 documentation guides, landing page, and production-quality site features. v7.0 added associated types to the trait system and built a comprehensive trait-based protocol ecosystem: lazy iterators with pipe-style composition, From/Into conversion, numeric traits for user-extensible arithmetic, and Collect for iterator materialization. v8.0 made Mesh installable and editable: one-command install scripts with prebuilt binaries, complete TextMate grammar and Shiki themes, LSP code completion/signature help/formatting/document symbols, VS Code Marketplace publishing, and documentation corrections. ~99K LOC Rust + ~5K LOC website across 18 milestones. Zero known compiler correctness issues.
 
-## Current Milestone: v10.1 Stabilization
+## Current Milestone: v11.0 Query Builder
 
-**Goal:** Fix all 47 Mesher compilation errors introduced during the v10.0 ORM integration (phases 96-103), rebuild Mesher successfully, run it, and verify all HTTP/WebSocket endpoints work correctly end-to-end.
+**Goal:** Expand the Mesh ORM with comprehensive query builder capabilities (JOINs, aggregations, upserts, JSONB, full-text search, raw SQL fragments) and rewrite Mesher to eliminate all raw SQL data queries, validating every ORM addition end-to-end.
 
 **Target features:**
-- Fix all Mesher compilation errors (type mismatches, undefined variables, incorrect API usage)
-- Successful `meshc build mesher` with zero errors
-- Mesher runs and connects to PostgreSQL
-- All HTTP API endpoints return correct responses
-- WebSocket endpoints function correctly
+- Query builder: JOINs (inner, left) with on-clause expressions
+- Query builder: Aggregations (count, sum, avg, group_by, having)
+- Query builder: Upsert support (insert_or_update with on_conflict)
+- Query builder: Advanced WHERE operators (comparisons, IN, IS NULL, BETWEEN, LIKE)
+- Query builder: Raw SQL fragments for PG-specific expressions (crypt, gen_random_bytes, JSONB operators, FTS)
+- Query builder: Subquery and RETURNING clause support
+- Mesher rewrite: zero Repo.query_raw/execute_raw for data queries
+- All Mesher HTTP/WS endpoints verified end-to-end
 
 ## Current State
 
-Shipped v10.0 ORM (2026-02-17). 20 milestones complete, 103 phases, 301 plans. v10.0 added a full ORM to Mesh but the Mesher rewrite in phases 102-103 left 47 compilation errors. v10.1 focuses on getting Mesher back to a working state.
+Shipped v10.0 ORM (2026-02-17). 20 milestones complete, 105 phases, 311 plans. v10.0 added a full ORM (schema DSL, query builder, repo pattern, changesets, relationships, preloading, migrations). v10.1 fixed codegen ABI issues (struct-in-Result pointer-boxing). Mesher still uses 68+ raw SQL queries via Repo.query_raw — v11.0 addresses this by expanding the query builder and rewriting Mesher.
 
-**Latest milestone (v10.0):** Full ORM library: schema DSL, query builder, repo pattern, changesets, relationships, preloading, migrations, and raw SQL elimination. 8 phases (96-103), 25 plans. Compiler additions: atoms, keyword args, multi-line pipes, struct update syntax, string key collect.
+**Latest milestone (v10.0/v10.1):** Full ORM library plus stabilization fixes. EventProcessor service call SIGSEGV persists (will be addressed during Mesher rewrite).
 
 ## Core Value
 
@@ -169,19 +172,28 @@ Expressive, readable concurrency -- writing concurrent programs should feel as n
 - ✓ REPL and formatter compatibility with v7.0 features (80+ JIT symbol registrations) -- v8.0
 - ✓ Website and docs corrections (install instructions, version badge, terminology, binary name) -- v8.0
 - ✓ VS Code extension published to Marketplace and Open VSX (18KB VSIX, 0.2.0) -- v8.0
-
-### Active
-
 - ✓ ORM: Schema DSL for model definition with field types and options -- v10.0
-- ✓ ORM: Pipe-chain query builder with where, order_by, limit, offset, select, join -- v10.0
+- ✓ ORM: Pipe-chain query builder with where, order_by, limit, offset, select -- v10.0
 - ✓ ORM: Full relationships (belongs_to, has_many, has_one, many-to-many) -- v10.0
 - ✓ ORM: Eager loading / preloading with nested relationship support -- v10.0
 - ✓ ORM: Migration tooling (generate, run up/down, track applied) -- v10.0
 - ✓ ORM: Repo pattern (insert, update, delete, all, get, get_by) -- v10.0
 - ✓ ORM: Changesets for validation and casting -- v10.0
-- ✓ ORM: Compiler additions for ORM expressiveness (DSL syntax, derive macros, etc.) -- v10.0
-- [ ] ORM: Mesher compiles and runs with ORM-based DB layer (47 errors remain)
-- [ ] Stabilization: All Mesher HTTP/WS endpoints verified end-to-end
+- ✓ ORM: Compiler additions for ORM expressiveness (atoms, keyword args, multi-line pipes, struct update syntax) -- v10.0
+- ✓ Codegen: Struct-in-Result pointer-boxing for correct ABI across service calls -- v10.1
+
+### Active
+
+- [ ] Query builder: JOIN support (inner, left) with on-clause expressions
+- [ ] Query builder: Aggregations (count, sum, avg, min, max) with group_by and having
+- [ ] Query builder: Upsert support (insert_or_update with on_conflict)
+- [ ] Query builder: Advanced WHERE operators (>, <, !=, IN, IS NULL, BETWEEN, LIKE)
+- [ ] Query builder: Raw SQL fragments (Query.fragment) for PG-specific expressions
+- [ ] Query builder: JSONB operators via fragments (contains, has_key, extract)
+- [ ] Query builder: Full-text search via fragments (tsvector, ts_rank)
+- [ ] Query builder: Subquery support and RETURNING clause
+- [ ] Mesher rewrite: zero Repo.query_raw/execute_raw for data queries
+- [ ] Mesher verification: all HTTP/WS endpoints work end-to-end
 
 ### Out of Scope
 
@@ -387,4 +399,4 @@ Tech debt (minor, pre-existing):
 | Dynamic version badge via useData().theme | DocsVersionBadge.vue pattern avoids hardcoded version strings | ✓ Good -- v8.0, maintenance-free |
 
 ---
-*Last updated: 2026-02-16 after v10.1 Stabilization milestone started*
+*Last updated: 2026-02-17 after v11.0 Query Builder milestone started*

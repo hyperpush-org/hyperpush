@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-16)
+See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** Phase 105.1 -- Fix Codegen ABI Issues and Workarounds from Phase 105 (v10.1 Stabilization)
+**Current focus:** v11.0 Query Builder -- Defining requirements
 
 ## Current Position
 
-Phase: 105.1 (Fix Codegen ABI Issues and Workarounds from Phase 105)
-Plan: 3 of 3 in current phase -- COMPLETE (all plans done)
-Status: Phase 105.1 complete. Auth workaround reverted. EventProcessor SIGSEGV persists (needs future investigation).
-Last activity: 2026-02-17 - Completed quick task 5: Update article with new changes and additions from git history
-
-Progress: [##########] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v11.0 started
 
 ## Performance Metrics
 
@@ -79,6 +77,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 105.1-03-PLAN.md (Revert Auth Workaround and Verify Endpoints)
+Stopped at: Milestone v11.0 initialization
 Resume file: None
-Next action: Phase 105.1 complete. EventProcessor service call SIGSEGV needs future investigation plan.
+Next action: Define requirements, create roadmap
