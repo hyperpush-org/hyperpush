@@ -280,18 +280,18 @@ Plans:
 - [ ] 110-02-PLAN.md -- Rewrite API key queries (get_project_by_api_key, get_project_id_by_key, create_api_key, revoke_api_key)
 
 ### Phase 111: Mesher Rewrite -- Issues and Events
-**Goal**: All Mesher issue management queries use the ORM with upserts, and event writer/extraction queries use fragments for JSONB operations
+**Goal**: Mesher issue management queries use the ORM where expressible, and complex queries (upserts with arithmetic, JSONB extraction, nested subqueries) retain raw SQL with documented ORM boundary rationale
 **Depends on**: Phase 110 (sequential rewrite after auth domain validates the pattern)
 **Requirements**: REWR-02, REWR-07
 **Success Criteria** (what must be TRUE):
-  1. Issue creation uses `Repo.insert(changeset, on_conflict: :update, conflict_target: ["fingerprint"])` instead of raw `INSERT ... ON CONFLICT DO UPDATE`
+  1. Simple issue queries (status transitions, CRUD, listing, counts) use `Query.where`, `Repo.update_where`, `Repo.delete_where`, and `Repo.all` instead of raw SQL
   2. Issue queries use `Query.join` for project lookups and `Query.where` with comparison operators instead of raw SQL JOINs and WHERE clauses
-  3. Event extraction uses `Query.fragment("payload->>'$1'", [field])` for JSONB field access instead of raw SQL JSONB operators
-  4. All 12 issue + event queries in queries.mpl are replaced with ORM calls
+  3. Complex queries (upsert_issue, check_volume_spikes, insert_event, extract_event_fields) retain raw SQL with documentation comments explaining the specific ORM limitation
+  4. All 14 issue + event queries addressed: 10 rewritten to ORM, 4 documented with ORM boundary rationale (arithmetic SET expressions, nested subqueries, server-side JSONB extraction, complex JSONB computation)
 **Plans**: 2 plans
 Plans:
 - [ ] 111-01-PLAN.md -- Rewrite 10 simple issue management queries (status transitions, CRUD, listing, counts) to ORM
-- [ ] 111-02-PLAN.md -- Document ORM boundaries for complex queries (upsert_issue, check_volume_spikes, insert_event, extract_event_fields)
+- [ ] 111-02-PLAN.md -- Document ORM boundaries for 4 complex queries (upsert_issue, check_volume_spikes, insert_event, extract_event_fields)
 
 ### Phase 112: Mesher Rewrite -- Search, Dashboard, and Alerts
 **Goal**: All Mesher search/filtering, dashboard/analytics, and alert system queries use the ORM -- full-text search via fragments, dashboard stats via aggregations, alert rules via JSONB fragments
