@@ -193,7 +193,7 @@ See milestones/v9.0-ROADMAP.md for full phase details.
 - [x] **Phase 108: Aggregations** - count/sum/avg/min/max, group_by, having clause (completed 2026-02-17)
 - [x] **Phase 109: Upserts, RETURNING, and Subqueries** - INSERT ON CONFLICT, RETURNING clause, subqueries in WHERE (completed 2026-02-17)
 - [x] **Phase 110: Mesher Rewrite -- Auth and Users** - User, session, and API-key queries rewritten with ORM + fragments (completed 2026-02-18)
-- [ ] **Phase 111: Mesher Rewrite -- Issues and Events** - Issue management (upserts) and event writer/extraction (JSONB fragments)
+- [x] **Phase 111: Mesher Rewrite -- Issues and Events** - Issue management (upserts) and event writer/extraction (JSONB fragments) (completed 2026-02-18)
 - [ ] **Phase 112: Mesher Rewrite -- Search, Dashboard, and Alerts** - FTS search, aggregation dashboards, alert system with JSONB
 - [ ] **Phase 113: Mesher Rewrite -- Retention and Final Cleanup** - Retention/storage queries, zero remaining raw SQL data queries
 - [ ] **Phase 114: Compile, Run, and End-to-End Verification** - Zero-error build, all HTTP/WS endpoints verified
@@ -290,8 +290,8 @@ Plans:
   4. All 14 issue + event queries addressed: 10 rewritten to ORM, 4 documented with ORM boundary rationale (arithmetic SET expressions, nested subqueries, server-side JSONB extraction, complex JSONB computation)
 **Plans**: 2 plans
 Plans:
-- [ ] 111-01-PLAN.md -- Rewrite 10 simple issue management queries (status transitions, CRUD, listing, counts) to ORM
-- [ ] 111-02-PLAN.md -- Document ORM boundaries for 4 complex queries (upsert_issue, check_volume_spikes, insert_event, extract_event_fields)
+- [x] 111-01-PLAN.md -- Rewrite 10 simple issue management queries (status transitions, CRUD, listing, counts) to ORM
+- [x] 111-02-PLAN.md -- Document ORM boundaries for 4 complex queries (upsert_issue, check_volume_spikes, insert_event, extract_event_fields)
 
 ### Phase 112: Mesher Rewrite -- Search, Dashboard, and Alerts
 **Goal**: All Mesher search/filtering, dashboard/analytics, and alert system queries use the ORM -- full-text search via fragments, dashboard stats via aggregations, alert rules via JSONB fragments
@@ -359,7 +359,7 @@ Phases execute in numeric order: 106 -> 107 -> 108 -> 109 -> 110 -> 111 -> 112 -
 | 108. Aggregations | 2/2 | Complete    | 2026-02-17 | - |
 | 109. Upserts/RETURNING/Subqueries | 2/2 | Complete    | 2026-02-17 | - |
 | 110. Rewrite: Auth & Users | 2/2 | Complete    | 2026-02-18 | - |
-| 111. Rewrite: Issues & Events | 1/2 | In Progress|  | - |
+| 111. Rewrite: Issues & Events | 2/2 | Complete   | 2026-02-18 | - |
 | 112. Rewrite: Search/Dashboard/Alerts | v11.0 | 0/TBD | Not started | - |
 | 113. Rewrite: Retention & Cleanup | v11.0 | 0/TBD | Not started | - |
 | 114. Verification | v11.0 | 0/TBD | Not started | - |

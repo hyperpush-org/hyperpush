@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 111 of 114 (v11.0 Query Builder) -- IN PROGRESS
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-18 -- Completed 111-01 (Rewrite issue management queries to ORM)
+Phase: 111 of 114 (v11.0 Query Builder) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-18 -- Completed 111-02 (Document ORM boundaries for complex queries)
 
 Progress: [██████░░░░] 56% (v11.0)
 
 ## Performance Metrics
 
 **All-time Totals:**
-- Plans completed: 322
-- Phases completed: 110
+- Plans completed: 323
+- Phases completed: 111
 - Milestones shipped: 20 (v1.0-v10.1)
 - Lines of Rust: ~98,850
 - Lines of website: ~5,500
@@ -48,6 +48,7 @@ Progress: [██████░░░░] 56% (v11.0)
 | 110   | 01   | 6min     | 2     | 2     |
 | 110   | 02   | 4min     | 2     | 2     |
 | 111   | 01   | 7min     | 2     | 1     |
+| 111   | 02   | 1min     | 2     | 2     |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Recent decisions affecting current work:
 - [Phase 110]: Two-step ORM pattern for PG crypto: minimal Repo.query_raw SELECT for expression, then Repo.insert for data
 - [Phase 110]: Repo.update_where type signature corrected: fields_map from Ptr to Map<String,String>, return from Ptr to Result<Map,String>
 - [Phase 111]: assign_issue retains Repo.execute_raw for NULL unassign branch -- ORM Map<String,String> cannot represent NULL
+- [Phase 111]: 4 complex queries retain raw SQL with documented ORM boundary rationale (upsert_issue, check_volume_spikes, insert_event, extract_event_fields)
 
 ### Roadmap Evolution
 
@@ -97,6 +99,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 111-01-PLAN.md (Rewrite issue management queries to ORM)
+Stopped at: Completed 111-02-PLAN.md (Document ORM boundaries for complex queries)
 Resume file: None
-Next action: Execute 111-02-PLAN.md (Rewrite event and complex issue queries).
+Next action: Plan and execute Phase 112.
