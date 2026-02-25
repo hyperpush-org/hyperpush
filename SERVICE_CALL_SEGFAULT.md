@@ -147,24 +147,289 @@ Live Mesher testing with PostgreSQL:
 | Struct (small) | Struct("Name") | struct type | bitcast via alloca |
 | Struct (large) | Struct("Name") | struct type | inttoptr + load |
 
-## Open Questions / Next Steps
+## Deep Investigation: What Was Verified Correct
 
-1. **Why does Bool reply cause 429?** The rate limiter returns `true` (allowed) but the caller acts as if it's `false`. Possible causes:
-   - The function signature change (returning i1 instead of i64) may interact badly with the calling convention or how the runtime passes values
-   - The `build_int_truncate` may not preserve the correct bit
-   - There may be a mismatch between what the service loop stores in the reply message and what the caller loads
+A thorough code trace of the entire service call data flow was performed. The following components were verified as correct:
 
-2. **Why does it still segfault?** Even after the Bool issue, something crashes. Possible causes:
-   - The service loop itself may have issues with how it encodes the reply tuple — the handler function's return type changed from i64 to the actual type, but the service loop code that extracts the reply from the (state, reply) tuple may not handle non-i64 return types correctly
-   - The GC may interact poorly with the new pointer types
-   - There may be additional places in the codegen that assume service call helpers return i64
+### Handler function return type is NOT affected by the fix
 
-3. **Service loop reply extraction**: The service loop calls the handler function and gets back a value. It then needs to extract the second tuple element (reply) and store it as i64 in the reply message. If the handler function now returns a non-i64 type, the service loop's extraction code may need corresponding changes.
+The handler function (`__service_{name}_handle_call_{snake}`) always returns `MirType::Ptr` (line 9612 in `lower.rs`). This was NOT changed by the fix. The handler body creates a tuple `(new_state, reply)` via `__mesh_make_tuple`, which returns a heap pointer. This is correct and unchanged.
 
-4. **Handler function vs. call helper function**: There are TWO functions per call handler:
-   - The **handler function** (runs inside the service actor loop) — takes state + args, returns (new_state, reply)
-   - The **call helper function** (called by the client) — sends message, waits for reply, converts i64 back to reply type
+### Service loop reply extraction is correct
 
-   The changes so far affect the **call helper function's return type**. But the **handler function** is also generated with a return type, and the **service loop** extracts the reply from the handler's return value. These may also need attention.
+The service loop in `expr.rs` (lines 3320-3730):
+1. Calls handler → gets pointer to `(state, reply)` tuple (lines 3524-3533)
+2. Handles both IntValue (legacy) and PointerValue result (lines 3624-3630)
+3. Calls `mesh_tuple_first(result_ptr)` → extracts state as i64 (lines 3632-3640)
+4. Calls `mesh_tuple_second(result_ptr)` → extracts reply as i64 (lines 3642-3650)
+5. Stores reply i64 into 8-byte alloca buffer (lines 3652-3658)
+6. Calls `mesh_service_reply(caller_pid, reply_buf, 8)` (lines 3661-3668)
 
-5. **Verify with a minimal test**: Create a simple .mpl file with a service that returns Bool and another that returns a Result type. Test outside of the full Mesher context to isolate the issue.
+This path always works with i64 values (tuple elements are always stored/extracted as i64). The fix did not change any of this. **The service loop correctly sends reply as i64 regardless of the actual reply type.**
+
+### Tuple encoding/decoding is correct
+
+`codegen_make_tuple` in `expr.rs` (lines 3842-3930) correctly coerces all types to i64:
+- IntValue with bit_width < 64: `build_int_z_extend` (covers Bool i1 → i64)
+- PointerValue: `build_ptr_to_int`
+- FloatValue: store f64, load as i64
+- StructValue ≤8 bytes: store struct, load as i64
+- StructValue >8 bytes: heap-allocate struct, store pointer-as-i64
+
+`mesh_tuple_second` (in `mesh-rt/src/collections/tuple.rs` line 32) simply reads the u64 at offset `tuple_ptr + 8 + index*8`. This correctly retrieves the i64-encoded value.
+
+### Message transport is correct
+
+The reply message flow:
+1. Service loop stores i64 in 8-byte alloca, calls `mesh_service_reply(pid, ptr, 8)`
+2. `mesh_service_reply` (line 126 in `service.rs`) calls `mesh_actor_send(pid, ptr, 8)`
+3. `mesh_actor_send` (line 261 in `mod.rs`) deep-copies the 8 bytes into a `MessageBuffer`
+4. `copy_msg_to_actor_heap` (line 606) creates: `[u64 type_tag][u64 data_len][u8... data]`
+5. Returns pointer to this 16-byte-header + data structure
+6. Client loads i64 from `reply_ptr + 16` (skipping the header) — gets the original i64
+
+### Call helper function codegen is correct
+
+`codegen_service_call_helper` in `expr.rs` (lines 3965-4138):
+1. Packs handler args into i64 payload buffer via `coerce_to_i64`
+2. Calls `mesh_service_call(pid, tag, payload_ptr, payload_size)` → gets reply message ptr
+3. Loads i64 from reply_data at offset +16
+4. Converts based on `reply_ty`:
+   - Bool: `build_int_truncate(i64, i1)` — i64(1) → i1(1) = true ✓
+   - SumType >8B: `inttoptr(i64)` → load `{i8, ptr}` from heap pointer
+   - String/Ptr: `inttoptr(i64)` → ptr
+   - Float: store i64, load as f64
+   - Int/Pid/Unit: raw i64
+
+### Call site type resolution is correct
+
+When the caller code does `let allowed = RateLimiter.check_limit(pid, project_id)`:
+
+1. `lower_call_expr` (line 5889) recognizes service module → falls through to generic path
+2. `lower_field_access` (line 6404) resolves `RateLimiter.check_limit` → `MirExpr::Var("__service_rate_limiter_call_check_limit", ty)` where `ty` comes from type checker
+3. Call expression type `ty = self.resolve_range(call.syntax().text_range())` — type checker gives `Bool`
+4. If type checker gives Unit (unresolved), fallback to `known_functions` registry (line 6028-6048) which has `Bool` from the fix
+5. Let binding type = `value.ty()` = Call's `ty` field = `MirType::Bool`
+6. Alloca is `i1`, store is `i1`, load is `i1` — all consistent
+
+### LLVM function types are consistent
+
+`declare_functions` (line 328 in `mod.rs`) uses `llvm_fn_type` with `func.return_type`:
+- Call helper function: `return_type = info.reply_type` (e.g., `MirType::Bool` → `i1`)
+- `llvm_type` (line 31 in `types.rs`) maps `MirType::Bool` → `context.bool_type()` = `i1`
+- Function body returns `i1` (from `codegen_service_call_helper`)
+- `compile_function` (line 504) coerces return value → types match → no coercion needed
+- Call site: `build_call(fn_val, args, ...)` returns `i1` → used directly
+
+### If-expression handles both i1 and i64 correctly
+
+`codegen_if` (line 1407): checks `cond_val.get_type().get_bit_width()`:
+- If != 1 (i64): truncates to i1 via `build_int_truncate`
+- If == 1 (i1): uses directly
+- After the fix, service call Bool results arrive as i1 → used directly, no truncation
+
+### Bool data path trace (should work correctly)
+
+Complete trace for `RateLimiter.check_limit` returning `true`:
+1. Handler body: `check_limit_impl` returns `(state, true)` — creates tuple
+2. Tuple construction: Bool `true` (i1=1) → `build_int_z_extend(i1, i64)` → i64=1
+3. Stored in tuple at offset 16 (element 1)
+4. `mesh_tuple_second` → reads u64=1 from offset 16
+5. Service loop stores i64=1 in reply buffer
+6. `mesh_service_reply` sends 8 bytes containing i64=1
+7. Client loads i64=1 from reply message offset +16
+8. `build_int_truncate(i64=1, i1)` → i1=1 (true)
+9. Caller `if allowed` → i1=1 → takes then branch → processes event
+
+**This should work. Yet the live test shows 429 (rate limited).**
+
+## Remaining Hypotheses
+
+### Hypothesis A: Cross-actor heap pointer invalidation (SumType replies)
+
+For `EventProcessor.process_event` returning `Result<String, String>` (`{i8, ptr}`, 16 bytes):
+1. Handler creates Result struct → heap-allocated on SERVICE actor's GC heap
+2. Tuple stores pointer-as-i64 in element 1
+3. `mesh_tuple_second` returns i64 (pointer into service actor's heap)
+4. Reply sends this i64 to caller
+5. **Caller does `inttoptr(i64)` → `load {i8, ptr}` from that pointer**
+6. This reads 16 bytes from the SERVICE actor's heap — cross-actor memory access
+
+All actors share the same address space (coroutines in same process), so the pointer is valid. BUT if the service actor's GC runs between reply-send and caller-read, the memory could be freed. This is unlikely on the first request but could explain crashes under load.
+
+**Counter-argument**: This same cross-heap access pattern exists for ALL heap-allocated tuple elements (including state structs). If it were broken, nothing would work. The existing state extraction path (`mesh_tuple_first` for large structs) does the same thing and works.
+
+### Hypothesis B: Pre-existing issue unrelated to reply types
+
+The 429 on first request could be caused by:
+- `Map.get(state.limits, project_id)` returning an unexpected value when key doesn't exist (e.g., a large number instead of 0)
+- State corruption during spawn (the `RateLimitState` struct is 24+ bytes, loaded from spawn args buffer)
+- A pre-existing bug that was always present but masked by the previous crash happening before the response was sent
+
+The SIGSEGV could be caused by:
+- A completely different service call failing (not rate limiter)
+- State struct corruption in the service loop's state update path
+- A bug in the spawn args serialization for large state types
+
+### Hypothesis C: Service loop arg loading type mismatch for non-i64/ptr params
+
+The service loop loads handler arguments from the message buffer (lines 3492-3521):
+```rust
+let load_ty = if handler_param_types[param_idx].is_pointer_type() {
+    ptr_ty.into()
+} else {
+    i64_ty.into()  // ALL non-pointer types loaded as i64
+};
+```
+
+This only checks for `ptr` vs `i64`. If any handler parameter is `i1` (Bool), `f64` (Float), or a struct type, the argument is loaded as `i64` but passed to a function expecting a different type. **This would be a type mismatch at the LLVM call instruction.**
+
+For the current Mesher services, handler params are String (ptr) and Int (i64), so this is not the immediate issue. But it IS a latent bug for services with Bool/Float/struct parameters.
+
+### Hypothesis D: The fix is correct but Mesher binary wasn't rebuilt
+
+If the live test binary was compiled before the fix, or if incremental compilation didn't recompile all dependent modules, the old (broken) code would still be running.
+
+## Code Location Reference
+
+### Two functions per call handler
+
+| Function | Name pattern | Returns | Generated at |
+|----------|-------------|---------|-------------|
+| Handler function | `__service_{name}_handle_call_{snake}` | `MirType::Ptr` (tuple ptr, ALWAYS) | `lower.rs:9613` |
+| Call helper function | `__service_{name}_call_{snake}` | `info.reply_type` (Bool, SumType, etc.) | `lower.rs:9857-9865` |
+
+### Key codegen locations
+
+| Component | File | Lines | What it does |
+|-----------|------|-------|-------------|
+| Service loop | `expr.rs` | 3320-3730 | Receive → dispatch → call handler → extract reply → send reply → loop |
+| Call helper | `expr.rs` | 3965-4138 | Pack args → `mesh_service_call` → load reply → convert type |
+| Tuple construction | `expr.rs` | 3842-3930 | Coerce elements to i64, heap-allocate `{u64 len, u64[N] elems}` |
+| Tuple extraction | `mesh-rt` tuple.rs | 26-34 | `mesh_tuple_first`/`second`: read u64 at offset |
+| State update | `expr.rs` | 3670-3710 | Convert i64 back to state LLVM type (ptr/small struct/large struct) |
+| Arg loading | `expr.rs` | 3492-3521 | Load handler args from message: ptr or i64 only |
+| Function declaration | `mod.rs` | 328-361 | `llvm_fn_type(params, return_type)` → LLVM function type |
+| Return coercion | `mod.rs` | 527-611 | `coerce_return_value`: ptr↔struct, int↔ptr, struct↔struct |
+
+### Mesher source locations
+
+| File | What |
+|------|------|
+| `mesher/services/rate_limiter.mpl:26-44` | RateLimiter service definition |
+| `mesher/services/rate_limiter.mpl:11-20` | `check_limit_impl` — the actual rate limit logic |
+| `mesher/ingestion/routes.mpl:169-177` | `handle_event_authed` — calls `RateLimiter.check_limit` |
+| `mesher/ingestion/pipeline.mpl:401-403` | `RateLimiter.start(60, 1000)` — initialization |
+
+### Rate limiter logic
+
+```mesh
+fn check_limit_impl(state :: RateLimitState, project_id :: String) -> (RateLimitState, Bool) do
+  let count = Map.get(state.limits, project_id)
+  if count >= state.max_events do
+    (state, false)        # rate limited
+  else
+    let new_limits = Map.put(state.limits, project_id, count + 1)
+    let new_state = RateLimitState { limits: new_limits, ... }
+    (new_state, true)     # allowed
+  end
+end
+```
+
+First request: `count` = `Map.get` on empty map (should be 0), `0 >= 1000` = false → should return `true`.
+
+## RESOLVED — Root Cause Found and Fixed
+
+### The actual root cause: `llvm_type(MirType::Tuple)` returned by-value struct instead of ptr
+
+The bug was **not** in the service call reply type handling (which was correct). It was in `crates/mesh-codegen/src/codegen/types.rs` line 43-50.
+
+**`llvm_type(MirType::Tuple([Int, Int]))` returned `struct { i64, i64 }` (a 16-byte by-value struct type).** But tuples at runtime are **always heap-allocated pointers** from `__mesh_make_tuple`, which returns a `ptr` to `{u64 len, u64[N] elements}`.
+
+This caused a **type/size mismatch** anywhere a tuple-typed value flowed through an alloca:
+
+1. **In `codegen_if`** (line 1427-1475): When an `if` expression returns a tuple from both branches:
+   - `result_alloca` was created as `alloca {i64, i64}` (16 bytes)
+   - But the actual branch values were `ptr` (8 bytes) from `__mesh_make_tuple`
+   - `build_store(result_alloca, ptr)` stored only 8 bytes into 16-byte alloca
+   - `build_load({i64,i64}, result_alloca)` loaded 16 bytes — 8 bytes of pointer + 8 bytes of zeroed/garbage stack
+   - `coerce_return_value` then heap-allocated this corrupted {ptr_val, 0} struct
+   - Service loop's `mesh_tuple_first`/`mesh_tuple_second` read garbage offsets → returned 0 for both state and reply
+
+2. **Same pattern would affect `codegen_let`** for let-bindings with tuple types.
+
+### Why this wasn't caught by existing tests
+
+All existing service E2E tests used `Int` return types exclusively. The `if`-expression-returning-tuple pattern only appears in handlers like `check_limit_impl` that conditionally return different tuples. The simple `(state, state)` pattern (no `if`) worked because the tuple pointer flowed directly to the return without going through an alloca.
+
+### The fix
+
+**`crates/mesh-codegen/src/codegen/types.rs`**: Changed `MirType::Tuple(...)` to return `ptr` instead of a by-value struct:
+
+```rust
+MirType::Tuple(_) => {
+    // Tuples are always heap-allocated via __mesh_make_tuple at runtime,
+    // which returns a pointer to {u64 len, u64[N] elements}. The LLVM
+    // representation is therefore ptr, not a by-value struct.
+    context.ptr_type(inkwell::AddressSpace::default()).into()
+}
+```
+
+### New E2E tests added
+
+- **`tests/e2e/service_bool_return.mpl`**: Service with Bool return + struct state (LimitState). Tests the Bool truncation path AND the if-expression-returning-tuple codegen path.
+- **`tests/e2e/service_string_return.mpl`**: Service with String return type. Tests the inttoptr pointer conversion path.
+
+### How this explains both symptoms
+
+1. **HTTP 429 on first request**: The `if count >= state.max_events` inside `check_limit_impl` returned a tuple from an if-expression. The tuple was corrupted (both elements → 0). The service loop stored 0 as the new state AND sent 0 as the reply. Reply i64=0 → Bool truncation → false → rate limited → 429.
+
+2. **SIGSEGV on subsequent requests**: After the corrupted state (0) was stored, the next request's handler received state=0 as an `Int`. For the Mesher's actual `RateLimitState` (a 24-byte struct), the service loop did `inttoptr(0)` → `load {ptr, i64, i64} from null` → **segfault**.
+
+### Verification of previous hypotheses
+
+- **Hypothesis A (cross-actor heap pointer)**: Not the issue. Heap pointers are valid across actors.
+- **Hypothesis B (pre-existing Map.get issue)**: Not the issue. `Map.get` correctly returns 0 for missing keys.
+- **Hypothesis C (service loop arg loading)**: Latent bug exists but not triggered by current Mesher services.
+- **Hypothesis D (stale binary)**: Partially relevant — the reply type fix was correct, but the separate Tuple type bug was the real cause.
+- **NEW: Hypothesis E (Tuple llvm_type mismatch)**: **This was the root cause.**
+
+### Test results after fix
+
+- **179 codegen tests**: All pass
+- **227 main E2E tests**: All pass
+- **93 stdlib E2E tests**: 91 pass (2 pre-existing HTTP test failures)
+- **13 concurrency E2E tests**: All pass (including 2 new service return type tests)
+- **9 actor tests**: All pass
+- **4 supervisor tests**: All pass
+- **8 tooling tests**: All pass
+
+### Remaining items
+
+1. **Latent arg-loading bug** (Hypothesis C): The service loop's argument loading only distinguishes `ptr` vs `i64`. Services with Bool, Float, or struct parameters would have type mismatches. Not triggered by current Mesher services but should be fixed for correctness.
+
+2. **Live Mesher retest**: Rebuild Mesher from clean and verify against PostgreSQL.
+
+## Live Verification (Phase 114)
+
+Rebuilt Mesher from clean with MirType::Tuple fix (types.rs: ptr, not by-value struct). Tested against PostgreSQL (Docker container mesher-postgres, credentials mesh/mesh/mesher). Test data seeded via psql: user, org, project (id: 90b526d8-145a-4631-bc05-9eb2bea8445f), api_key (testkey123).
+
+**Auth note:** Event ingestion uses `x-sentry-auth` header (mesher/ingestion/auth.mpl), not `X-Api-Key` as listed in the plan interface section.
+
+**Smoke test results (all domains):**
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| POST /api/v1/events | POST | 202 | x-sentry-auth: testkey123 -- no SIGSEGV |
+| GET /api/v1/projects/:id/issues | GET | 200 | search domain |
+| GET /api/v1/projects/:id/dashboard/volume | GET | 200 | dashboard domain |
+| GET /api/v1/projects/:id/dashboard/health | GET | 200 | dashboard domain |
+| GET /api/v1/projects/:id/alert-rules | GET | 200 | returns [] |
+| GET /api/v1/projects/:id/alerts | GET | 200 | returns [] |
+| GET /api/v1/projects/:id/settings | GET | 200 | returns {"retention_days":90,"sample_rate":1} |
+| GET /api/v1/projects/:id/storage | GET | 200 | returns {"event_count":0,"estimated_bytes":0} |
+| ws://localhost:8081/ | WS upgrade | 101 | HTTP/1.1 Switching Protocols |
+
+- First authenticated POST /api/v1/events: **202 Accepted** — no SIGSEGV
+- Mesher process alive after all endpoint tests (PID 57256): **CONFIRMED**
+- Status: **RESOLVED**
