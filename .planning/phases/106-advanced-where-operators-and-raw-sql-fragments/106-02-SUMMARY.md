@@ -2,6 +2,7 @@
 phase: 106-advanced-where-operators-and-raw-sql-fragments
 plan: 02
 subsystem: database
+requirements-completed: [FRAG-01, FRAG-02, FRAG-03, FRAG-04]
 tags: [query-builder, sql, fragments, raw-sql, parameter-renumbering, order-by, group-by]
 
 # Dependency graph

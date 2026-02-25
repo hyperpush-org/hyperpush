@@ -2,6 +2,7 @@
 phase: 106-advanced-where-operators-and-raw-sql-fragments
 plan: 01
 subsystem: database
+requirements-completed: [WHERE-01, WHERE-02, WHERE-03, WHERE-04, WHERE-05, WHERE-06]
 tags: [query-builder, sql, where-clause, not-in, between, ilike, or]
 
 # Dependency graph
