@@ -223,7 +223,11 @@ impl<'src> Lexer<'src> {
         }
     }
 
-    /// `||` -> `PipePipe`, `|>` -> `Pipe`, single `|` -> `Bar`
+    /// `||` -> `PipePipe`, `|>` -> `Pipe`, `|N>` -> `SlotPipe(N)`, single `|` -> `Bar`
+    ///
+    /// For slot pipe:
+    /// - `|2>` emits `SlotPipe(2)`, `|10>` emits `SlotPipe(10)`
+    /// - `|0>` and `|1>` emit `Error` (invalid by design: 0 is meaningless, use `|>` for slot 1)
     fn lex_pipe(&mut self, start: u32) -> Token {
         self.cursor.advance(); // consume '|'
         match self.cursor.peek() {
@@ -234,6 +238,30 @@ impl<'src> Lexer<'src> {
             Some('>') => {
                 self.cursor.advance();
                 Token::new(TokenKind::Pipe, start, self.cursor.pos())
+            }
+            Some(c) if c.is_ascii_digit() => {
+                // Scan the digit sequence
+                let digit_start = self.cursor.pos();
+                self.cursor.eat_while(|c| c.is_ascii_digit());
+                let digit_end = self.cursor.pos();
+                let digit_str = self.cursor.slice(digit_start, digit_end);
+                let n: u32 = digit_str.parse().unwrap_or(0);
+                // Must be followed by '>'
+                if self.cursor.peek() == Some('>') {
+                    self.cursor.advance(); // consume '>'
+                    if n == 0 {
+                        // |0> is invalid -- arguments are 1-indexed
+                        Token::new(TokenKind::Error, start, self.cursor.pos())
+                    } else if n == 1 {
+                        // |1> is invalid -- use |> instead
+                        Token::new(TokenKind::Error, start, self.cursor.pos())
+                    } else {
+                        Token::new(TokenKind::SlotPipe(n), start, self.cursor.pos())
+                    }
+                } else {
+                    // Digits consumed but no '>' -- not a valid slot pipe, emit error
+                    Token::new(TokenKind::Error, start, self.cursor.pos())
+                }
             }
             _ => Token::new(TokenKind::Bar, start, self.cursor.pos()),
         }
@@ -801,6 +829,42 @@ mod tests {
                 &TokenKind::Eof,
             ]
         );
+    }
+
+    #[test]
+    fn lex_slot_pipe_basic() {
+        let tokens = Lexer::tokenize("|2>");
+        assert_eq!(tokens[0].kind, TokenKind::SlotPipe(2));
+    }
+
+    #[test]
+    fn lex_slot_pipe_multidigit() {
+        let tokens = Lexer::tokenize("|10>");
+        assert_eq!(tokens[0].kind, TokenKind::SlotPipe(10));
+    }
+
+    #[test]
+    fn lex_slot_pipe_zero_is_error() {
+        let tokens = Lexer::tokenize("|0>");
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+    }
+
+    #[test]
+    fn lex_slot_pipe_one_is_error() {
+        let tokens = Lexer::tokenize("|1>");
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+    }
+
+    #[test]
+    fn lex_regular_pipe_unchanged() {
+        let tokens = Lexer::tokenize("|>");
+        assert_eq!(tokens[0].kind, TokenKind::Pipe);
+    }
+
+    #[test]
+    fn lex_bar_unchanged() {
+        let tokens = Lexer::tokenize("|");
+        assert_eq!(tokens[0].kind, TokenKind::Bar);
     }
 
     #[test]

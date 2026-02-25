@@ -108,6 +108,8 @@ pub enum TokenKind {
     Bang,
     /// `|>`
     Pipe,
+    /// `|N>` slot pipe operator, e.g. `|2>`, `|3>`. N is the 1-indexed argument position.
+    SlotPipe(u32),
     /// `..`
     DotDot,
     /// `<>`
@@ -336,17 +338,17 @@ mod tests {
     #[test]
     fn token_kind_variant_count() {
         // Count variants by checking that all categories are covered.
-        // Keywords: 45, Operators: 24, Delimiters: 6, Punctuation: 5,
-        // Literals: 7, Identifiers/comments: 4, Special: 2 = 93 total
+        // Keywords: 48, Operators: 25 (added SlotPipe(u32)), Delimiters: 6, Punctuation: 5,
+        // Literals: 8, Identifiers/comments: 4, Special: 2 = 98 total
         // This test documents the expected count.
         let keywords = 48u32;
-        let operators = 24;
+        let operators = 25; // Added SlotPipe(u32)
         let delimiters = 6;
         let punctuation = 5;
         let literals = 8;
         let ident_comments = 4;
         let special = 2;
         let total = keywords + operators + delimiters + punctuation + literals + ident_comments + special;
-        assert_eq!(total, 97, "TokenKind should have 97 variants");
+        assert_eq!(total, 98, "TokenKind should have 98 variants");
     }
 }
