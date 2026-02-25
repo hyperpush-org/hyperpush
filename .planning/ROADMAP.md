@@ -347,7 +347,10 @@ Plans:
   3. ROADMAP.md Phase 109 success criteria updated to reflect the positional-arg API style actually implemented (`Repo.insert_or_update`, `Repo.delete_where_returning`, `Query.where_sub`)
   4. UPS-01..03 marked `[x]` Complete in REQUIREMENTS.md after ROADMAP acceptance
   5. Dead code functions `get_project_id_by_key` and `get_user_orgs` removed from mesher/storage/queries.mpl with no import sites affected
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 115-01-PLAN.md -- Requirements tracking corrections (WHERE/FRAG/UPS documentation updates)
+- [ ] 115-02-PLAN.md -- ROADMAP Phase 109 API acceptance + dead code removal from queries.mpl
 
 ## Progress
 
@@ -385,6 +388,6 @@ Phases execute in numeric order: 106 -> 107 -> 108 -> 109 -> 110 -> 111 -> 112 -
 | 112. Rewrite: Search/Dashboard/Alerts | 2/2 | Complete    | 2026-02-18 | - |
 | 113. Rewrite: Retention & Cleanup | 1/1 | Complete    | 2026-02-25 | - |
 | 114. Verification | 2/2 | Complete    | 2026-02-25 | - |
-| 115. Tracking Corrections & API Acceptance | v11.0 | 0/TBD | Not started | - |
+| 115. Tracking Corrections & API Acceptance | v11.0 | 0/2 | Not started | - |
 
 **Total: 106 phases shipped across 20 milestones. 313 plans completed. 9 phases remaining for v11.0.**
