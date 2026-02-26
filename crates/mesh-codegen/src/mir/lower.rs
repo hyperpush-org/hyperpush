@@ -644,6 +644,14 @@ impl<'a> Lowerer<'a> {
             "mesh_env_args".to_string(),
             MirType::FnPtr(vec![], Box::new(MirType::Ptr)),
         );
+        self.known_functions.insert(
+            "mesh_env_get_with_default".to_string(),
+            MirType::FnPtr(vec![MirType::String, MirType::String], Box::new(MirType::String)),
+        );
+        self.known_functions.insert(
+            "mesh_env_get_int".to_string(),
+            MirType::FnPtr(vec![MirType::String, MirType::Int], Box::new(MirType::Int)),
+        );
         // ── Collection functions (Phase 8 Plan 02) ─────────────────────
         // List
         self.known_functions.insert("mesh_list_new".to_string(), MirType::FnPtr(vec![], Box::new(MirType::Ptr)));
@@ -10427,7 +10435,10 @@ fn map_builtin_name(name: &str) -> String {
         "io_read_line" => "mesh_io_read_line".to_string(),
         "io_eprintln" => "mesh_io_eprintln".to_string(),
         // Env functions
-        "env_get" => "mesh_env_get".to_string(),
+        // "env_get" is the prefixed form of Env.get — routes to 2-arg with-default variant
+        "env_get" => "mesh_env_get_with_default".to_string(),
+        "env_get_with_default" => "mesh_env_get_with_default".to_string(),
+        "env_get_int" => "mesh_env_get_int".to_string(),
         "env_args" => "mesh_env_args".to_string(),
         // Names that have already been resolved via from-import and lowered
         // with the module prefix (e.g., user wrote `length` after `from String import length`,

@@ -247,9 +247,21 @@ pub fn register_builtins(
 
     // ── Standard library: Env functions (Phase 8) ────────────────────
 
+    // Env.get(key, default) -> String
+    // Module-qualified dispatch: Env.get -> prefixed "env_get" -> map_builtin_name -> mesh_env_get_with_default
     env.insert(
-        "env_get".into(),
-        Scheme::mono(Ty::fun(vec![Ty::string()], Ty::option(Ty::string()))),
+        "env_get_with_default".into(),
+        Scheme::mono(Ty::fun(vec![Ty::string(), Ty::string()], Ty::string())),
+    );
+    // Env.get_int(key, default) -> Int
+    env.insert(
+        "env_get_int".into(),
+        Scheme::mono(Ty::fun(vec![Ty::string(), Ty::int()], Ty::int())),
+    );
+    // Env.args() -> List<String>  (bare env_args still resolves via map_builtin_name)
+    env.insert(
+        "env_args".into(),
+        Scheme::mono(Ty::fun(vec![], Ty::list(Ty::string()))),
     );
 
     // ── Standard library: Collection types (Phase 8) ─────────────────
@@ -1722,7 +1734,9 @@ mod tests {
         assert!(env.lookup("io_eprintln").is_some());
 
         // Env functions
-        assert!(env.lookup("env_get").is_some());
+        assert!(env.lookup("env_get_with_default").is_some());
+        assert!(env.lookup("env_get_int").is_some());
+        assert!(env.lookup("env_args").is_some());
 
         // HTTP functions (Phase 8 Plan 05)
         assert!(env.lookup("http_router").is_some());

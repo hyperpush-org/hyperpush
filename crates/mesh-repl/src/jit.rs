@@ -246,6 +246,8 @@ fn register_runtime_symbols() {
     // Environment
     add_sym("mesh_env_get", mesh_rt::mesh_env_get as *const ());
     add_sym("mesh_env_args", mesh_rt::mesh_env_args as *const ());
+    add_sym("mesh_env_get_with_default", mesh_rt::mesh_env_get_with_default as *const ());
+    add_sym("mesh_env_get_int", mesh_rt::mesh_env_get_int as *const ());
 
     // JSON
     add_sym("mesh_json_get", mesh_rt::mesh_json_get as *const ());

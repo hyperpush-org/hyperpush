@@ -244,6 +244,14 @@ pub fn declare_intrinsics<'ctx>(module: &Module<'ctx>) {
     let env_args_ty = ptr_type.fn_type(&[], false);
     module.add_function("mesh_env_args", env_args_ty, Some(inkwell::module::Linkage::External));
 
+    // mesh_env_get_with_default(key: ptr, default: ptr) -> ptr (MeshString)
+    let env_get_def_ty = ptr_type.fn_type(&[ptr_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_env_get_with_default", env_get_def_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_env_get_int(key: ptr, default: i64) -> i64
+    let env_get_int_ty = i64_type.fn_type(&[ptr_type.into(), i64_type.into()], false);
+    module.add_function("mesh_env_get_int", env_get_int_ty, Some(inkwell::module::Linkage::External));
+
     // ── Standard library: Collection functions (Phase 8 Plan 02) ──────────
 
     // List functions
@@ -1377,6 +1385,8 @@ mod tests {
         assert!(module.get_function("mesh_io_eprintln").is_some());
         assert!(module.get_function("mesh_env_get").is_some());
         assert!(module.get_function("mesh_env_args").is_some());
+        assert!(module.get_function("mesh_env_get_with_default").is_some());
+        assert!(module.get_function("mesh_env_get_int").is_some());
 
         // Collection functions (Phase 8 Plan 02)
         assert!(module.get_function("mesh_list_new").is_some());
