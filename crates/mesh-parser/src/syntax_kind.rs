@@ -115,7 +115,7 @@ pub enum SyntaxKind {
     SEMICOLON,
     NEWLINE,
 
-    // ── Literals (8) ───────────────────────────────────────────────────
+    // ── Literals (9) ───────────────────────────────────────────────────
     INT_LITERAL,
     FLOAT_LITERAL,
     STRING_START,
@@ -124,6 +124,8 @@ pub enum SyntaxKind {
     INTERPOLATION_START,
     INTERPOLATION_END,
     ATOM_LITERAL,
+    /// Regex literal token: `~r/pattern/flags`.
+    REGEX_LITERAL,
 
     // ── Identifiers and comments (4) ───────────────────────────────────
     IDENT,
@@ -196,6 +198,8 @@ pub enum SyntaxKind {
     LITERAL,
     /// Atom literal expression: `:name`, `:email`, `:asc`.
     ATOM_EXPR,
+    /// Regex literal expression: `~r/pattern/flags`.
+    REGEX_EXPR,
     /// Name in a definition position.
     NAME,
     /// Name reference (identifier used as expression).
@@ -469,6 +473,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::InterpolationStart => SyntaxKind::INTERPOLATION_START,
             TokenKind::InterpolationEnd => SyntaxKind::INTERPOLATION_END,
             TokenKind::Atom => SyntaxKind::ATOM_LITERAL,
+            TokenKind::RegexLiteral(_, _) => SyntaxKind::REGEX_LITERAL,
             // Identifiers and comments
             TokenKind::Ident => SyntaxKind::IDENT,
             TokenKind::Comment => SyntaxKind::COMMENT,
@@ -577,7 +582,7 @@ mod tests {
             TokenKind::Colon,
             TokenKind::Semicolon,
             TokenKind::Newline,
-            // Literals (8)
+            // Literals (9)
             TokenKind::IntLiteral,
             TokenKind::FloatLiteral,
             TokenKind::StringStart,
@@ -586,6 +591,7 @@ mod tests {
             TokenKind::InterpolationStart,
             TokenKind::InterpolationEnd,
             TokenKind::Atom,
+            TokenKind::RegexLiteral("".to_string(), "".to_string()),
             // Identifiers and comments (4)
             TokenKind::Ident,
             TokenKind::Comment,
@@ -596,7 +602,7 @@ mod tests {
             TokenKind::Error,
         ];
 
-        assert_eq!(all_kinds.len(), 98, "must test all 98 TokenKind variants");
+        assert_eq!(all_kinds.len(), 99, "must test all 99 TokenKind variants");
 
         for kind in all_kinds {
             let _syntax_kind: SyntaxKind = kind.into();

@@ -155,7 +155,7 @@ pub enum TokenKind {
     /// Significant newline (statement terminator).
     Newline,
 
-    // ── Literals (8) ───────────────────────────────────────────────────
+    // ── Literals (9) ───────────────────────────────────────────────────
     /// Integer literal, e.g. `42`, `0xFF`, `0b1010`.
     IntLiteral,
     /// Floating-point literal, e.g. `3.14`, `1.0e10`.
@@ -172,6 +172,9 @@ pub enum TokenKind {
     InterpolationEnd,
     /// Atom literal, e.g. `:name`, `:email`, `:asc`.
     Atom,
+    /// Regex literal, e.g. `~r/pattern/ims`. Fields: (pattern, flags).
+    /// Pattern is the content between `/` delimiters; flags is the suffix (e.g. "ims" or "").
+    RegexLiteral(String, String),
 
     // ── Identifiers and comments (4) ───────────────────────────────────
     /// Regular identifier, e.g. `foo`, `my_var`.
@@ -339,16 +342,16 @@ mod tests {
     fn token_kind_variant_count() {
         // Count variants by checking that all categories are covered.
         // Keywords: 48, Operators: 25 (added SlotPipe(u32)), Delimiters: 6, Punctuation: 5,
-        // Literals: 8, Identifiers/comments: 4, Special: 2 = 98 total
+        // Literals: 9 (added RegexLiteral(String, String)), Identifiers/comments: 4, Special: 2 = 99 total
         // This test documents the expected count.
         let keywords = 48u32;
         let operators = 25; // Added SlotPipe(u32)
         let delimiters = 6;
         let punctuation = 5;
-        let literals = 8;
+        let literals = 9; // Added RegexLiteral(String, String)
         let ident_comments = 4;
         let special = 2;
         let total = keywords + operators + delimiters + punctuation + literals + ident_comments + special;
-        assert_eq!(total, 98, "TokenKind should have 98 variants");
+        assert_eq!(total, 99, "TokenKind should have 99 variants");
     }
 }

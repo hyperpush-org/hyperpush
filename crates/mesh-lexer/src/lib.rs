@@ -123,6 +123,17 @@ impl<'src> Lexer<'src> {
             // ── Single-character operators ─────────────────────────────
             '?' => self.single_char_token(TokenKind::Question, start),
 
+            // ── Regex literal: ~r/pattern/flags ─────────────────────────
+            '~' => {
+                self.cursor.advance(); // consume '~'
+                // Only ~r/.../ is currently valid; anything else is an error.
+                if self.cursor.peek() == Some('r') {
+                    self.lex_regex_literal(start)
+                } else {
+                    Token::new(TokenKind::Error, start, self.cursor.pos())
+                }
+            }
+
             // ── Comments ────────────────────────────────────────────────
             '#' => self.lex_comment(start),
 
@@ -317,6 +328,70 @@ impl<'src> Lexer<'src> {
         } else {
             Token::new(TokenKind::Dot, start, self.cursor.pos())
         }
+    }
+
+    // ── Regex literals ────────────────────────────────────────────────
+
+    /// Lex a regex literal: `~r/pattern/flags`.
+    ///
+    /// Called after `~` has been consumed and `r` is at the current position.
+    /// - Consumes `r`
+    /// - Expects `/` opening delimiter; returns Error if absent
+    /// - Reads pattern characters until an unescaped `/` (handles `\/` as literal)
+    /// - Reads optional flags (`i`, `m`, `s` only); any other letter -> Error
+    /// - Returns `RegexLiteral(pattern, flags)` on success
+    fn lex_regex_literal(&mut self, start: u32) -> Token {
+        self.cursor.advance(); // consume 'r'
+
+        // Expect opening '/'
+        if self.cursor.peek() != Some('/') {
+            return Token::new(TokenKind::Error, start, self.cursor.pos());
+        }
+        self.cursor.advance(); // consume '/'
+
+        // Read pattern until unescaped '/' or EOF
+        let mut pattern = String::new();
+        let mut prev_was_backslash = false;
+        loop {
+            match self.cursor.peek() {
+                None => {
+                    // Unterminated regex
+                    return Token::new(TokenKind::Error, start, self.cursor.pos());
+                }
+                Some('/') if !prev_was_backslash => {
+                    self.cursor.advance(); // consume closing '/'
+                    break;
+                }
+                Some(c) => {
+                    pattern.push(c);
+                    if c == '\\' && !prev_was_backslash {
+                        prev_was_backslash = true;
+                    } else {
+                        prev_was_backslash = false;
+                    }
+                    self.cursor.advance();
+                }
+            }
+        }
+
+        // Read flags: only 'i', 'm', 's' are valid
+        let mut flags = String::new();
+        loop {
+            match self.cursor.peek() {
+                Some(c @ ('i' | 'm' | 's')) => {
+                    flags.push(c);
+                    self.cursor.advance();
+                }
+                Some(c) if c.is_ascii_alphabetic() => {
+                    // Invalid flag character -- consume it and return error
+                    self.cursor.advance();
+                    return Token::new(TokenKind::Error, start, self.cursor.pos());
+                }
+                _ => break,
+            }
+        }
+
+        Token::new(TokenKind::RegexLiteral(pattern, flags), start, self.cursor.pos())
     }
 
     // ── Comments ──────────────────────────────────────────────────────
