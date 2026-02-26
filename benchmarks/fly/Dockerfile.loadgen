@@ -10,9 +10,14 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sf https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64 \
     -o /usr/local/bin/hey && chmod +x /usr/local/bin/hey
 
+# Install fly CLI (needed by run-benchmarks-isolated.sh to manage server machines)
+RUN curl -L https://fly.io/install.sh | FLYCTL_INSTALL=/usr/local sh
+
 WORKDIR /app
 COPY benchmarks/fly/run-benchmarks.sh /app/run-benchmarks.sh
-RUN chmod +x /app/run-benchmarks.sh
+COPY benchmarks/fly/run-benchmarks-isolated.sh /app/run-benchmarks-isolated.sh
+COPY benchmarks/fly/start-server-isolated.sh /app/start-server-isolated.sh
+RUN chmod +x /app/run-benchmarks.sh /app/run-benchmarks-isolated.sh /app/start-server-isolated.sh
 
-# SERVER_HOST must be provided at machine launch time via -e SERVER_HOST=<ip>
-CMD ["/app/run-benchmarks.sh"]
+# Default: run isolated benchmark. For co-located mode, override with /app/run-benchmarks.sh
+CMD ["/app/run-benchmarks-isolated.sh"]

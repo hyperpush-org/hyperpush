@@ -58,23 +58,28 @@ for lang in Mesh Go Rust Elixir; do
     sleep 3
   fi
 
-  # Launch a fresh server machine for this language only
+  # Launch a fresh server machine for this language only.
+  # start-server-isolated.sh is baked into the server image under /app/benchmarks/fly/.
+  # Use /bin/bash as entrypoint to avoid relying on the file's execute bit.
   echo "Launching server machine for $lang..."
-  machine_output=$(fly machine run "$SERVER_IMAGE" \
+  if ! machine_output=$(fly machine run "$SERVER_IMAGE" \
+    /app/benchmarks/fly/start-server-isolated.sh \
     --app "$APP" \
     --name "$machine_name" \
     --vm-size performance-2x \
     --region "$REGION" \
     --env "LANG=$lang" \
-    --entrypoint /app/benchmarks/fly/start-server-isolated.sh \
-    2>&1)
+    --entrypoint /bin/bash \
+    2>&1); then
+    echo "ERROR: fly machine run failed for $lang:"
+    echo "$machine_output"
+    exit 1
+  fi
   echo "$machine_output"
 
-  # Extract machine ID from output
-  machine_id=$(echo "$machine_output" | grep -oE '[0-9a-z]{14}' | head -1 || true)
-  if [ -z "$machine_id" ]; then
-    machine_id=$(echo "$machine_output" | grep -oE 'Machine ID: [^ ]+' | awk '{print $3}' || true)
-  fi
+  # Extract machine ID from output — parse "Machine ID: <id>" line directly
+  # (regex on raw output would match image IDs first, giving the wrong result)
+  machine_id=$(echo "$machine_output" | grep "Machine ID:" | awk '{print $NF}' | head -1 || true)
 
   # Use internal DNS hostname for stable addressing
   SERVER_HOST="${machine_name}.vm.${APP}.internal"
@@ -82,40 +87,8 @@ for lang in Mesh Go Rust Elixir; do
   echo "Machine ID: ${machine_id:-unknown}"
   echo "Server host: $SERVER_HOST"
 
-  # Poll logs for SERVER_READY signal (max 120s)
-  echo "Waiting for SERVER_READY signal..."
-  ready=false
-  for attempt in $(seq 1 60); do
-    if [ -n "$machine_id" ]; then
-      log_line=$(fly logs --machine "$machine_id" --app "$APP" 2>/dev/null | grep "SERVER_READY" | head -1 || true)
-    else
-      log_line=$(fly logs --app "$APP" 2>/dev/null | grep "SERVER_READY" | head -1 || true)
-    fi
-    if [ -n "$log_line" ]; then
-      ready=true
-      echo "SERVER_READY signal received"
-      break
-    fi
-    sleep 2
-  done
-
-  if [ "$ready" != "true" ]; then
-    echo "WARNING: SERVER_READY not received within 120s for $lang — skipping" >&2
-    for ep in text json; do
-      RESULT_RPS["${lang}_${ep}"]="N/A"
-      RESULT_P50["${lang}_${ep}"]="N/A"
-      RESULT_P99["${lang}_${ep}"]="N/A"
-    done
-    RESULT_RSS["$lang"]="N/A"
-    # Destroy machine before continuing
-    if [ -n "$machine_id" ]; then
-      fly machine stop "$machine_id" --app "$APP" 2>/dev/null || true
-      fly machine destroy "$machine_id" --app "$APP" --yes 2>/dev/null || true
-    fi
-    continue
-  fi
-
   # Wait for HTTP reachability
+  # (Skipping log-based SERVER_READY: fly logs streams live only, missing signals emitted before poll starts)
   echo "Polling $SERVER_HOST:$port for HTTP reachability..."
   http_ready=false
   for attempt in $(seq 1 60); do
