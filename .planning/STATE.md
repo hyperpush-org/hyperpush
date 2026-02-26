@@ -103,6 +103,7 @@ Recent decisions affecting current work:
 
 - v12.0 roadmap created 2026-02-25: 8 phases (116-123), 33 requirements mapped, 100% coverage
 - Phase ordering: compiler features first (116-119), then dogfooding (120), then skill (121), then repo (122), then benchmarks (123)
+- Phase 124 added: Fix POST /api/v1/events 401 seed data issue
 
 ### Pending Todos
 
