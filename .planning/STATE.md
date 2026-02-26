@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Language Ergonomics & Open Source Readiness
 status: unknown
-last_updated: "2026-02-26T01:47:14.137Z"
+last_updated: "2026-02-26T02:16:18.605Z"
 progress:
-  total_phases: 114
+  total_phases: 115
   completed_phases: 114
-  total_plans: 304
-  completed_plans: 304
+  total_plans: 307
+  completed_plans: 305
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 118 of 123 (Phase 118: Env Var Stdlib)
-Plan: 02 complete (phase complete)
-Status: Phase 118 complete — Phase 119 next
-Last activity: 2026-02-26 — 118-02 complete: E2E tests for Env.get/Env.get_int, all callers migrated to 2-arg API
+Phase: 119 of 123 (Phase 119: Regular Expressions)
+Plan: 01 complete
+Status: Phase 119 in progress — Plan 02 next
+Last activity: 2026-02-26 — 119-01 complete: regex literal full compiler pipeline (~r/pat/flags lexer, parser, AST, typeck, MIR)
 
 Progress: [█░░░░░░░░░] 5% (v12.0)
 
@@ -53,6 +53,7 @@ Progress: [█░░░░░░░░░] 5% (v12.0)
 | 117   | 02   | 8min     | 2     | 4     |
 | 118   | 01   | 10min    | 2     | 6     |
 | 118   | 02   | 13min    | 2     | 6     |
+| 119   | 01   | 6min     | 2     | 8     |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 118]: env_args type signature upgraded to Ty::list(Ty::string()) in builtins.rs
 - [Phase 118]: stdlib_modules() Env entry in infer.rs updated to 2-arg get, get_int, args signatures (was stale 1-arg Option-returning)
 - [Phase 118]: get_env_or_default helper removed from mesher/main.mpl; all callsites use direct Env.get(key, default)
+- [Phase 119]: RegexExpr.pattern()/flags() parse CST source text (not TokenKind payload) since SyntaxToken only stores text spans
+- [Phase 119]: Flags bitmask i=1, m=2, s=4; only i/m/s valid -- other letters produce lexer Error token
+- [Phase 119]: mesh_regex_from_literal call site wired in Plan 01; runtime symbol added in Plan 02
 
 ### Roadmap Evolution
 
@@ -99,6 +103,6 @@ None. v11.0 fully shipped and verified. Zero known compiler correctness issues.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 118-02-PLAN.md (E2E tests and migration of Env.get callers)
+Stopped at: Completed 119-01-PLAN.md (regex literal full compiler pipeline)
 Resume file: None
-Next action: /gsd:execute-phase 119
+Next action: /gsd:execute-phase 119 (plan 02)
