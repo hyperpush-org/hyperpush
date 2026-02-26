@@ -48,6 +48,7 @@ pub fn link(
         .arg("-L")
         .arg(rt_dir)
         .arg("-lmesh_rt")
+        .arg("-lm")
         .arg("-o")
         .arg(output_path);
 
