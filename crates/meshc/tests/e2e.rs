@@ -157,6 +157,18 @@ fn e2e_string_interp() {
     assert_eq!(output, "Hello, World!\nThe answer is 42\n");
 }
 
+/// STRG-01: #{} string interpolation — new syntax.
+#[test]
+fn e2e_string_interp_hash() {
+    let source = read_fixture("string_interp_hash.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(
+        output,
+        "Hello, World!\nCount: 3\nFlag: true\nExpr: 7\nNested: prefix-World-suffix\n",
+        "#{{}} interpolation must evaluate expressions and embed string representations"
+    );
+}
+
 /// SC2: ADT sum type construction.
 #[test]
 fn e2e_adts() {
