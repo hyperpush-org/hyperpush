@@ -244,7 +244,10 @@ Plans:
   1. User can write `"Value: #{expr}"` with any valid expression and it evaluates at runtime and concatenates into the string
   2. User can write `"""..."""` heredoc strings containing newlines and special characters without escape sequences
   3. Heredoc strings support embedded interpolation: `"""{"id": "#{id}"}"""` evaluates correctly
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 117-01-PLAN.md — Lexer: #{...} interpolation delimiter, backward compat with ${...}, E2E tests for STRG-01
+- [ ] 117-02-PLAN.md — MIR lowerer: trimIndent for triple-quoted heredocs, E2E tests for STRG-02 and STRG-03
 
 ### Phase 118: Env Var Stdlib
 **Goal**: Users can read environment variables with typed defaults using `Env.get` and `Env.get_int`
@@ -342,7 +345,7 @@ Note: Phase 119 (Regex) depends only on Phase 115 and may proceed in parallel wi
 | 104-105.1 | v10.1 | 6/6 | Complete | 2026-02-17 |
 | 106-115 | v11.0 | 22/22 | Complete | 2026-02-25 |
 | 116. Slot Pipe Operator | 2/2 | Complete    | 2026-02-25 | - |
-| 117. String Interpolation & Heredocs | v12.0 | 0/? | Not started | - |
+| 117. String Interpolation & Heredocs | v12.0 | 0/2 | Not started | - |
 | 118. Env Var Stdlib | v12.0 | 0/? | Not started | - |
 | 119. Regular Expressions | v12.0 | 0/? | Not started | - |
 | 120. Mesher Dogfooding | v12.0 | 0/? | Not started | - |
