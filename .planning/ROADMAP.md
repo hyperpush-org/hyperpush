@@ -332,7 +332,12 @@ Plans:
   2. Equivalent benchmark servers exist in Go, Rust, and Elixir using idiomatic frameworks
   3. Benchmarks measure throughput (req/s), p50/p99 latency, and memory usage for all four languages under the same conditions
   4. Benchmark methodology is documented (tool, hardware, concurrency settings) and results are committed to the repository
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 123-01-PLAN.md — Mesh and Go benchmark servers (bench.mpl port 3000, Go net/http port 3001)
+- [ ] 123-02-PLAN.md — Rust axum and Elixir Plug+Cowboy benchmark servers (ports 3002, 3003)
+- [ ] 123-03-PLAN.md — Runner script, execute benchmarks, document results, README update, human checkpoint
 
 ## Progress
 
@@ -370,7 +375,7 @@ Note: Phase 119 (Regex) depends only on Phase 115 and may proceed in parallel wi
 | 120. Mesher Dogfooding | 2/2 | Complete    | 2026-02-26 | - |
 | 121. Mesh Agent Skill | 4/4 | Complete    | 2026-02-26 | - |
 | 122. Repository Reorganization | 2/2 | Complete    | 2026-02-26 | - |
-| 123. Performance Benchmarks | v12.0 | 0/? | Not started | - |
+| 123. Performance Benchmarks | v12.0 | 0/3 | Planned | - |
 
 **Total through v11.0: 115 phases shipped, 319 plans completed across 21 milestones.**
 
