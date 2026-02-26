@@ -191,7 +191,7 @@ The LSP server is configured through your editor's settings. In VS Code, the Mes
 
 ### VS Code
 
-The official Mesh extension for VS Code provides syntax highlighting, diagnostics, hover, and go-to-definition. The extension is located in the `editors/vscode-mesh/` directory of the Mesh repository.
+The official Mesh extension for VS Code provides syntax highlighting, diagnostics, hover, and go-to-definition. The extension is located in the `tools/editors/vscode-mesh/` directory of the Mesh repository.
 
 #### Features
 
@@ -204,14 +204,14 @@ The official Mesh extension for VS Code provides syntax highlighting, diagnostic
 To install the extension from source:
 
 ```bash
-cd editors/vscode-mesh
+cd tools/editors/vscode-mesh
 npm install
 npm run compile
 npm run package
 code --install-extension mesh-lang-0.1.0.vsix
 ```
 
-Or open the `editors/vscode-mesh/` folder in VS Code and press F5 to launch an Extension Development Host with the extension loaded.
+Or open the `tools/editors/vscode-mesh/` folder in VS Code and press F5 to launch an Extension Development Host with the extension loaded.
 
 #### Configuration
 
@@ -221,7 +221,7 @@ Or open the `editors/vscode-mesh/` folder in VS Code and press F5 to launch an E
 
 ### Other Editors
 
-For editors that support TextMate grammars (Sublime Text, Atom, etc.), the grammar file at `editors/vscode-mesh/syntaxes/mesh.tmLanguage.json` can be used directly for syntax highlighting.
+For editors that support TextMate grammars (Sublime Text, Atom, etc.), the grammar file at `tools/editors/vscode-mesh/syntaxes/mesh.tmLanguage.json` can be used directly for syntax highlighting.
 
 For editors that support LSP (Neovim, Emacs, Helix, Zed), configure `meshc lsp` as the language server command. The server communicates via stdin/stdout using standard JSON-RPC.
 

@@ -9,7 +9,7 @@ export async function getHighlighter(): Promise<Highlighter> {
 
   highlighterPromise = (async () => {
     const { createHighlighter } = await import('shiki')
-    const meshGrammar = (await import('../../../../../editors/vscode-mesh/syntaxes/mesh.tmLanguage.json')).default
+    const meshGrammar = (await import('../../../../../tools/editors/vscode-mesh/syntaxes/mesh.tmLanguage.json')).default
     const meshLight = (await import('../shiki/mesh-light.json')).default
     const meshDark = (await import('../shiki/mesh-dark.json')).default
 
