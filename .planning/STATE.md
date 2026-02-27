@@ -157,11 +157,12 @@ None. v11.0 fully shipped and verified. Zero known compiler correctness issues.
 |---|-------------|------|--------|-----------|
 | 6 | write an article about the benchmarks in MD format | 2026-02-26 | a125e3f0 | [6-write-an-article-about-the-benchmarks-in](./quick/6-write-an-article-about-the-benchmarks-in/) |
 | 7 | get isolated peak throughput numbers by running each server alone | 2026-02-26 | 30cc9dc8 | [7-get-isolated-peak-throughput-numbers-by-](./quick/7-get-isolated-peak-throughput-numbers-by-/) |
+| 8 | improve env syntax ergonomics in mesher (replace parse_port with Env.get_int) | 2026-02-27 | eb45bd8a | [8-improve-env-syntax-ergonomics-in-mesher-](./quick/8-improve-env-syntax-ergonomics-in-mesher-/) |
 
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Isolated benchmark COMPLETE. All results in hand. Need to fill RESULTS.md and ARTICLE.md, commit, close quick-7, destroy fly machines, then plan Phase 124.
+Stopped at: Completed quick task 8: improve env syntax ergonomics in mesher (replace parse_port with Env.get_int)
 Resume file: None
 
 ISOLATED BENCHMARK RESULTS (machine 48e693ec054208, now complete):
