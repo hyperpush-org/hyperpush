@@ -226,7 +226,7 @@ impl TraitRegistry {
         }
 
         // Store the impl (even if it has errors, for method lookup).
-        // Capture info needed for synthetic Into generation before moving.
+        // Capture info needed for synthetic Into / TryInto generation before moving.
         let maybe_synthesize_into = impl_def.trait_name == "From"
             && !impl_def.trait_type_args.is_empty();
         let synth_source_ty = if maybe_synthesize_into {
@@ -235,6 +235,19 @@ impl TraitRegistry {
             None
         };
         let synth_target_ty = if maybe_synthesize_into {
+            Some(impl_def.impl_type.clone())
+        } else {
+            None
+        };
+
+        let maybe_synthesize_try_into = impl_def.trait_name == "TryFrom"
+            && !impl_def.trait_type_args.is_empty();
+        let synth_try_source_ty = if maybe_synthesize_try_into {
+            Some(impl_def.trait_type_args[0].clone())
+        } else {
+            None
+        };
+        let synth_try_target_ty = if maybe_synthesize_try_into {
             Some(impl_def.impl_type.clone())
         } else {
             None
@@ -265,6 +278,37 @@ impl TraitRegistry {
             };
             // Insert directly to avoid infinite recursion (don't call register_impl).
             self.impls.entry("Into".to_string()).or_default().push(into_impl);
+        }
+
+        // Synthetic TryInto generation (mirrors From -> Into pattern):
+        // when `impl TryFrom<A> for B` is registered,
+        // automatically synthesize `impl TryInto<B> for A`.
+        if let (Some(try_source_ty), Some(try_target_ty)) =
+            (synth_try_source_ty, synth_try_target_ty)
+        {
+            let mut try_into_methods = FxHashMap::default();
+            try_into_methods.insert(
+                "try_into".to_string(),
+                ImplMethodSig {
+                    has_self: true,
+                    param_count: 0,
+                    return_type: None, // Result<T, E> -- resolved from the TryFrom impl
+                },
+            );
+            let try_source_name = format!("{}", try_source_ty);
+            let try_into_impl = ImplDef {
+                trait_name: "TryInto".to_string(),
+                trait_type_args: vec![try_target_ty],
+                impl_type: try_source_ty,
+                impl_type_name: try_source_name,
+                methods: try_into_methods,
+                associated_types: FxHashMap::default(),
+            };
+            // Insert directly to avoid infinite recursion (same pattern as Into synthesis).
+            self.impls
+                .entry("TryInto".to_string())
+                .or_default()
+                .push(try_into_impl);
         }
 
         errors
