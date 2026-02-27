@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v13.0
+milestone: v1.0
 milestone_name: Language Completeness
-status: roadmap_ready
-last_updated: "2026-02-27T00:00:00.000Z"
+status: unknown
+last_updated: "2026-02-27T19:16:35.497Z"
 progress:
-  total_phases: 6
-  completed_phases: 0
-  total_plans: 11
-  completed_plans: 0
+  total_phases: 123
+  completed_phases: 122
+  total_plans: 321
+  completed_plans: 320
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** v13.0 Language Completeness — Phase 126 ready to plan
+**Current focus:** v13.0 Language Completeness — Phase 126 Plan 01 complete, Plan 02 ready
 
 ## Current Position
 
 Phase: 126 of 131 (Multi-line Pipe Continuation)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-27 — v13.0 roadmap created (6 phases, 17 requirements mapped)
+Plan: 01 complete — Plan 02 next
+Status: In Progress
+Last activity: 2026-02-27 — 126-01 complete: trailing-pipe parser continuation (237 tests passing)
 
-Progress: [░░░░░░░░░░] 0% (0/11 plans)
+Progress: [█░░░░░░░░░] 9% (1/11 plans)
 
 ## Performance Metrics
 
@@ -40,7 +40,7 @@ Progress: [░░░░░░░░░░] 0% (0/11 plans)
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 126. Multi-line Pipe | 2 | Not started |
+| 126. Multi-line Pipe | 2 | In Progress (1/2) |
 | 127. Type Aliases | 2 | Not started |
 | 128. TryFrom/TryInto | 2 | Not started |
 | 129. Map.collect + Quality | 2 | Not started |
@@ -59,6 +59,7 @@ Recent decisions affecting current work:
 - [v13.0 Roadmap]: Phase 129 groups Map.collect fix (MAPCOL-01) with code quality (QUAL-01, QUAL-02) — small independent fixes bundled together
 - [v13.0 Roadmap]: Phase 130 (Dogfooding) deferred until all compiler phases complete — prevents rework
 - [v13.0 Roadmap]: Phase 131 (Docs) after dogfooding — examples sourced from verified Mesher patterns
+- [Phase 126]: Made is_newline_insignificant pub(crate) rather than adding a new method — minimal change
 
 ### Pending Todos
 
@@ -71,5 +72,5 @@ None. v12.0 fully shipped. v13.0 roadmap created with 100% requirement coverage 
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: v13.0 roadmap created — ready to plan Phase 126
+Stopped at: Completed 126-01-PLAN.md — trailing-pipe parser continuation
 Resume file: None
