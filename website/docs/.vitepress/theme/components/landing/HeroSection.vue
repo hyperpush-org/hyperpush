@@ -20,7 +20,7 @@ end
 fn handle_count(request) do
   let pid = Process.whereis("counter")
   let count = Counter.increment(pid)
-  HTTP.response(200, "Count: \${count}")
+  HTTP.response(200, "Count: \#{count}")
 end
 
 fn main() do

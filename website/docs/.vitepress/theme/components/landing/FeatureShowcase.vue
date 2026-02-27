@@ -54,8 +54,8 @@ end
 
 fn process(result) do
   case result do
-    Ok(value) -> println("Got: \${value}")
-    Err(msg) -> println("Error: \${msg}")
+    Ok(value) -> println("Got: \#{value}")
+    Err(msg) -> println("Error: \#{msg}")
   end
 end`,
   },
@@ -82,9 +82,9 @@ let user = User { name: "Alice", age: 30 }`,
   },
   {
     number: '04',
-    title: 'Pipe Operator',
+    title: 'Pipe Operators',
     description:
-      'Chain transformations naturally with the pipe operator. Data flows left to right, just like you read it.',
+      'Chain transformations naturally with the pipe operator. Use |N> to route values to any argument position — both read left to right.',
     filename: 'pipes.mpl',
     code: `let result = "hello world"
   |> String.split(" ")
@@ -93,7 +93,15 @@ let user = User { name: "Alice", age: 30 }`,
   end)
   |> String.join(", ")
 
-# result == "HELLO, WORLD"`,
+# result == "HELLO, WORLD"
+
+# Slot pipe: route value to any position
+fn insert_at(prefix, word, suffix) do
+  prefix <> word <> suffix
+end
+
+let tagged = "mesh" |2> insert_at("[", "]")
+# tagged == "[mesh]"`,
   },
 ]
 
