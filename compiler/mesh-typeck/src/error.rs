@@ -344,6 +344,14 @@ pub enum TypeError {
         assoc_name: String,
         span: TextRange,
     },
+    /// A type alias references a type name that does not exist (ALIAS-04).
+    UndefinedType {
+        /// The name of the type alias.
+        alias_name: String,
+        /// The target type name that could not be resolved.
+        target_name: String,
+        span: TextRange,
+    },
 }
 
 impl fmt::Display for TypeError {
@@ -726,6 +734,17 @@ impl fmt::Display for TypeError {
                     f,
                     "cannot resolve associated type `{}` -- Self.Item can only be used inside an impl block",
                     assoc_name
+                )
+            }
+            TypeError::UndefinedType {
+                alias_name,
+                target_name,
+                ..
+            } => {
+                write!(
+                    f,
+                    "type alias `{}` references undefined type `{}`",
+                    alias_name, target_name
                 )
             }
         }

@@ -1581,6 +1581,56 @@ pub fn infer_with_imports(parse: &Parse, import_ctx: &ImportContext) -> TypeckRe
         }
     }
 
+    // ── ALIAS-04: Pre-registration pass ──────────────────────────────────
+    // Before the main inference loop, pre-register all type aliases so that
+    // forward references (e.g., alias B used before alias A that equals B)
+    // resolve correctly. Also pre-register struct and sum type names (by scanning
+    // items) so alias validation can check against locally-defined types.
+    //
+    // We collect (TypeAliasDef, TextRange) tuples during this pass for
+    // subsequent validation.
+    let mut alias_defs_for_validation: Vec<(TypeAliasDef, TextRange)> = Vec::new();
+
+    for child in tree.syntax().children() {
+        let range = child.text_range();
+        match Item::cast(child.clone()) {
+            Some(Item::TypeAliasDef(alias_def)) => {
+                register_type_alias(&alias_def, &mut type_registry);
+                alias_defs_for_validation.push((alias_def, range));
+            }
+            Some(Item::StructDef(struct_def)) => {
+                // Pre-register struct name so alias validation can reference it.
+                let name = struct_def
+                    .name()
+                    .and_then(|n| n.text())
+                    .unwrap_or_else(|| "<unnamed>".to_string());
+                // Only register the name stub — full registration happens in main loop.
+                // We use a minimal StructDefInfo with no fields.
+                type_registry.register_struct(StructDefInfo {
+                    name,
+                    generic_params: vec![],
+                    fields: vec![],
+                });
+            }
+            Some(Item::SumTypeDef(sum_def)) => {
+                // Pre-register sum type name so alias validation can reference it.
+                let name = sum_def
+                    .name()
+                    .and_then(|n| n.text())
+                    .unwrap_or_else(|| "<unnamed>".to_string());
+                type_registry.register_sum_type(SumTypeDefInfo {
+                    name,
+                    generic_params: vec![],
+                    variants: vec![],
+                });
+            }
+            _ => {}
+        }
+    }
+
+    // Validate that all type aliases reference known types (ALIAS-04).
+    validate_type_aliases(&type_registry, &alias_defs_for_validation, &mut ctx.errors);
+
     // Group consecutive same-name, same-arity FnDef items.
     let grouped = group_multi_clause_fns(items_for_grouping);
 
@@ -3197,6 +3247,66 @@ fn parse_alias_type(node: &mesh_parser::SyntaxNode, _generic_params: &[String]) 
     // Parse the tokens, treating generic_params as type variables
     // (they'll be represented as Ty::Con("A"), Ty::Con("B") etc.)
     parse_type_tokens(&tokens, &mut 0)
+}
+
+// ── Type Alias Validation (ALIAS-04) ──────────────────────────────────
+
+/// Check whether a type name is known: a primitive, struct, sum type, or alias.
+fn is_known_type(name: &str, type_registry: &TypeRegistry) -> bool {
+    // Known primitive and builtin types
+    matches!(
+        name,
+        "Int" | "Float" | "String" | "Bool" | "Unit" | "Option" | "Result" | "List" | "Map"
+            | "Set" | "Range" | "Queue" | "Pid" | "Atom" | "Regex" | "Never"
+    ) || type_registry.struct_defs.contains_key(name)
+        || type_registry.sum_type_defs.contains_key(name)
+        || type_registry.type_aliases.contains_key(name)
+}
+
+/// Validate all registered type aliases have resolvable target types.
+///
+/// Called after all type pre-registrations are complete (structs, sum types,
+/// and type aliases all registered) so that forward references resolve correctly.
+fn validate_type_aliases(
+    type_registry: &TypeRegistry,
+    alias_defs: &[(TypeAliasDef, rowan::TextRange)],
+    errors: &mut Vec<crate::error::TypeError>,
+) {
+    for (alias_def, range) in alias_defs {
+        // Only validate simple (non-generic) aliases — generic aliases like
+        // `type Pair<A, B> = (A, B)` use type variables that aren't in the registry.
+        let generic_params: Vec<String> = alias_def
+            .syntax()
+            .children()
+            .filter(|n| n.kind() == SyntaxKind::GENERIC_PARAM_LIST)
+            .flat_map(|gpl| {
+                gpl.children_with_tokens()
+                    .filter_map(|t| t.into_token())
+                    .filter(|t| t.kind() == SyntaxKind::IDENT)
+                    .map(|t| t.text().to_string())
+            })
+            .collect();
+
+        // If the alias has generic parameters, the target may use those params as
+        // types (e.g. `type Pair<A, B> = (A, B)`) — skip validation for them.
+        if !generic_params.is_empty() {
+            continue;
+        }
+
+        if let Some(target_name) = alias_def.target_type_name() {
+            if !is_known_type(&target_name, type_registry) {
+                let alias_name = alias_def
+                    .name()
+                    .and_then(|n| n.text())
+                    .unwrap_or_else(|| "<unnamed>".to_string());
+                errors.push(crate::error::TypeError::UndefinedType {
+                    alias_name,
+                    target_name,
+                    span: *range,
+                });
+            }
+        }
+    }
 }
 
 // ── Sum Type Registration (04-02) ──────────────────────────────────────

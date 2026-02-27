@@ -5379,3 +5379,18 @@ fn e2e_regex_split() {
     assert_eq!(lines[3], "c");
     assert_eq!(lines[4], "d");
 }
+
+// ── Phase 127: Type Aliases (ALIAS-01, ALIAS-02) ─────────────────────
+
+/// Phase 127: type alias used in fn signatures and let bindings (ALIAS-01, ALIAS-02).
+///
+/// Verifies that:
+/// - `type Url = String` and `type UserId = Int` parse and register correctly
+/// - Aliases can be used as parameter types, return types, and let binding annotations
+/// - Values flow transparently through alias boundaries (no explicit coercion)
+#[test]
+fn e2e_type_alias_basic() {
+    let source = read_fixture("type_alias_basic.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(output, "https://example.com\n42\n");
+}

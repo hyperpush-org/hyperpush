@@ -210,3 +210,33 @@ fn test_type_alias_generic() {
     // After alias resolution, Pair<Int, String> is (Int, String)
     assert_result_type(&result, Ty::Tuple(vec![Ty::int(), Ty::string()]));
 }
+
+/// ALIAS-04: compiler emits error for alias referencing undefined type
+#[test]
+fn test_type_alias_undefined_target() {
+    let result = check_source("type Foo = NonExistentType");
+    assert!(!result.errors.is_empty(), "expected error for undefined alias target");
+    // Verify the error mentions the undefined type name
+    let err_str = format!("{:?}", result.errors);
+    assert!(
+        err_str.contains("NonExistentType") || err_str.contains("undefined"),
+        "error should mention the undefined type: {}",
+        err_str
+    );
+}
+
+/// ALIAS-02: alias in let binding with type annotation
+#[test]
+fn test_type_alias_in_let_binding() {
+    let result = check_source("type Name = String\nlet x :: Name = \"hello\"\nx");
+    assert!(result.errors.is_empty(), "no errors expected: {:?}", result.errors);
+}
+
+/// ALIAS-02: alias in function return type
+#[test]
+fn test_type_alias_in_fn_return() {
+    let result = check_source(
+        "type Url = String\nfn make_url(s :: String) -> Url do\n  s\nend\nmake_url(\"http://x\")",
+    );
+    assert!(result.errors.is_empty(), "no errors expected: {:?}", result.errors);
+}

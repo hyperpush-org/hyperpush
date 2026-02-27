@@ -135,6 +135,7 @@ fn error_code(err: &TypeError) -> &'static str {
         TypeError::UnresolvedAssocType { .. } => "E0042",
         TypeError::SlotPositionConflict { .. } => "E0043",
         TypeError::SlotPipeOutOfRange { .. } => "E0044",
+        TypeError::UndefinedType { .. } => "E0045",
     }
 }
 
@@ -499,7 +500,8 @@ pub fn render_json_diagnostic(
                 | TypeError::TryOnNonResultOption { span, .. }
                 | TypeError::UnresolvedAssocType { span, .. }
                 | TypeError::SlotPositionConflict { span, .. }
-                | TypeError::SlotPipeOutOfRange { span, .. } => {
+                | TypeError::SlotPipeOutOfRange { span, .. }
+                | TypeError::UndefinedType { span, .. } => {
                     let range = text_range_to_range(*span);
                     spans.push(JsonSpan {
                         start: range.start,
@@ -1736,6 +1738,33 @@ pub fn render_diagnostic(
             }
 
             builder.finish()
+        }
+
+        TypeError::UndefinedType {
+            alias_name,
+            target_name,
+            span,
+        } => {
+            let msg = format!(
+                "type alias `{}` references undefined type `{}`",
+                alias_name, target_name
+            );
+            let range = clamp(text_range_to_range(*span));
+
+            Report::build(ReportKind::Error, (fname.clone(), range.clone()))
+                .with_code(code)
+                .with_message(&msg)
+                .with_config(config)
+                .with_label(
+                    Label::new((fname.clone(), range))
+                        .with_message(format!("`{}` is not defined", target_name))
+                        .with_color(Color::Red),
+                )
+                .with_help(format!(
+                    "define `{}` as a struct, sum type, or type alias before using it here",
+                    target_name
+                ))
+                .finish()
         }
     };
 
