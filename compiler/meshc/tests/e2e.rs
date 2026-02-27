@@ -3284,6 +3284,80 @@ end
     assert_eq!(output, "11\n");
 }
 
+// ── Phase 126: Multi-line Pipe Continuation (PIPE-01, PIPE-02) ──────────
+
+/// PIPE-01: Trailing-pipe form — |> at end of line continues on next line.
+/// PIPE-02: Output matches single-line equivalent (same computation = same result).
+#[test]
+fn e2e_pipe_multiline_trailing() {
+    let source = read_fixture("pipe_multiline_trailing.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(output, "11\n30\n");
+}
+
+/// PIPE-01/02: Multi-line slot pipe — |N> at start and end of line.
+/// Both leading and trailing slot pipe forms must produce identical results.
+#[test]
+fn e2e_pipe_multiline_slot() {
+    let source = read_fixture("pipe_multiline_slot.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(output, "15\n15\n20\n");
+}
+
+/// PIPE-02: Explicit equivalence — multi-line chain output == single-line output.
+/// Both expressions compute 5 |> double |> add_one = 11.
+#[test]
+fn e2e_pipe_multiline_equivalence() {
+    let single_line = compile_and_run(r#"
+fn double(x :: Int) -> Int do x * 2 end
+fn add_one(x :: Int) -> Int do x + 1 end
+fn main() do
+  let result = 5 |> double |> add_one
+  println("${result}")
+end
+"#);
+    let multi_line = compile_and_run(r#"
+fn double(x :: Int) -> Int do x * 2 end
+fn add_one(x :: Int) -> Int do x + 1 end
+fn main() do
+  let result = 5 |>
+    double |>
+    add_one
+  println("${result}")
+end
+"#);
+    assert_eq!(single_line, multi_line, "multi-line pipe must produce same output as single-line");
+}
+
+/// PIPE-02: Slot pipe equivalence — multi-line |N> == single-line |N>.
+#[test]
+fn e2e_pipe_slot_multiline_equivalence() {
+    let single_line = compile_and_run(r#"
+fn add(a :: Int, b :: Int) -> Int do a + b end
+fn main() do
+  let result = 5 |2> add(10)
+  println("${result}")
+end
+"#);
+    let multi_line = compile_and_run(r#"
+fn add(a :: Int, b :: Int) -> Int do a + b end
+fn main() do
+  let result = 5 |2>
+    add(10)
+  println("${result}")
+end
+"#);
+    assert_eq!(single_line, multi_line, "multi-line slot pipe must produce same output as single-line");
+}
+
+/// Regression: existing single-line pipes unchanged by Phase 126 changes.
+#[test]
+fn e2e_pipe_126_regression() {
+    let source = read_fixture("pipe.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(output, "11\n");
+}
+
 // ── Phase 96 Plan 03: Struct Update Expression ──────────────────────
 
 /// Basic struct update: create new struct with specific fields changed.
