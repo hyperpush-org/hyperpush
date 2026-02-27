@@ -384,7 +384,7 @@ Note: Phase 119 (Regex) depends only on Phase 115 and may proceed in parallel wi
 **Goal:** After running `meshc migrate up`, developers can immediately test POST /api/v1/events with a known API key without any manual database setup
 **Requirements**: SEED-01
 **Depends on:** Phase 123
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 124-01-PLAN.md — Seed migration: default org, project, and API key (mshr_devdefaultapikey000000000000000000000000000)

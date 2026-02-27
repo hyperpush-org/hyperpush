@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Language Ergonomics & Open Source Readiness
 status: unknown
-last_updated: "2026-02-26T19:58:04.959Z"
+last_updated: "2026-02-27T04:00:15.265Z"
 progress:
   total_phases: 131
-  completed_phases: 130
-  total_plans: 339
-  completed_plans: 339
+  completed_phases: 131
+  total_plans: 340
+  completed_plans: 340
 ---
 
 # Project State
@@ -67,6 +67,7 @@ Progress: [█░░░░░░░░░] 5% (v12.0)
 | Phase 123 P02 | 2min | 2 tasks | 5 files |
 | Phase 123 P01 | 5min | 2 tasks | 3 files |
 | Phase 123 P03 | 3 | 3 tasks | 5 files |
+| Phase 124 P01 | 2min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,8 @@ Recent decisions affecting current work:
 - [Phase 123]: Mesh compiler built from compiler/ Rust workspace in Dockerfile (mesher/ contains only macOS arm64 binary)
 - [Phase 123]: Internal DNS hostname (bench-servers.vm.bench-mesh.internal) recommended over raw IPv6 to avoid bracket notation issues
 - [Phase 123]: RSS logged as CSV to stdout (RSS,lang,epoch,kB) every 2s; extracted via fly logs | grep '^RSS,'
+- [Phase 124]: projects.slug ON CONFLICT requires WHERE slug IS NOT NULL predicate to match partial index (bare ON CONFLICT (slug) causes PostgreSQL runtime error)
+- [Phase 124]: Seed migration uses Pool.execute for INSERT/DELETE and Repo.query_raw for SELECT, matching existing schema migration pattern
 
 ### Roadmap Evolution
 
@@ -148,7 +151,40 @@ None. v11.0 fully shipped and verified. Zero known compiler correctness issues.
 
 ## Session Continuity
 
-Last session: 2026-02-26
-Stopped at: quick-7 checkpoint (human-verify: review isolated benchmark scripts and documentation)
+Last session: 2026-02-27
+Stopped at: Isolated benchmark COMPLETE. All results in hand. Need to fill RESULTS.md and ARTICLE.md, commit, close quick-7, destroy fly machines, then plan Phase 124.
 Resume file: None
-Next action: User reviews scripts, then can run isolated benchmarks via run-benchmarks-isolated.sh
+
+ISOLATED BENCHMARK RESULTS (machine 48e693ec054208, now complete):
+
+/text endpoint (runs 2–5 avg):
+  Mesh:   29,108 req/s  p50=2.77ms  p99=16.94ms
+  Go:     30,306 req/s  p50=2.95ms  p99=8.51ms
+  Rust:   46,244 req/s  p50=2.06ms  p99=4.55ms
+  Elixir: 12,441 req/s  p50=6.74ms  p99=25.14ms
+
+/json endpoint (runs 2–5 avg):
+  Mesh:   28,955 req/s  p50=2.84ms  p99=16.19ms
+  Go:     29,934 req/s  p50=2.97ms  p99=8.40ms
+  Rust:   46,234 req/s  p50=2.08ms  p99=4.77ms
+  Elixir: 12,733 req/s  p50=7.15ms  p99=23.41ms
+
+Run 1 (excluded) values:
+  Mesh /text: 28,681  Mesh /json: 28,562
+  Go /text:   30,270  Go /json:   30,690
+  Rust /text: 45,584  Rust /json: 46,672
+  Elixir /text: 12,583  Elixir /json: 13,391
+
+Peak RSS: N/A (fly logs --no-tail too fast to catch RSS lines)
+
+Co-located vs Isolated deltas:
+  Mesh /text:   19,718 → 29,108  (+47%)
+  Mesh /json:   20,483 → 28,955  (+41%)
+  Go /text:     26,278 → 30,306  (+15%)
+  Go /json:     26,175 → 29,934  (+14%)
+  Rust /text:   27,133 → 46,244  (+70%)
+  Rust /json:   28,563 → 46,234  (+62%)
+  Elixir /text: 11,842 → 12,441  (+5%)
+  Elixir /json: 11,481 → 12,733  (+11%)
+
+Next action: /clear then fill RESULTS.md isolated tables + update ARTICLE.md + commit + destroy fly machines + close quick-7 + plan Phase 124
