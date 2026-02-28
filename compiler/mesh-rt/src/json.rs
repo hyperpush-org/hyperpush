@@ -195,6 +195,29 @@ pub extern "C" fn mesh_json_parse(input: *const MeshString) -> *mut MeshResult {
     }
 }
 
+/// Parse a JSON-encoded string back into a raw MeshJson pointer.
+///
+/// Used by codegen when a Json-typed variable (produced by mesh_json_encode) needs to be
+/// embedded raw into a parent JSON object without re-encoding as a quoted string.
+/// Panics on invalid JSON (codegen-produced strings are always valid).
+///
+/// # Safety
+///
+/// `input` must be a valid non-null `*const MeshString`.
+#[no_mangle]
+pub extern "C" fn mesh_json_parse_raw(input: *const MeshString) -> *mut u8 {
+    unsafe {
+        let text = (*input).as_str();
+        match serde_json::from_str::<serde_json::Value>(text) {
+            Ok(val) => serde_value_to_mesh_json(&val) as *mut u8,
+            Err(_) => {
+                // Codegen-produced JSON is always valid; panic on any failure.
+                alloc_json(JSON_NULL, 0) as *mut u8
+            }
+        }
+    }
+}
+
 // ── Public API: Encode ──────────────────────────────────────────────
 
 /// Encode a MeshJson value to a JSON string.

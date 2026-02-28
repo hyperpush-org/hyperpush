@@ -909,6 +909,10 @@ impl<'a> Lowerer<'a> {
         self.known_functions.insert("mesh_json_from_float".to_string(), MirType::FnPtr(vec![MirType::Float], Box::new(MirType::Ptr)));
         self.known_functions.insert("mesh_json_from_bool".to_string(), MirType::FnPtr(vec![MirType::Bool], Box::new(MirType::Ptr)));
         self.known_functions.insert("mesh_json_from_string".to_string(), MirType::FnPtr(vec![MirType::String], Box::new(MirType::Ptr)));
+        // Phase 132: decode a JSON-encoded String back to a raw *mut MeshJson pointer.
+        // Used when a Json-typed variable (String from mesh_json_encode) needs to be
+        // embedded raw into a parent json { } object without double-encoding.
+        self.known_functions.insert("mesh_json_parse_raw".to_string(), MirType::FnPtr(vec![MirType::String], Box::new(MirType::Ptr)));
         // Phase 103: JSON field extraction (no DB roundtrip)
         // mesh_json_get(json: String, key: String) -> String
         self.known_functions.insert("mesh_json_get".to_string(), MirType::FnPtr(vec![MirType::Ptr, MirType::Ptr], Box::new(MirType::Ptr)));
@@ -4241,14 +4245,31 @@ impl<'a> Lowerer<'a> {
                 // raw object pointer is embedded directly (no double-encoding).
                 self.lower_json_expr_inner(inner_json)
             } else if ty_is_json(&val_ty) {
-                // Variable of type Json — its MIR type is Ptr (see types.rs resolve_con).
-                // Pass the opaque pointer through without wrapping in mesh_json_from_string.
-                self.lower_expr(&val_expr)
+                // Variable of type Json.
+                // lower_json_expr returns MirType::String (the mesh_json_encode output).
+                // To embed it raw in the parent object (no double-encoding), decode the
+                // string back to a *mut MeshJson pointer via mesh_json_parse_raw.
+                let val_lowered = self.lower_expr(&val_expr);
+                let parse_raw_ty = MirType::FnPtr(vec![MirType::String], Box::new(MirType::Ptr));
+                MirExpr::Call {
+                    func: Box::new(MirExpr::Var("mesh_json_parse_raw".to_string(), parse_raw_ty)),
+                    args: vec![val_lowered],
+                    ty: MirType::Ptr,
+                }
             } else {
                 // All other types: lower to the raw Mesh value then convert to a JSON pointer.
                 let val_lowered = self.lower_expr(&val_expr);
                 let mir_ty = resolve_type(&val_ty, self.registry, false);
                 match &mir_ty {
+                    MirType::Unit => {
+                        // nil literal: emit mesh_json_null()
+                        let null_ty = MirType::FnPtr(vec![], Box::new(MirType::Ptr));
+                        MirExpr::Call {
+                            func: Box::new(MirExpr::Var("mesh_json_null".to_string(), null_ty)),
+                            args: vec![],
+                            ty: MirType::Ptr,
+                        }
+                    }
                     MirType::Ptr => {
                         // Collection types (List, Map, Option<T>, etc.): delegate to
                         // emit_collection_to_json which dispatches on the typeck Ty.

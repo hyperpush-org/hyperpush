@@ -1320,6 +1320,70 @@ end
     );
 }
 
+// ── json { } literal tests (Phase 132) ────────────────────────────────
+
+#[test]
+fn e2e_json_literal_basic() {
+    let source = read_fixture("json_literal_basic.mpl");
+    let output = compile_and_run(&source);
+    let lines: Vec<&str> = output.trim().lines().collect();
+    assert!(lines.len() >= 3, "expected 3 output lines, got: {}", output);
+    let line0: serde_json::Value = serde_json::from_str(lines[0]).expect("line 0 must be valid JSON");
+    assert_eq!(line0["status"], "ok");
+    let line1: serde_json::Value = serde_json::from_str(lines[1]).expect("line 1 must be valid JSON");
+    assert_eq!(line1["count"], 42);
+    assert_eq!(line1["active"], true);
+    let line2: serde_json::Value = serde_json::from_str(lines[2]).expect("line 2 must be valid JSON");
+    assert!(line2["value"].is_null());
+}
+
+#[test]
+fn e2e_json_literal_nested() {
+    let source = read_fixture("json_literal_nested.mpl");
+    let output = compile_and_run(&source);
+    let parsed: serde_json::Value = serde_json::from_str(output.trim()).expect("output must be valid JSON");
+    // result field must be an object (not a quoted string -- that would be double-encoding)
+    assert!(parsed["result"].is_object(), "nested json must be embedded raw, not double-encoded");
+    assert_eq!(parsed["result"]["code"], 200);
+    assert_eq!(parsed["ok"], true);
+}
+
+#[test]
+fn e2e_json_literal_list() {
+    let source = read_fixture("json_literal_list.mpl");
+    let output = compile_and_run(&source);
+    let parsed: serde_json::Value = serde_json::from_str(output.trim()).expect("output must be valid JSON");
+    assert!(parsed["tags"].is_array(), "List<String> must serialize as JSON array");
+    let tags = parsed["tags"].as_array().unwrap();
+    assert_eq!(tags.len(), 2);
+    assert_eq!(tags[0], "error");
+    assert_eq!(tags[1], "critical");
+    assert_eq!(parsed["count"], 2);
+}
+
+#[test]
+fn e2e_json_literal_option() {
+    let source = read_fixture("json_literal_option.mpl");
+    let output = compile_and_run(&source);
+    let lines: Vec<&str> = output.trim().lines().collect();
+    assert!(lines.len() >= 2, "expected 2 output lines, got: {}", output);
+    let r1: serde_json::Value = serde_json::from_str(lines[0]).expect("line 0 must be valid JSON");
+    assert_eq!(r1["data"], "value", "Some(v) must serialize as the value");
+    let r2: serde_json::Value = serde_json::from_str(lines[1]).expect("line 1 must be valid JSON");
+    assert!(r2["data"].is_null(), "None must serialize as null");
+}
+
+#[test]
+fn e2e_json_literal_struct() {
+    let source = read_fixture("json_literal_struct.mpl");
+    let output = compile_and_run(&source);
+    let parsed: serde_json::Value = serde_json::from_str(output.trim()).expect("output must be valid JSON");
+    assert!(parsed["point"].is_object(), "deriving(Json) struct must embed as nested object");
+    assert_eq!(parsed["point"]["x"], 3);
+    assert_eq!(parsed["point"]["y"], 4);
+    assert_eq!(parsed["label"], "origin");
+}
+
 // ── Phase 47 Plan 02: Map/Set Conversion E2E Tests ────────────────────
 
 #[test]
