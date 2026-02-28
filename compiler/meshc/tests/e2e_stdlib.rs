@@ -1575,6 +1575,20 @@ fn e2e_http_middleware() {
     // ServerGuard Drop will kill the server process (middleware).
 }
 
+/// QUAL-02: Handler parameter type is inferred without explicit :: Request annotation
+/// when the handler body uses Request.* accessors (e.g., Request.path). This works
+/// because the accessor calls constrain the type variable to Request during body
+/// inference, before generalization occurs.
+///
+/// Note: Passthrough middleware (fn pass(request, next) do next(request) end) still
+/// requires :: Request annotation because the body does not directly constrain request.
+#[test]
+fn e2e_http_middleware_inferred() {
+    let source = read_fixture("stdlib_http_middleware_inferred.mpl");
+    let output = compile_and_run(&source);
+    assert_eq!(output, "middleware_inferred_ok\n");
+}
+
 // ── SQLite E2E Tests (Phase 53 Plan 02) ─────────────────────────────────
 //
 // Verifies the full SQLite driver pipeline: Mesh source -> compiler ->
