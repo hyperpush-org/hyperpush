@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Language Completeness
 status: unknown
-last_updated: "2026-02-28T04:06:21.550Z"
+last_updated: "2026-02-28T04:45:32.893Z"
 progress:
-  total_phases: 129
+  total_phases: 130
   completed_phases: 129
-  total_plans: 334
-  completed_plans: 334
+  total_plans: 336
+  completed_plans: 335
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 132 of 132 (Improve Language JSON Handling) — Complete
-Plan: 03 complete — Wave 3 done; mesher migration (70 usages) + JSON Literals docs
-Status: Complete
-Last activity: 2026-02-28 — 132-03 complete: 70 json { } usages in mesher, JSON Literals docs section
+Phase: 133 of 133 (VSCode Extension Update) — Plan 01 complete
+Plan: 01 complete — Grammar + LSP updated with m10-m13 syntax forms
+Status: In Progress (1/2 plans)
+Last activity: 2026-02-27 — 133-01 complete: TextMate grammar + LSP completion updated
 
-Progress: [██████████] 100% (3/3 plans)
+Progress: [█████░░░░░] 50% (1/2 plans)
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████████] 100% (3/3 plans)
 | 132 | P01 | 2m | 2 | 3 |
 | 132 | P02 | 9m 22s | 2 | 13 |
 | 132 | P03 | 10m 25s | 3 | 10 |
+| 133 | P01 | 92s | 2 | 2 |
 
 ## Accumulated Context
 
@@ -106,10 +107,12 @@ Recent decisions affecting current work:
 - [Phase 132-02]: mesh_json_parse_raw added to mesh-rt (extern C, no_mangle); panics on invalid JSON since codegen-produced strings are always valid
 - [Phase 132-03]: Skip 'type' as json { } key: Mesh reserved keyword (TYPE_KW token), not IDENT; parser requires bare IDENT for json literal keys
 - [Phase 132-03]: Skip pre-encoded JSONB field values in json { }: exception/stacktrace/condition_json etc. would double-encode as JSON strings
+- [Phase 133]: Placed #regex-literals and #atoms before #strings in grammar patterns array so they take priority; pipe pattern updated to \|[0-9]*> covering both |> and |N>
 
 ### Roadmap Evolution
 
 - Phase 132 added: Improve language JSON handling with native object literal syntax instead of manual string concatenation
+- Phase 133 added: Ensure the vscode extension is updated with changes from milestones 10, 11, 12, 13
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None. v12.0 fully shipped. v13.0 roadmap created with 100% requirement coverage 
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 132-03-PLAN.md — mesher migration (70 json { } usages), JSON Literals docs section. Phase 132 fully complete.
+Last session: 2026-02-27
+Stopped at: Completed 133-01-PLAN.md — VSCode extension: TextMate grammar and LSP completion updated for m10-m13 syntax forms.
 Resume file: None
