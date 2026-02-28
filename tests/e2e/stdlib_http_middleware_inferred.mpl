@@ -1,14 +1,10 @@
 # stdlib_http_middleware_inferred.mpl
-# QUAL-02: Middleware handler parameter type is inferred without :: Request annotation
-# when the function body uses Request.* accessors, which constrains the type variable
-# to Request before generalization.
-#
-# Limitation: passthrough middleware (e.g., fn pass(request, next) do next(request) end)
-# still requires :: Request annotations because the body doesn't directly constrain the
-# request parameter type. Type inference works correctly when Request.* calls appear
-# in the function body.
+# QUAL-02: Middleware handler parameter type is inferred without :: Request annotation.
+# Both passthrough middleware and handler functions work without explicit type annotations.
+# The lowerer recovers concrete parameter types from call-site usage types when the
+# type checker's let-generalization would otherwise leave them as unresolved Ty::Var.
 
-fn passthrough(request :: Request, next) -> Response do
+fn passthrough(request, next) -> Response do
   next(request)
 end
 

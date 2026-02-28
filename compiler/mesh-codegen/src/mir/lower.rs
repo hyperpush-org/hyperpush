@@ -243,6 +243,14 @@ struct Lowerer<'a> {
     /// Used to distinguish actual function definitions from variant constructors,
     /// actors, etc. when applying module-qualified naming at call sites.
     user_fn_defs: HashSet<String>,
+    /// Maps user-defined function name → all concrete function types observed at
+    /// call sites where the function was passed as a value argument (not called directly).
+    ///
+    /// Example: `fn pass(req, next) do next(req) end` used in `HTTP.use(r, pass)`.
+    /// At the usage site, the typeck resolves `pass` to `Fn(Request, ...) -> Response`.
+    /// This map lets the lowerer recover the correct parameter types for functions whose
+    /// parameters were generalized (as Ty::Var) before the call site could constrain them.
+    fn_value_usage_types: HashMap<String, Vec<Ty>>,
     /// Current enclosing function's return type (Phase 45).
     /// Set when entering a function body, used by lower_try_expr for early-return
     /// variant construction. Save/restore pattern for nested functions and closures.
@@ -304,6 +312,7 @@ impl<'a> Lowerer<'a> {
             module_name: module_name.to_string(),
             pub_functions: pub_fns.clone(),
             user_fn_defs: HashSet::new(),
+            fn_value_usage_types: HashMap::new(),
             current_fn_return_type: None,
             try_counter: 0,
         }
@@ -518,6 +527,63 @@ impl<'a> Lowerer<'a> {
             }
             None => false,
         }
+    }
+
+    // ── Function value usage type recovery ───────────────────────────
+
+    /// Scan every NAME_REF node in the source AST and, for each node that refers
+    /// to a user-defined function and has a concrete (non-Var) function type in the
+    /// typeck map, record all observed types for that function name.
+    ///
+    /// At call sites like `HTTP.use(r, pass)` the typeck resolves the `pass`
+    /// identifier to the instantiated concrete type (e.g. `Fn(Request, …)->Response`)
+    /// even when the function definition's own parameter types were generalized away
+    /// as Ty::Var before the call site was processed.  We collect these usage types
+    /// so that `resolve_param_from_usage` can recover the correct MIR type for
+    /// parameters that would otherwise fall back to MirType::Unit.
+    fn build_fn_value_usage_types(
+        &self,
+        root: &mesh_parser::SyntaxNode,
+    ) -> HashMap<String, Vec<Ty>> {
+        let mut map: HashMap<String, Vec<Ty>> = HashMap::new();
+        for node in root.descendants() {
+            if node.kind() == SyntaxKind::NAME_REF {
+                if let Some(name_ref) = NameRef::cast(node) {
+                    if let Some(name) = name_ref.text() {
+                        if self.user_fn_defs.contains(&name) {
+                            if let Some(ty) = self.types.get(&name_ref.syntax().text_range()) {
+                                // Only record concrete function types — skip Ty::Var results.
+                                if matches!(ty, Ty::Fun(..)) {
+                                    map.entry(name.to_string()).or_default().push(ty.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        map
+    }
+
+    /// Try to recover a concrete MIR type for the parameter at position `param_idx`
+    /// of function `fn_name` by inspecting usage-site types collected in
+    /// `fn_value_usage_types`.  Returns `None` if no concrete type can be found.
+    fn resolve_param_from_usage(&self, fn_name: &str, param_idx: usize) -> Option<MirType> {
+        for usage_ty in self.fn_value_usage_types.get(fn_name)?.iter() {
+            if let Ty::Fun(usage_params, _) = usage_ty {
+                if let Some(specific_ty) = usage_params.get(param_idx) {
+                    let mir = resolve_type(
+                        specific_ty,
+                        self.registry,
+                        matches!(specific_ty, Ty::Fun(..)),
+                    );
+                    if mir != MirType::Unit {
+                        return Some(mir);
+                    }
+                }
+            }
+        }
+        None
     }
 
     // ── Top-level lowering ───────────────────────────────────────────
@@ -1129,6 +1195,15 @@ impl<'a> Lowerer<'a> {
             }
         }
 
+        // Pre-pass: build function value usage types map so that lower_fn_def can
+        // recover concrete parameter types for functions whose params were generalized
+        // away (Ty::Var) before call sites like `HTTP.use(r, pass)` constrained them.
+        {
+            let syntax = self.parse.syntax();
+            let usage_types = self.build_fn_value_usage_types(&syntax);
+            self.fn_value_usage_types = usage_types;
+        }
+
         // Second pass: lower all items, grouping consecutive same-name FnDefs.
         let items: Vec<Item> = sf.items().collect();
         let mut i = 0;
@@ -1239,13 +1314,23 @@ impl<'a> Lowerer<'a> {
 
         if let Some(param_list) = fn_def.param_list() {
             if let Some(Ty::Fun(param_tys, _)) = &fn_ty_raw {
-                for (param, param_ty) in param_list.params().zip(param_tys.iter()) {
+                for (param_idx, (param, param_ty)) in
+                    param_list.params().zip(param_tys.iter()).enumerate()
+                {
                     let param_name = param
                         .name()
                         .map(|t| t.text().to_string())
                         .unwrap_or_else(|| "_".to_string());
                     let is_closure = matches!(param_ty, Ty::Fun(..));
-                    let mir_ty = resolve_type(param_ty, self.registry, is_closure);
+                    let mut mir_ty = resolve_type(param_ty, self.registry, is_closure);
+                    // If the parameter type is unresolved (Ty::Var → MirType::Unit),
+                    // try to recover the concrete type from call sites where this
+                    // function was passed as a value argument (e.g. HTTP.use(r, fn)).
+                    if mir_ty == MirType::Unit && matches!(param_ty, Ty::Var(_)) {
+                        if let Some(recovered) = self.resolve_param_from_usage(&name, param_idx) {
+                            mir_ty = recovered;
+                        }
+                    }
                     self.insert_var(param_name.clone(), mir_ty.clone());
                     params.push((param_name, mir_ty));
                 }
@@ -1599,9 +1684,19 @@ impl<'a> Lowerer<'a> {
         let (param_tys, return_type) = if let Some(Ty::Fun(pts, ret)) = &fn_ty_raw {
             (
                 pts.iter()
-                    .map(|t| {
+                    .enumerate()
+                    .map(|(param_idx, t)| {
                         let is_closure = matches!(t, Ty::Fun(..));
-                        resolve_type(t, self.registry, is_closure)
+                        let mut mir_ty = resolve_type(t, self.registry, is_closure);
+                        // Recover concrete type for Ty::Var parameters from usage sites.
+                        if mir_ty == MirType::Unit && matches!(t, Ty::Var(_)) {
+                            if let Some(recovered) =
+                                self.resolve_param_from_usage(&name, param_idx)
+                            {
+                                mir_ty = recovered;
+                            }
+                        }
+                        mir_ty
                     })
                     .collect::<Vec<_>>(),
                 resolve_type(ret, self.registry, false),
@@ -6540,29 +6635,18 @@ impl<'a> Lowerer<'a> {
         };
 
         // Phase 96 / 129: Map.collect string key detection.
-        // If the pipe result is mesh_map_collect, use the string-key variant when:
-        //   1. (Primary) The resolved result type of this pipe expression is Map<String, V>.
-        //      This handles Iter.zip(string_keys, values) chains where K is unified to
-        //      String by downstream Map.get("string_key") calls in the type-checker.
-        //   2. (Fallback) Walk the pipe chain source types via pipe_chain_has_string_keys.
-        //      This handles the Map.to_list roundtrip pattern (List<(String,V)> source).
+        // Walk the pipe chain source types: if the source is List<(String,V)>,
+        // Map<String,V>, or a zip of List<String> keys, use the string-key collect
+        // variant (mesh_map_collect_string_keys).
+        //
+        // Note: checking the pipe's own resolved result type does not work here — HM
+        // let-generalization quantifies the K type variable before downstream Map.get
+        // calls can unify it with String. The chain-walk is the correct mechanism.
         if let MirExpr::Call { ref mut func, .. } = result {
             if let MirExpr::Var(ref name, _) = **func {
-                if name == "mesh_map_collect" {
-                    // Primary check: resolved result type of this pipe expression.
-                    // If Map<String, V>, use string-key variant.
-                    // (Handles Iter.zip chains where K is unified by downstream Map.get calls.)
-                    let result_is_string_keyed = self
-                        .types
-                        .get(&pipe.syntax().text_range())
-                        .map(|ty| Self::ty_has_string_map_keys(ty))
-                        .unwrap_or(false);
-                    // Fallback: walk pipe chain source (handles Map.to_list roundtrip
-                    // and Iter.zip-with-string-keys patterns).
-                    if result_is_string_keyed || self.pipe_chain_has_string_keys(pipe) {
-                        let fn_ty = MirType::FnPtr(vec![MirType::Ptr], Box::new(MirType::Ptr));
-                        **func = MirExpr::Var("mesh_map_collect_string_keys".to_string(), fn_ty);
-                    }
+                if name == "mesh_map_collect" && self.pipe_chain_has_string_keys(pipe) {
+                    let fn_ty = MirType::FnPtr(vec![MirType::Ptr], Box::new(MirType::Ptr));
+                    **func = MirExpr::Var("mesh_map_collect_string_keys".to_string(), fn_ty);
                 }
             }
         }
