@@ -36,6 +36,7 @@ pub mod iter;
 pub mod option;
 pub mod panic;
 pub mod crypto;
+pub mod datetime;  // Phase 136
 pub mod regex;
 pub mod string;
 
