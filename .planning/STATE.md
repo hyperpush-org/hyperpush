@@ -1,24 +1,24 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v13.0
 milestone_name: Language Completeness
-status: unknown
-last_updated: "2026-02-28T05:23:45.418Z"
+status: shipped
+last_updated: "2026-02-28T00:00:00.000Z"
 progress:
-  total_phases: 131
-  completed_phases: 131
-  total_plans: 338
-  completed_plans: 338
+  total_phases: 134
+  completed_phases: 134
+  total_plans: 362
+  completed_plans: 362
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-27)
+See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** v13.0 Language Completeness — Phase 131 complete (Documentation: cheatsheet + type-system guide), v13.0 fully shipped
+**Current focus:** Planning next milestone (v14.0) — run `/gsd:new-milestone` to begin
 
 ## Current Position
 

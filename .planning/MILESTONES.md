@@ -514,3 +514,30 @@
 
 ---
 
+
+## v13.0 Language Completeness (Shipped: 2026-02-28)
+
+**Delivered:** Rounded out the language with multi-line pipe continuation, type aliases (including cross-module), TryFrom/TryInto traits with automatic derivation, Map.collect for string keys, native `json { }` object literals, VS Code extension v0.3.0, and comprehensive documentation updates.
+
+**Phases completed:** 9 phases (126-134), 19 plans, 38 tasks
+
+**Key accomplishments:**
+- Multi-line pipe continuation — `|>` at end-of-line or start-of-continuation accepted by parser; multi-line chains produce identical output to single-line equivalents; 6 snapshot tests + 5 E2E tests
+- Type aliases — `type Url = String` and `pub type UserId = Int` with cross-module export and transparent unification; ALIAS-04 error for undefined alias targets; FromImportDecl bug fix enables type alias from-imports
+- TryFrom/TryInto traits — user-defined fallible conversions with automatic TryInto derivation (mirrors From/Into pattern); `?` operator works ergonomically; 3 latent codegen bugs fixed (generic return type resolution, struct always-box, synth return type)
+- Map.collect string keys — Iter.zip string-key dispatch fix; collect() on `{String, V}` iterator pairs now produces `Map<String, V>`; zero-warning compiler build confirmed
+- Mesher dogfooding — 36-route multi-line pipe router chain in main.mpl; `Fingerprint` type alias in mesher types; demonstrates all v13.0 language features in production code
+- Native `json { }` object literals — full compiler pipeline (lexer → parser → AST → type inference → MIR → codegen); 70 mesher .mpl usages migrated; eliminates all manual string escaping for JSON
+- VS Code extension v0.3.0 — updated TextMate grammar (json keyword, nil, atoms, regex, slot pipe), LSP completions with all 49 keywords, type alias and json snippets; packaged as VSIX
+- Documentation fully current — cheatsheet, language-basics, type-system, web docs, and AI agent skills all updated with v13.0 features and `json { }` as idiomatic JSON response pattern
+
+**Stats:**
+- ~115,740 lines of Rust (+1,216) | ~4,441 lines of Mesh
+- 9 phases, 19 plans, 38 tasks
+- 2 days (2026-02-27 → 2026-02-28)
+- 132 files changed, +11,584 / -303 lines
+
+**Git range:** `docs(126)` → `docs(phase-134)`
+
+---
+

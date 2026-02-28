@@ -4,6 +4,56 @@
 
 ---
 
+## Milestone: v13.0 — Language Completeness
+
+**Shipped:** 2026-02-28
+**Phases:** 9 (126-134) | **Plans:** 19 | **Tasks:** 38
+
+### What Was Built
+
+- Multi-line pipe continuation (`|>` at end-of-line or start-of-continuation) — semantically equivalent to single-line; 6 snapshot tests + 5 E2E tests
+- Type aliases (`type Url = String`, `pub type UserId = Int`) with cross-module export, transparent unification, ALIAS-04 undefined-type error, and FromImportDecl bug fix enabling from-imports of pub type aliases
+- TryFrom/TryInto traits with automatic TryInto derivation (mirrors From/Into pattern); `?` operator support; 3 latent codegen bugs fixed (generic return type resolution, struct always-box, synth return type)
+- Map.collect string keys — Iter.zip source detection approach because HM let-generalization prevents type-based detection; zero-warning compiler build confirmed
+- Mesher dogfooding — 36-route multi-line pipe router chain; `Fingerprint` type alias; validates all language features in production
+- Native `json { }` object literals — full compiler pipeline; 70 mesher .mpl usages migrated; replaces all manual string escaping
+- VS Code extension v0.3.0 — m10-m13 grammar, 49-keyword LSP, type alias/json snippets, packaged VSIX
+- Documentation and AI skills fully current across all surfaces
+
+### What Worked
+
+- **Audit-then-close pattern:** Running `/gsd:audit-milestone` before completion surfaced the QUAL-01/QUAL-02 checkbox staleness and the misleading fixture comment — documented as known tech debt rather than blocking
+- **Dogfooding as integration test:** Phase 130 (Mesher dogfooding) found the FromImportDecl validation gap that Phase 127's unit tests missed — real-world usage exposed the gap within the first use
+- **Incremental feature phases:** Multi-line pipes (126), type aliases (127), TryFrom (128), Map.collect (129) each stood alone with clear requirements — no phase blocked on unclear prior work
+- **Bonus phases without scope creep:** Phases 132-134 (json literals, VS Code v0.3.0, docs/skills update) were added mid-milestone cleanly because the core features were already complete and stable
+
+### What Was Inefficient
+
+- QUAL-01 and QUAL-02 checkbox staleness in REQUIREMENTS.md — both were addressed in Phase 129 but the file wasn't updated; surfaced as audit finding requiring manual cleanup
+- The misleading comment in `tests/e2e/stdlib_http_middleware_inferred.mpl:3-4` was written during Phase 129 with incorrect claims; caught in audit but not fixed (minor but leaves a maintenance burden)
+- Phase 132 required revising plans based on plan-checker feedback before execution (fix(132): revise plans) — the initial plan underestimated the two-level lowering architecture needed for nested json values
+
+### Patterns Established
+
+- **json { } as idiomatic JSON response pattern** — explicitly documented in http SKILL.md, web docs, and strings sub-skill; all future HTTP examples should use `json { }` over heredoc or escaped strings
+- **QUAL-02 scope limitation pattern** — passthrough middleware without accessor calls requires `:: Request`; this is a documented HM limitation, not a bug to keep chasing
+- **Extension version sync cadence** — VS Code extension should be updated each milestone (not deferred across multiple milestones like m10-m13 accumulation)
+
+### Key Lessons
+
+1. **Dogfooding before documentation** (Phase 130 → 131 order) catches real-world gaps that compiler unit tests miss; the FromImportDecl bug discovery validated this phase ordering
+2. **Fixture comments are documentation** — misleading comments in test fixtures get read by future engineers as ground truth; they should be held to the same accuracy standard as docs
+3. **Mid-milestone phase additions work cleanly** when the core features are compiler-complete and the additions are independent (json literals, VS Code, docs had zero overlap with 126-131 work)
+
+### Cost Observations
+
+- 9 phases, 19 plans, 38 tasks in 2 days
+- Average plan execution: ~7 minutes (range: 1m 2s for docs plans → 22m for complex codegen plans)
+- Sessions: 2 days of work
+- Notable: Documentation and skill update phases (131, 134) were fastest (1-3 min each); complex codegen phases (128-02, 129-02) were slowest (20-22 min each)
+
+---
+
 ## Milestone: v12.0 — Language Ergonomics & Open Source Readiness
 
 **Shipped:** 2026-02-27
@@ -105,6 +155,7 @@
 | v10.0 | 8 | 25 | ORM library — schema DSL, repo pattern, migrations |
 | v11.0 | 11 | 22 | ORM query builder + full application rewrite |
 | v12.0 | 10 | 24 | Language ergonomics + open source readiness + benchmarks |
+| v13.0 | 9 | 19 | Language completeness — type system, traits, json literals, tooling |
 
 ### Top Lessons (Cross-Milestone)
 

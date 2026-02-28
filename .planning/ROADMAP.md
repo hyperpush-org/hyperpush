@@ -24,7 +24,7 @@
 - [x] **v10.1 Stabilization** - Phases 104-105.1 (shipped 2026-02-17)
 - [x] **v11.0 Query Builder** - Phases 106-115 (shipped 2026-02-25)
 - [x] **v12.0 Language Ergonomics & Open Source Readiness** - Phases 116-125 (shipped 2026-02-27)
-- [ ] **v13.0 Language Completeness** - Phases 126-131 (in progress)
+- [x] **v13.0 Language Completeness** - Phases 126-134 (shipped 2026-02-28)
 
 ## Phases
 
@@ -225,142 +225,24 @@ See milestones/v12.0-ROADMAP.md for full phase details.
 
 </details>
 
-### v13.0 Language Completeness (In Progress)
+<details>
+<summary>✅ v13.0 Language Completeness (Phases 126-134) — SHIPPED 2026-02-28</summary>
 
-**Milestone Goal:** Round out the language with multi-line pipes, type aliases, TryFrom/TryInto, Map.collect string keys, and fix pre-existing compiler/inference tech debt — completing the ergonomics and type-system expressiveness required for production Mesh programs.
+See milestones/v13.0-ROADMAP.md for full phase details.
+19 plans across 9 phases. ~115,740 lines of Rust (+1,216). 132 files changed. 17/17 requirements satisfied.
 
-#### Phase Details
+- [x] Phase 126: Multi-line Pipe Continuation (2/2 plans) — completed 2026-02-27
+- [x] Phase 127: Type Aliases (3/3 plans) — completed 2026-02-27
+- [x] Phase 128: TryFrom/TryInto Traits (2/2 plans) — completed 2026-02-27
+- [x] Phase 129: Map.collect + Code Quality (2/2 plans) — completed 2026-02-28
+- [x] Phase 130: Mesher Dogfooding (1/1 plan) — completed 2026-02-28
+- [x] Phase 131: Documentation Site Update (2/2 plans) — completed 2026-02-28
+- [x] Phase 132: JSON Object Literals (3/3 plans) — completed 2026-02-28
+- [x] Phase 133: VS Code Extension v0.3.0 (2/2 plans) — completed 2026-02-28
+- [x] Phase 134: Skills + Docs Update (2/2 plans) — completed 2026-02-28
 
-### Phase 126: Multi-line Pipe Continuation
-**Goal**: Users can format pipe chains across multiple lines for readability
-**Depends on**: Nothing (first phase of milestone)
-**Requirements**: PIPE-01, PIPE-02
-**Success Criteria** (what must be TRUE):
-  1. User can place `|>` or `|N>` at the end of a line and continue the pipe chain on the next line
-  2. User can place `|>` or `|N>` at the start of a continuation line and the parser accepts it as a continuation
-  3. A multi-line pipe chain produces exactly the same compiled output as its single-line equivalent
-  4. All existing single-line pipe chains continue to compile and run without change
-**Plans**: 2 plans
-
-Plans:
-- [ ] 126-01-PLAN.md — Parser: trailing-pipe continuation + snapshot tests (TDD)
-- [ ] 126-02-PLAN.md — E2E tests for all pipe forms and PIPE-02 equivalence
-
-### Phase 127: Type Aliases
-**Goal**: Users can declare named aliases for existing types to improve code readability
-**Depends on**: Nothing (independent of Phase 126)
-**Requirements**: ALIAS-01, ALIAS-02, ALIAS-03, ALIAS-04
-**Success Criteria** (what must be TRUE):
-  1. User can write `type Url = String` and use `Url` anywhere `String` is valid (function signatures, struct fields, let bindings)
-  2. User can write `pub type UserId = Int` to export a type alias for use in other modules
-  3. Compiler emits a clear error when a type alias references a type name that does not exist
-  4. Type aliases are transparent to the type checker — values of the alias type unify with the aliased type without explicit conversion
-**Plans**: 3 plans
-
-Plans:
-- [ ] 127-01-PLAN.md — Fix pub type parsing, AST visibility, ALIAS-04 undefined type error, E2E tests
-- [ ] 127-02-PLAN.md — Cross-module pub type export (ExportedSymbols, ModuleExports, import pre-registration)
-- [ ] 127-03-PLAN.md — Gap closure: replace single-file e2e_type_alias_pub with compile_multifile_and_run cross-module test
-
-### Phase 128: TryFrom/TryInto Traits
-**Goal**: Users can implement fallible conversions between types using the TryFrom/TryInto trait protocol
-**Depends on**: Phase 127 (type aliases may be used in TryFrom signatures; also builds on From/Into pattern from v7.0)
-**Requirements**: TRYFROM-01, TRYFROM-02, TRYFROM-03
-**Success Criteria** (what must be TRUE):
-  1. User can implement `TryFrom<F>` for a type with `fn try_from(value: F) -> Result<Self, E>` and it type-checks correctly
-  2. `TryInto<T>` is automatically available on any type that implements `TryFrom<F>`, mirroring the From/Into auto-derivation from v7.0
-  3. The `?` operator works on `try_from`/`try_into` call results inside `Result`-returning functions without extra unwrapping
-**Plans**: 2 plans
-
-Plans:
-- [ ] 128-01-PLAN.md — TryFrom/TryInto trait registration + synthetic TryInto derivation in typeck
-- [ ] 128-02-PLAN.md — MIR codegen dispatch for try_from/try_into + E2E tests
-
-### Phase 129: Map.collect String Keys and Code Quality
-**Goal**: Users can collect string-keyed iterators into maps, and the compiler builds without warnings
-**Depends on**: Phase 128 (consolidates remaining small compiler fixes alongside an iterator fix)
-**Requirements**: MAPCOL-01, QUAL-01, QUAL-02
-**Success Criteria** (what must be TRUE):
-  1. User can call `.collect()` on an iterator of `{String, V}` pairs and receive a `Map<String, V>` with all entries present
-  2. `cargo build --all` on the compiler workspace produces zero warnings
-  3. A middleware handler function compiles without requiring an explicit `:: Request` type annotation on its parameter
-**Plans**: 2 plans
-
-Plans:
-- [ ] 129-01-PLAN.md — Fix Map.collect string key dispatch for Iter.zip pattern (TDD) (MAPCOL-01)
-- [ ] 129-02-PLAN.md — Verify clean build (QUAL-01) and remove :: Request annotations for inference (QUAL-02)
-
-### Phase 130: Mesher Dogfooding
-**Goal**: Mesher source updated to demonstrate and validate the new v13.0 language features in production code
-**Depends on**: Phase 129 (all compiler features complete before dogfooding)
-**Requirements**: DOGFOOD-01, DOGFOOD-02
-**Success Criteria** (what must be TRUE):
-  1. At least one multi-line pipe chain exists in Mesher source where a long single-line chain previously existed, and Mesher compiles and passes E2E tests
-  2. At least one type alias exists in Mesher source replacing a repeated concrete type pattern, and the type checker accepts it throughout all use sites
-**Plans**: 1 plan
-
-Plans:
-- [ ] 130-01-PLAN.md — Multi-line pipe router chain in main.mpl + Fingerprint type alias in types/event.mpl and fingerprint.mpl
-
-### Phase 131: Documentation Site Update
-**Goal**: The public documentation site reflects all v13.0 language additions
-**Depends on**: Phase 130 (dogfooding confirms final syntax and examples before docs are written)
-**Requirements**: DOCS-01, DOCS-02, DOCS-03
-**Success Criteria** (what must be TRUE):
-  1. The cheatsheet and at least one guide page show multi-line pipe syntax with a working example
-  2. The type system documentation explains `type Alias = ExistingType` declaration and usage with cross-module export
-  3. The documentation includes a TryFrom/TryInto section covering impl syntax, auto-TryInto derivation, and `?` operator ergonomics
-**Plans**: 2 plans
-
-Plans:
-- [ ] 131-01-PLAN.md — Cheatsheet and language-basics: multi-line pipe syntax and type alias docs (DOCS-01, DOCS-02)
-- [ ] 131-02-PLAN.md — Type-system guide: type alias section and TryFrom/TryInto section (DOCS-02, DOCS-03)
+</details>
 
 ## Progress
 
-**Total: 22 milestones shipped, 125 phases, 343 plans across completed milestones.**
-
-**Execution Order:** 126 → 127 → 128 → 129 → 130 → 131
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 126. Multi-line Pipe Continuation | 2/2 | Complete    | 2026-02-27 | - |
-| 127. Type Aliases | 3/3 | Complete    | 2026-02-27 | - |
-| 128. TryFrom/TryInto Traits | 2/2 | Complete    | 2026-02-27 | - |
-| 129. Map.collect + Code Quality | 2/2 | Complete    | 2026-02-28 | - |
-| 130. Mesher Dogfooding | 1/1 | Complete    | 2026-02-28 | - |
-| 131. Documentation Site Update | 2/2 | Complete    | 2026-02-28 | - |
-
-### Phase 132: Improve language JSON handling with native object literal syntax instead of manual string concatenation
-
-**Goal:** Native `json { }` object literal syntax that produces JSON strings without manual escaping or heredoc interpolation — replaces `"{\"k\":\"" <> v <> "\""` and `"""{"k":"#{v}"}"""` patterns throughout Mesher
-**Requirements**: JSON-01
-**Depends on:** Phase 131
-**Plans:** 3/3 plans complete
-
-Plans:
-- [ ] 132-01-PLAN.md — Lexer keyword + parser grammar + AST node + type inference (JsonExpr as String)
-- [ ] 132-02-PLAN.md — MIR lowering to mesh_json_* calls + 5 E2E test fixtures
-- [ ] 132-03-PLAN.md — Mesher migration (all .mpl files) + documentation update
-
-### Phase 133: Ensure the vscode extension is updated with changes from milestones 10, 11, 12, 13
-
-**Goal:** VSCode extension v0.3.0 with grammar and LSP completions reflecting all syntax additions from milestones 10-13 — slot pipe operators, regex literals, atom literals, json keyword, nil constant, type alias and json snippets
-**Requirements**: none
-**Depends on:** Phase 132
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] 133-01-PLAN.md — Grammar + LSP: json keyword, nil constant, atom literals, regex literals, slot pipe, new snippets
-- [ ] 133-02-PLAN.md — Version bump to 0.3.0, CHANGELOG update, VSIX package build
-
-### Phase 134: Add phase 132's change to the documentation site and update the appropriate skill(s) in tools/skill/mesh/skills/
-
-**Goal:** json { } native object literal feature propagated into all skill files and web documentation — skills teach the idiomatic pattern, web docs show JSON Object Literals as the primary approach for HTTP JSON responses
-**Requirements**: DOC-134-01
-**Depends on:** Phase 133
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] 134-01-PLAN.md — strings SKILL.md + top-level mesh SKILL.md: json { } documentation and routing updates
-- [ ] 134-02-PLAN.md — http SKILL.md + web/index.md: replace escaped JSON examples and add JSON Object Literals subsection
+**Total: 23 milestones shipped, 134 phases, 362 plans across completed milestones.**
