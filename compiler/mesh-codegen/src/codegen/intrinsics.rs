@@ -376,6 +376,36 @@ pub fn declare_intrinsics<'ctx>(module: &Module<'ctx>) {
     let after_ty = i8_type.fn_type(&[i64_type.into(), i64_type.into()], false);
     module.add_function("mesh_datetime_after", after_ty, Some(inkwell::module::Linkage::External));
 
+    // ── Http client functions (Phase 137) ──────────────────────────────────────
+
+    // mesh_http_build(method: ptr, url: ptr) -> i64 (MeshRequest handle)
+    let build_ty = i64_type.fn_type(&[ptr_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_http_build", build_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_header(handle: i64, key: ptr, val: ptr) -> i64
+    let header_ty = i64_type.fn_type(&[i64_type.into(), ptr_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_http_header", header_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_body(handle: i64, body: ptr) -> i64
+    let body_ty = i64_type.fn_type(&[i64_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_http_body", body_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_timeout(handle: i64, ms: i64) -> i64
+    let timeout_ty = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+    module.add_function("mesh_http_timeout", timeout_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_query(handle: i64, key: ptr, val: ptr) -> i64
+    let query_ty = i64_type.fn_type(&[i64_type.into(), ptr_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_http_query", query_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_json(handle: i64, body: ptr) -> i64
+    let json_ty = i64_type.fn_type(&[i64_type.into(), ptr_type.into()], false);
+    module.add_function("mesh_http_json", json_ty, Some(inkwell::module::Linkage::External));
+
+    // mesh_http_send(handle: i64) -> ptr (Result<HttpResponse, String>)
+    let send_ty = ptr_type.fn_type(&[i64_type.into()], false);
+    module.add_function("mesh_http_send", send_ty, Some(inkwell::module::Linkage::External));
+
     // ── Standard library: Collection functions (Phase 8 Plan 02) ──────────
 
     // List functions

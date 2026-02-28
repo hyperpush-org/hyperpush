@@ -894,6 +894,22 @@ impl<'a> Lowerer<'a> {
         // after(dt1: i64, dt2: i64) -> Bool (i8)
         self.known_functions.insert("mesh_datetime_after".to_string(),
             MirType::FnPtr(vec![MirType::Int, MirType::Int], Box::new(MirType::Bool)));
+        // Http client functions (Phase 137)
+        // MeshRequest handle is u64 -> MirType::Int
+        self.known_functions.insert("mesh_http_build".to_string(),
+            MirType::FnPtr(vec![MirType::String, MirType::String], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_header".to_string(),
+            MirType::FnPtr(vec![MirType::Int, MirType::String, MirType::String], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_body".to_string(),
+            MirType::FnPtr(vec![MirType::Int, MirType::String], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_timeout".to_string(),
+            MirType::FnPtr(vec![MirType::Int, MirType::Int], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_query".to_string(),
+            MirType::FnPtr(vec![MirType::Int, MirType::String, MirType::String], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_json".to_string(),
+            MirType::FnPtr(vec![MirType::Int, MirType::String], Box::new(MirType::Int)));
+        self.known_functions.insert("mesh_http_send".to_string(),
+            MirType::FnPtr(vec![MirType::Int], Box::new(MirType::Ptr)));
         // ── Collection functions (Phase 8 Plan 02) ─────────────────────
         // List
         self.known_functions.insert("mesh_list_new".to_string(), MirType::FnPtr(vec![], Box::new(MirType::Ptr)));
@@ -10841,6 +10857,7 @@ const STDLIB_MODULES: &[&str] = &[
     "Base64",  // Phase 135
     "Hex",     // Phase 135
     "DateTime",  // Phase 136
+    "Http",      // Phase 137
 ];
 
 /// Map Mesh builtin function names to their runtime equivalents.
@@ -10916,6 +10933,14 @@ fn map_builtin_name(name: &str) -> String {
         "datetime_diff"           => "mesh_datetime_diff".to_string(),
         "datetime_is_before"      => "mesh_datetime_before".to_string(),
         "datetime_is_after"       => "mesh_datetime_after".to_string(),
+        // Http client functions (Phase 137)
+        "http_build"   => "mesh_http_build".to_string(),
+        "http_header"  => "mesh_http_header".to_string(),
+        "http_body"    => "mesh_http_body".to_string(),
+        "http_timeout" => "mesh_http_timeout".to_string(),
+        "http_query"   => "mesh_http_query".to_string(),
+        "http_json"    => "mesh_http_json".to_string(),
+        "http_send"    => "mesh_http_send".to_string(),
         // Bare name for compile (from Regex import compile)
         "compile" => "mesh_regex_compile".to_string(),
         // Names that have already been resolved via from-import and lowered
@@ -11776,6 +11801,17 @@ pub fn lower_to_mir(parse: &Parse, typeck: &TypeckResult, module_name: &str, pub
             variants,
         });
     }
+
+    // Pre-seed HttpResponse struct for Http.send field access (Phase 137)
+    // Layout MUST match MeshClientResponse in compiler/mesh-rt/src/http/client.rs.
+    lowerer.structs.push(MirStructDef {
+        name: "HttpResponse".to_string(),
+        fields: vec![
+            ("status".to_string(), MirType::Int),
+            ("body".to_string(), MirType::Ptr),    // *mut MeshString
+            ("headers".to_string(), MirType::Ptr), // *mut MeshMap
+        ],
+    });
 
     // Generate Ord__compare__ for built-in primitive types (Int, Float, String).
     // These use BinOp::Lt and BinOp::Eq directly since primitives don't have

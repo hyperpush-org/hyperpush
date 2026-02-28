@@ -446,6 +446,28 @@ fn stdlib_modules() -> HashMap<String, HashMap<String, Scheme>> {
 
     modules.insert("DateTime".to_string(), datetime_mod);
 
+    // ── Http client module (Phase 137) ───────────────────────────────────────
+    let http_req_t = Ty::int();   // opaque handle — u64 ABI as Int
+    let http_resp_t = Ty::Con(TyCon::new("HttpResponse"));
+    let mut http_client_mod = HashMap::new();
+
+    http_client_mod.insert("build".to_string(),
+        Scheme::mono(Ty::fun(vec![Ty::string(), Ty::string()], http_req_t.clone())));
+    http_client_mod.insert("header".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone(), Ty::string(), Ty::string()], http_req_t.clone())));
+    http_client_mod.insert("body".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone(), Ty::string()], http_req_t.clone())));
+    http_client_mod.insert("timeout".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone(), Ty::int()], http_req_t.clone())));
+    http_client_mod.insert("query".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone(), Ty::string(), Ty::string()], http_req_t.clone())));
+    http_client_mod.insert("json".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone(), Ty::string()], http_req_t.clone())));
+    http_client_mod.insert("send".to_string(),
+        Scheme::mono(Ty::fun(vec![http_req_t.clone()], Ty::result(http_resp_t.clone(), Ty::string()))));
+
+    modules.insert("Http".to_string(), http_client_mod);
+
     // ── File module ─────────────────────────────────────────────────
     let mut file_mod = HashMap::new();
     file_mod.insert(
@@ -1599,6 +1621,7 @@ const STDLIB_MODULE_NAMES: &[&str] = &[
     "Base64",  // Phase 135
     "Hex",     // Phase 135
     "DateTime",  // Phase 136
+    "Http",      // Phase 137
 ];
 
 /// Check if a name is a known stdlib module.
@@ -1627,6 +1650,18 @@ pub fn infer_with_imports(parse: &Parse, import_ctx: &ImportContext) -> TypeckRe
     let mut type_registry = TypeRegistry::new();
     builtins::register_builtins(&mut ctx, &mut env, &mut trait_registry);
     register_builtin_sum_types(&mut ctx, &mut env, &mut type_registry);
+
+    // Register stdlib struct types for field access (Phase 137+)
+    // HttpResponse is the return type of Http.send — enables resp.status, resp.body, resp.headers
+    type_registry.register_struct(StructDefInfo {
+        name: "HttpResponse".to_string(),
+        generic_params: vec![],
+        fields: vec![
+            ("status".to_string(), Ty::int()),
+            ("body".to_string(), Ty::string()),
+            ("headers".to_string(), Ty::map(Ty::string(), Ty::string())),
+        ],
+    });
 
     // Pre-seed with imported trait defs (XMOD-05: globally visible)
     for trait_def in &import_ctx.all_trait_defs {

@@ -375,6 +375,49 @@ pub fn register_builtins(
     env.insert("datetime_is_after".into(),
         Scheme::mono(Ty::fun(vec![dt_t.clone(), dt_t.clone()], Ty::bool())));
 
+    // ── Standard library: Http client builder API (Phase 137) ─────────────────
+    let http_req_t = Ty::int();   // MeshRequest opaque handle is u64 -> Int ABI
+    let http_resp_t = Ty::Con(TyCon::new("HttpResponse"));
+
+    // Http.build(:method_atom, url) -> Request (Int handle)
+    // Atom is lowered to String ABI at the codegen level.
+    env.insert("http_build".into(), Scheme::mono(Ty::fun(
+        vec![Ty::string(), Ty::string()],
+        http_req_t.clone()
+    )));
+    // Http.header(req, key, val) -> Request
+    env.insert("http_header".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone(), Ty::string(), Ty::string()],
+        http_req_t.clone()
+    )));
+    // Http.body(req, s) -> Request
+    env.insert("http_body".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone(), Ty::string()],
+        http_req_t.clone()
+    )));
+    // Http.timeout(req, ms) -> Request
+    env.insert("http_timeout".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone(), Ty::int()],
+        http_req_t.clone()
+    )));
+    // Http.query(req, key, val) -> Request
+    env.insert("http_query".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone(), Ty::string(), Ty::string()],
+        http_req_t.clone()
+    )));
+    // Http.json(req, body) -> Request
+    env.insert("http_json".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone(), Ty::string()],
+        http_req_t.clone()
+    )));
+    // Http.send(req) -> Result<HttpResponse, String>
+    env.insert("http_send".into(), Scheme::mono(Ty::fun(
+        vec![http_req_t.clone()],
+        Ty::result(http_resp_t.clone(), Ty::string())
+    )));
+    // HttpResponse type name available as a type annotation
+    env.insert("HttpResponse".into(), Scheme::mono(http_resp_t.clone()));
+
     // ── Standard library: Collection types (Phase 8) ─────────────────
 
     // Type constructors for collection types (bare names).
