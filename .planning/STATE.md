@@ -98,6 +98,10 @@ Recent decisions affecting current work:
 - [Phase 131]: TryFrom/TryInto section placed immediately after From/Into as natural fallible extension
 - [Phase 131]: Language Basics Multi-Line Pipes placed as H3 under Pipe Operator, Type Aliases as H2 before What's Next; cheatsheet entries added inline in existing blocks
 
+### Roadmap Evolution
+
+- Phase 132 added: Improve language JSON handling with native object literal syntax instead of manual string concatenation
+
 ### Pending Todos
 
 None.
