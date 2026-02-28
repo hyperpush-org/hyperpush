@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** v14.0 Phase 138 — Testing Framework (next phase)
+**Current focus:** v14.0 Phase 138 — Testing Framework (in progress)
 
 ## Current Position
 
-Phase: 137 of 140 (HTTP Client Improvements) — COMPLETE
-Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase Complete, ready for Phase 138
-Last activity: 2026-02-28 — Phase 137 Plan 02 complete: Http streaming (OS-thread-per-stream, Arc<AtomicBool> cancel handle), keep-alive client (Http.client/send_with/client_close), all 6 functions registered in 5 compiler points, e2e tests pass
+Phase: 138 of 140 (Testing Framework) — IN PROGRESS
+Plan: 1 of 3 in current phase — COMPLETE
+Status: Plan 01 complete, ready for Plan 02
+Last activity: 2026-02-28 — Phase 138 Plan 01 complete: meshc test subcommand, test_runner.rs with *.test.mpl discovery, compile-to-temp-binary execution, ANSI summary output, --coverage stub
 
-Progress: [█████░░░░░] 38%  (5/13 plans)
+Progress: [██████░░░░] 46%  (6/13 plans)
 
 ## Performance Metrics
 
@@ -43,7 +43,7 @@ Progress: [█████░░░░░] 38%  (5/13 plans)
 | 135. Encoding & Crypto Stdlib | 2 | Complete |
 | 136. DateTime Stdlib | 2 | Complete |
 | 137. HTTP Client Improvements | 2 | Complete |
-| 138. Testing Framework | 3 | Not started |
+| 138. Testing Framework | 3 | In progress (1/3) |
 | 139. Package Manifest & meshpkg CLI | 2 | Not started |
 | 140. Package Registry Backend & Website | 2 | Not started |
 
@@ -83,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 137 Plan 02]: usize bridge for *mut u8 across thread boundary — cast to usize before spawn, cast back inside closure; same pattern as ws/server.rs
 - [Phase 137 Plan 02]: :continue is a Mesh reserved keyword (loop control) — fixture closures return "ok" string instead; only "stop" is checked by is_stop_atom
 - [Phase 137 Plan 02]: Multi-statement closure bodies need 'fn param do ... end' syntax, not arrow form 'fn param -> ...'
+- [Phase 138 Plan 01]: test_runner copies each *.test.mpl to temp dir as main.mpl to reuse existing build() entry-point lookup without modification
+- [Phase 138 Plan 01]: TestSummary.passed is public API (future plans will read it); suppress dead_code lint with #[allow(dead_code)] on struct
 
 ### Pending Todos
 
@@ -90,12 +92,12 @@ None.
 
 ### Blockers/Concerns
 
-- [Phase 138]: Coverage (TEST-10) has HIGH implementation risk per research — LLVM incompatible with current codegen; plan as stub (--coverage flag accepted, outputs "not yet supported" or basic MIR counter prototype)
+- [Phase 138 Plan 01]: Coverage (TEST-10) stub shipped in Plan 01 — --coverage flag accepted, prints "Coverage reporting coming soon", exits 0; full MIR counter injection deferred to v14.1
 - [Phase 140]: Registry storage abstraction (StorageBackend trait for S3/R2 migration path) needs design decision at planning time
 - [Phase 140]: Empty registry at launch ("ghost town" problem) — plan to publish stdlib packages as seed content during Phase 140
 
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Phase 137 complete — Plan 02 done: Http streaming, cancel handle, keep-alive client through 5 compiler points; ready for Phase 138 (Testing Framework)
+Stopped at: Completed 138-01-PLAN.md — meshc test CLI infrastructure (test_runner.rs, Commands::Test); ready for Phase 138 Plan 02
 Resume file: None

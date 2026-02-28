@@ -47,7 +47,7 @@
 
 ### Testing Framework (TEST)
 
-- [ ] **TEST-01**: User can run all `*.test.mpl` files in a project via `meshc test` with a pass/fail summary per test function
+- [x] **TEST-01**: User can run all `*.test.mpl` files in a project via `meshc test` with a pass/fail summary per test function
 - [ ] **TEST-02**: User can assert a boolean expression in a test via `assert expr` with failure output showing the expression source and value
 - [ ] **TEST-03**: User can assert equality in a test via `assert_eq a, b` with expected vs actual output on failure
 - [ ] **TEST-04**: User can assert inequality in a test via `assert_ne a, b` with a descriptive failure message
@@ -56,7 +56,7 @@
 - [ ] **TEST-07**: User can define shared setup and teardown for a describe block via `setup do ... end` and `teardown do ... end`
 - [ ] **TEST-08**: User can spawn a mock actor in a test via `Test.mock_actor(fn msg -> ... end)` returning a Pid for concurrency testing
 - [ ] **TEST-09**: User can assert the test actor receives a message matching a pattern via `assert_receive pattern, timeout`
-- [ ] **TEST-10**: User can generate a test coverage report via `meshc test --coverage`
+- [x] **TEST-10**: User can generate a test coverage report via `meshc test --coverage`
 
 ### Package Manifest & CLI (PKG)
 
@@ -141,7 +141,7 @@ Which phases cover which requirements.
 | HTTP-05 | Phase 137 | Complete |
 | HTTP-06 | Phase 137 | Complete |
 | HTTP-07 | Phase 137 | Complete |
-| TEST-01 | Phase 138 | Pending |
+| TEST-01 | Phase 138 | Complete |
 | TEST-02 | Phase 138 | Pending |
 | TEST-03 | Phase 138 | Pending |
 | TEST-04 | Phase 138 | Pending |
@@ -150,7 +150,7 @@ Which phases cover which requirements.
 | TEST-07 | Phase 138 | Pending |
 | TEST-08 | Phase 138 | Pending |
 | TEST-09 | Phase 138 | Pending |
-| TEST-10 | Phase 138 | Pending |
+| TEST-10 | Phase 138 | Complete |
 | PKG-01 | Phase 139 | Pending |
 | PKG-02 | Phase 139 | Pending |
 | PKG-03 | Phase 139 | Pending |
