@@ -22,24 +22,24 @@ end
 
 fn main() do
   let c = Circle(3.14)
-  let json1 = Json.encode(c)
-  println(json1)
+  let json_str1 = Json.encode(c)
+  println(json_str1)
 
   let r = Rectangle(2.0, 5.0)
-  let json2 = Json.encode(r)
-  println(json2)
+  let json_str2 = Json.encode(r)
+  println(json_str2)
 
   let p = Point
-  let json3 = Json.encode(p)
-  println(json3)
+  let json_str3 = Json.encode(p)
+  println(json_str3)
 
-  let result = Shape.from_json(json1)
+  let result = Shape.from_json(json_str1)
   case result do
     Ok(decoded) -> verify_circle(decoded)
     Err(e1) -> println("Error: ${e1}")
   end
 
-  let result2 = Shape.from_json(json3)
+  let result2 = Shape.from_json(json_str3)
   case result2 do
     Ok(decoded2) -> verify_point(decoded2)
     Err(e2) -> println("Error: ${e2}")

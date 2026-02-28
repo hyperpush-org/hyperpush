@@ -13,6 +13,6 @@ fn main() do
     shapes: [Circle(1.0), Point, Circle(2.5)],
     name: "test"
   }
-  let json = Json.encode(d)
-  println(json)
+  let json_str = Json.encode(d)
+  println(json_str)
 end

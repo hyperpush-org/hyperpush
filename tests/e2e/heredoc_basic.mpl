@@ -4,8 +4,8 @@ fn main() do
     World!
     """
   println(greeting)
-  let json = """
+  let json_str = """
     {"key": "value"}
     """
-  println(json)
+  println(json_str)
 end

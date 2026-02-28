@@ -13,10 +13,10 @@ fn main() do
     tags: ["web", "api", "prod"],
     settings: %{ "port" => 8080, "workers" => 4 }
   }
-  let json = Json.encode(c)
-  println(json)
+  let json_str = Json.encode(c)
+  println(json_str)
 
-  let result = Config.from_json(json)
+  let result = Config.from_json(json_str)
   case result do
     Ok(c2) -> print_results(List.length(c2.tags), Map.size(c2.settings))
     Err(e) -> println("Error: ${e}")

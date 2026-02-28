@@ -30,8 +30,8 @@ fn main() do
     count: 42,
     inner: Inner { value: 99 }
   }
-  let json = Json.encode(orig)
-  let result = Outer.from_json(json)
+  let json_str = Json.encode(orig)
+  let result = Outer.from_json(json_str)
   case result do
     Ok(decoded) -> verify_outer(decoded, "test", 42, 99, "round-trip")
     Err(e1) -> println("Error: ${e1}")
@@ -42,8 +42,8 @@ fn main() do
     count: 0,
     inner: Inner { value: 0 }
   }
-  let json2 = Json.encode(orig2)
-  let result2 = Outer.from_json(json2)
+  let json_str2 = Json.encode(orig2)
+  let result2 = Outer.from_json(json_str2)
   case result2 do
     Ok(decoded2) -> verify_outer(decoded2, "empty", 0, 0, "zero-values")
     Err(e2) -> println("Error: ${e2}")

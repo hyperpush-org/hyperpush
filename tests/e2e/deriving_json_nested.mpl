@@ -16,10 +16,10 @@ end
 
 fn main() do
   let p = Person { name: "Bob", addr: Address { city: "NYC", zip: 10001 } }
-  let json = Json.encode(p)
-  println(json)
+  let json_str = Json.encode(p)
+  println(json_str)
 
-  let result = Person.from_json(json)
+  let result = Person.from_json(json_str)
   case result do
     Ok(p2) -> show_person(p2)
     Err(e) -> println("Error: ${e}")

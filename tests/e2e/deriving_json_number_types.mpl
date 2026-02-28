@@ -12,10 +12,10 @@ end
 
 fn main() do
   let n = Numbers { i: 42, f: 3.14 }
-  let json = Json.encode(n)
-  println(json)
+  let json_str = Json.encode(n)
+  println(json_str)
 
-  let result = Numbers.from_json(json)
+  let result = Numbers.from_json(json_str)
   case result do
     Ok(n2) -> show_numbers(n2)
     Err(e) -> println("Error: ${e}")

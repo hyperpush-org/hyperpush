@@ -3138,9 +3138,9 @@ import Models
 
 fn main() do
   let u = Models.make_user("Alice", 30)
-  let json = Json.encode(u)
-  println(json)
-  let result = User.from_json(json)
+  let json_str = Json.encode(u)
+  println(json_str)
+  let result = User.from_json(json_str)
   case result do
     Ok(u2) -> println("${u2.name} ${u2.age}")
     Err(e) -> println("Error: ${e}")
@@ -3173,8 +3173,8 @@ from Models import User
 
 fn main() do
   let u = User { name: "Bob", age: 25 }
-  let json = Json.encode(u)
-  let result = User.from_json(json)
+  let json_str = Json.encode(u)
+  let result = User.from_json(json_str)
   case result do
     Ok(u2) -> println("${u2.name} ${u2.age}")
     Err(e) -> println("Error: ${e}")
