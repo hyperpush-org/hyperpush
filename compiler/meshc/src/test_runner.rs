@@ -888,11 +888,13 @@ fn transform_assert_receive(body: &str) -> String {
             // the last comma that is NOT inside brackets/parens.
             let (pattern, timeout_ms) = split_assert_receive_args(rest);
             let indent = &line[..line.len() - line.trim_start().len()];
+            // Escape double quotes inside the pattern for embedding in the error message string.
+            let escaped_pattern = pattern.replace('\\', "\\\\").replace('"', "\\\"");
+            // Use single-line form to avoid a parser issue where parse_receive_expr
+            // does not eat newlines before checking for END_KW after an after clause.
+            // Single-line: receive do PATTERN -> () after TIMEOUT -> test_fail_msg(...) end
             out.push_str(&format!(
-                "{indent}receive\n\
-                 {indent}  {pattern} -> ()\n\
-                 {indent}  after {timeout_ms} -> test_fail_msg(\"assert_receive {pattern} timed out after {timeout_ms}ms\")\n\
-                 {indent}end\n"
+                "{indent}receive do {pattern} -> () after {timeout_ms} -> test_fail_msg(\"assert_receive {escaped_pattern} timed out after {timeout_ms}ms\") end\n"
             ));
         } else {
             out.push_str(line);

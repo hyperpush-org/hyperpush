@@ -2,8 +2,18 @@ test("Test.mock_actor spawns an actor") do
   let pid = Test.mock_actor(fn(msg) do
     msg
   end)
-  # Verify the mock actor was spawned by checking we got a valid pid
-  # (We can't easily compare Pid to Int, so just verify the call succeeds)
   let _ = pid
   assert(true)
+end
+
+test("assert_receive gets message sent to self") do
+  let me = self()
+  send(me, 42)
+  assert_receive 42, 500
+end
+
+test("assert_receive with default timeout") do
+  let me = self()
+  send(me, 99)
+  assert_receive 99
 end
