@@ -21,7 +21,7 @@ description: Mesh programming language — use for any question about Mesh synta
 1. Expression-oriented: most constructs evaluate to a value; `do...end` delimits blocks.
 2. Type annotations use `::` (e.g., `x :: Int`); function return types use `->`.
 3. String interpolation: `"hello #{name}"` (hash-brace syntax; `${}` also accepted for compatibility).
-4. Heredocs: `"""..."""` for multiline strings with embedded interpolation.
+4. Heredocs: `"""..."""` for multiline strings with embedded interpolation; `json { }` for JSON object literals (type-safe, auto-coerces to String).
 5. Pipe operator `|>` chains function calls left-to-right: `3 |> double |> println`.
 6. Slot pipe `|N>` routes a value to the Nth argument position: `"world" |2> concat3("hello ", " !")`.
 7. Pattern matching with `case...do...end`; `_` is the wildcard.
@@ -41,7 +41,7 @@ description: Mesh programming language — use for any question about Mesh synta
 1. Actors & Supervisors: Erlang/OTP-style lightweight actors with typed PIDs and supervision trees.
 2. HTTP/WebSocket: built-in `HTTP.router()`, `HTTP.route()`, `HTTP.serve()`, `HTTP.use()` for middleware.
 3. Database: Sqlite and PostgreSQL raw clients plus an ORM query builder (deriving Row, schema DSL).
-4. Stdlib: List, Map, Set, Range, Queue, Iter (pipeline), String, Json, IO, Env, Regex modules.
+4. Stdlib: List, Map, Set, Range, Queue, Iter (pipeline), String, Json (encode/parse + `json { }` literals), IO, Env, Regex modules.
 5. Concurrency Utilities: Job module for async task spawning/awaiting; service blocks for stateful OTP-style gen_server processes.
 
 ## Available Sub-Skills
@@ -53,7 +53,7 @@ description: Mesh programming language — use for any question about Mesh synta
 6. `skills/actors` — Actor blocks, spawn, send, receive, typed PIDs, services (call/cast), Job.async/await
 7. `skills/supervisors` — Supervisor blocks, strategies, child specs, restart policies
 8. `skills/collections` — List, Map, Set, Range, Queue, Iter pipelines, map/filter/reduce
-9. `skills/strings` — String interpolation, heredocs, String stdlib, Env vars, Regex
+9. `skills/strings` — String interpolation, heredocs, `json { }` object literals, String stdlib, Env vars, Regex
 10. `skills/http` — HTTP server/client, routing, middleware, WebSocket
 11. `skills/database` — Sqlite, PostgreSQL, ORM query builder, schema deriving, upserts
 
