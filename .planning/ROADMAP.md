@@ -303,8 +303,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 137-01-PLAN.md — Http builder API (build/header/body/timeout/query/json/send), ureq 3 upgrade, MeshRequest opaque handle, HttpResponse struct, 5-point compiler registration
-- [ ] 137-02-PLAN.md — Http streaming (Http.stream OS-thread-per-stream, :stop inline cancellation) + keep-alive client (Http.client Agent handle, Http.send_with, Http.client_close)
+- [x] 137-01-PLAN.md — Http builder API (build/header/body/timeout/query/json/send), ureq 3 upgrade, MeshRequest opaque handle, HttpResponse struct, 5-point compiler registration
+- [x] 137-02-PLAN.md — Http streaming (Http.stream OS-thread-per-stream, :stop inline cancellation) + keep-alive client (Http.client Agent handle, Http.send_with, Http.client_close)
 
 ### Phase 138: Testing Framework
 **Goal**: Mesh developers can write `*.test.mpl` files with assertion helpers, grouping, setup/teardown, and mock actors, then run all tests via `meshc test` and see a pass/fail summary
@@ -316,12 +316,12 @@ Plans:
   3. User can group tests with `describe "..." do ... end` and the group name appears in failure output; `setup do ... end` and `teardown do ... end` blocks run around each test in the group
   4. User can spawn a mock actor via `Test.mock_actor(fn msg -> ... end)` and send it messages in a test; the test actor is isolated so leftover named actors from one test do not affect another
   5. User can assert the current test actor received a specific message via `assert_receive pattern, timeout_ms`, with timeout failure reporting the pattern and elapsed time
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 138-01: Test runner (meshc test subcommand, *.test.mpl discovery, per-file compile+execute, pass/fail aggregation)
-- [ ] 138-02: Assertion helpers (assert, assert_eq, assert_ne, assert_raises in mesh-rt/src/test_support.rs + typeck + intrinsics)
-- [ ] 138-03: describe/setup/teardown grouping + Test.mock_actor + assert_receive + meshc test --coverage stub
+- [ ] 138-01-PLAN.md — `meshc test` subcommand + test_runner.rs (*.test.mpl discovery, per-file compile+execute, pass/fail aggregation, --coverage stub)
+- [ ] 138-02-PLAN.md — Assertion runtime (mesh-rt/src/test.rs: assert/assert_eq/assert_ne/assert_raises) + 5-point compiler registration
+- [ ] 138-03-PLAN.md — Test DSL lowering (test/describe/setup/teardown harness) + Test.mock_actor + assert_receive + e2e fixtures
 
 ### Phase 139: Package Manifest & meshpkg CLI
 **Goal**: Mesh packages can be declared in a `mesh.toml` manifest with dependencies, locked reproducibly in `mesh.lock`, and published/installed/searched via the `meshpkg` CLI binary
