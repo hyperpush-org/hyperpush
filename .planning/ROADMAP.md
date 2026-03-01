@@ -398,10 +398,13 @@ Plans:
 
 ### Phase 143: Deploy everything including new stuff from v14
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** All v14.0 services deployed to production — registry backend on Fly.io at api.packages.meshlang.dev, SvelteKit packages site on Cloudflare Pages at packages.meshlang.dev, docs site redeployed to meshlang.dev, and meshpkg binary distributed via updated install.sh and GitHub Actions release pipeline
+**Requirements**: DEPLOY-143
 **Depends on:** Phase 142
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 143 to break down)
+- [ ] 143-01-PLAN.md — Pre-deploy code fixes (with_secure, DEFAULT_REGISTRY URL) + Dockerfile/fly.toml + infrastructure provisioning checkpoint
+- [ ] 143-02-PLAN.md — SvelteKit packages website (scaffold + 3 SSR routes + CF Pages config)
+- [ ] 143-03-PLAN.md — meshpkg release pipeline (extend release.yml + update install.sh)
+- [ ] 143-04-PLAN.md — Deploy registry to Fly.io + trigger docs + tag v14.0.0 release + CF Pages setup + smoke test
