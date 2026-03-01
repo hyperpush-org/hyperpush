@@ -23,6 +23,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenvy = "0.15"
 tokio = { version = "1", features = ["full"] }
 tokio-util = "0.7"
+flate2 = "1"
+tar = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+time = "0.3"
 
 [package]
 name = "mesh-registry"
@@ -54,3 +58,7 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
 tokio-util = { workspace = true }
+flate2 = { workspace = true }
+tar = { workspace = true }
+reqwest = { workspace = true }
+time = { workspace = true }
