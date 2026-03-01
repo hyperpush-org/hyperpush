@@ -401,7 +401,7 @@ Plans:
 **Goal:** All v14.0 services deployed to production — registry backend on Fly.io at api.packages.meshlang.dev, SvelteKit packages site on Cloudflare Pages at packages.meshlang.dev, docs site redeployed to meshlang.dev, and meshpkg binary distributed via updated install.sh and GitHub Actions release pipeline
 **Requirements**: DEPLOY-143
 **Depends on:** Phase 142
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 143-01-PLAN.md — Pre-deploy code fixes (with_secure, DEFAULT_REGISTRY URL) + Dockerfile/fly.toml + infrastructure provisioning checkpoint

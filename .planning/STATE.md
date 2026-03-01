@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Ecosystem & Standard Library
 status: unknown
-last_updated: "2026-03-01T07:40:21.182Z"
+last_updated: "2026-03-01T17:25:10.029Z"
 progress:
   total_phases: 131
   completed_phases: 130
-  total_plans: 342
-  completed_plans: 342
+  total_plans: 346
+  completed_plans: 343
 ---
 
 # Project State
@@ -54,6 +54,7 @@ Progress: [██████████] 99%  (13/13 plans)
 | Phase 142 P01 | 109 | 3 tasks | 3 files |
 | Phase 142 P02 | 2 | 3 tasks | 3 files |
 | Phase 142 P03 | 2 | 2 tasks | 2 files |
+| Phase 143 P02 | 2 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ Recent decisions affecting current work:
 - [Phase 142]: All doc code examples sourced exclusively from passing e2e tests (no invented syntax)
 - [Phase 142]: Testing knowledge captured only in Ecosystem Overview prose — no skills/testing sub-skill file exists or was created in this phase
 - [Phase 142]: Http.* (lowercase) = HTTP CLIENT vs HTTP.* (uppercase) = HTTP SERVER distinction documented explicitly in skill files as rule 10 of v14 section
+- [Phase 143]: vite ^6 required for @sveltejs/vite-plugin-svelte 6.x peer dep compatibility
+- [Phase 143]: type:module required in SvelteKit package.json — kit is ESM-only
+- [Phase 143]: vite.config.js required in SvelteKit projects — vite build needs sveltekit() plugin registered
 
 ### Roadmap Evolution
 
