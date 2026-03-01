@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to create sessions table");
 
     let session_layer = SessionManagerLayer::new(session_store)
-        .with_secure(false)  // Set true in production (HTTPS only)
+        .with_secure(true)
         .with_expiry(Expiry::OnInactivity(Duration::days(30)));
 
     let s3 = storage::r2::build_r2_client(&config);

@@ -9,7 +9,7 @@ use std::process;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 
-const DEFAULT_REGISTRY: &str = "https://registry.meshlang.dev";
+const DEFAULT_REGISTRY: &str = "https://api.packages.meshlang.dev";
 
 #[derive(Parser)]
 #[command(name = "meshpkg", version, about = "Mesh package manager")]
