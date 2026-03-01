@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Ecosystem & Standard Library
 status: unknown
-last_updated: "2026-03-01T06:53:50.620Z"
+last_updated: "2026-03-01T07:33:13.322Z"
 progress:
   total_phases: 131
-  completed_phases: 129
-  total_plans: 339
-  completed_plans: 339
+  completed_phases: 130
+  total_plans: 342
+  completed_plans: 342
 ---
 
 # Project State
@@ -51,6 +51,8 @@ Progress: [██████████] 99%  (13/13 plans)
 | Phase 141 P01 | 1 | 2 tasks | 2 files |
 | Phase 141 P02 | 5 | 2 tasks | 3 files |
 | Phase 141 P03 | 3 | 2 tasks | 1 file |
+| Phase 142 P01 | 109 | 3 tasks | 3 files |
+| Phase 142 P02 | 2 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -121,6 +123,10 @@ Recent decisions affecting current work:
 - [Phase 141]: validate_level exposed as pub fn in validation.mpl — required for direct import in test files; was private fn in source but plan interface spec listed it as pub
 - [Phase 141]: meshc test pure function pattern established: test files in mesher/tests/ import from Ingestion.* modules; Result variants tested via case expression
 - [Phase 141 Plan 03]: meshc test project_dir must walk upward from test file path to find nearest main.mpl — using CWD caused entire workspace to be copied to temp build dir
+- [Phase 142]: HTTP Client docs use lowercase Http.* for v14 fluent builder and uppercase HTTP.* for legacy single-call API — critical naming distinction documented explicitly
+- [Phase 142]: meshpkg section placed as its own H2 alongside Test Runner rather than under Package Manager — separate binary warrants top-level section
+- [Phase 142]: Combined Crypto, Base64, Hex, DateTime into single Standard Library page per research recommendation
+- [Phase 142]: All doc code examples sourced exclusively from passing e2e tests (no invented syntax)
 
 ### Roadmap Evolution
 
@@ -141,5 +147,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 141-03-PLAN.md — Build and test verification; meshc build mesher/ exits 0; 18/18 unit tests passing (5 fingerprint + 13 validation); meshc test project_dir bug fixed; Phase 141 complete
+Stopped at: Completed 142-02-PLAN.md — tooling page meshc test + meshpkg docs; web page Http v14 fluent builder docs; cheatsheet Testing + stdlib sections
 Resume file: None
