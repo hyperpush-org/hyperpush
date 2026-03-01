@@ -3,8 +3,6 @@
   import { Package, Search, Sun, Moon } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  export let data;
-
   let dark = false;
   onMount(() => {
     dark = document.documentElement.classList.contains('dark');
