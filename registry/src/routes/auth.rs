@@ -83,10 +83,19 @@ pub async fn github_callback(
     // Store user info in session
     session.insert(SESSION_USER_ID, user_id.to_string()).await
         .map_err(|e| AppError::Internal(e.to_string()))?;
-    session.insert(SESSION_GITHUB_LOGIN, github_login).await
+    session.insert(SESSION_GITHUB_LOGIN, github_login.clone()).await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    Ok(Redirect::to("/dashboard"))
+    // Auto-create a publish token and hand it off to the frontend
+    let (_token_id, raw_token) = db::tokens::create_token(&state.pool, user_id, "default")
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    let redirect = format!(
+        "{}/token?value={}&login={}",
+        state.config.frontend_url, raw_token, github_login
+    );
+    Ok(Redirect::to(&redirect))
 }
 
 async fn fetch_github_user(access_token: &str) -> Result<(i64, String, Option<String>), AppError> {

@@ -11,6 +11,7 @@ pub struct AppConfig {
     pub callback_url: String,
     pub session_secret: String,
     pub port: u16,
+    pub frontend_url: String,
 }
 
 impl AppConfig {
@@ -27,6 +28,7 @@ impl AppConfig {
             callback_url: env("GITHUB_CALLBACK_URL")?,
             session_secret: env("SESSION_SECRET")?,
             port: env_or("PORT", "3000").parse().unwrap_or(3000),
+            frontend_url: env_or("FRONTEND_URL", "https://packages.meshlang.dev"),
         })
     }
 }

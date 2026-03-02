@@ -51,6 +51,11 @@
         target="_blank"
         class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground md:block no-underline"
       >Docs</a>
+      <!-- Publish link -->
+      <a
+        href="/publish"
+        class="hidden text-sm font-medium text-foreground transition-colors hover:text-muted-foreground md:block no-underline"
+      >Publish</a>
     </form>
   </div>
 </header>
