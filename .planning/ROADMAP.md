@@ -288,8 +288,8 @@ See milestones/v14.0-ROADMAP.md for full phase details.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 146-01-PLAN.md — Scaffold mesh-slug package (mesh.toml, slug.mpl stubs, main.mpl)
-- [ ] 146-02-PLAN.md — TDD implementation of all 4 slug functions + full test suite
+- [x] 146-01-PLAN.md — Scaffold mesh-slug package (mesh.toml, slug.mpl stubs, main.mpl)
+- [x] 146-02-PLAN.md — TDD implementation of all 4 slug functions + full test suite
 
 ### Phase 147: Publish and Verify
 **Goal**: mesh-slug is live on the Mesh package registry and any project can install it
@@ -303,9 +303,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 147-01-PLAN.md — Fix meshpkg tarball packing and meshc installed package discovery
-- [ ] 147-02-PLAN.md — Authenticate, update package name, publish to registry, verify search
-- [ ] 147-03-PLAN.md — Install in consumer project, compile, run, final verification
+- [x] 147-01-PLAN.md — Fix meshpkg tarball packing and meshc installed package discovery
+- [x] 147-02-PLAN.md — Authenticate, update package name, publish to registry, verify search
+- [x] 147-03-PLAN.md — Install in consumer project, compile, run, final verification
 
 ### Phase 148: Mesher Integration
 **Goal**: Mesher uses mesh-slug from the registry as a real dependency, proving the full package workflow end-to-end
