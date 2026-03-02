@@ -5,4 +5,4 @@ description = "Mesher monitoring platform — production-grade issue tracker wri
 license = "MIT"
 
 [dependencies]
-# No external mesh package dependencies — uses Mesh stdlib only
+"snowdamiz/mesh-slug" = "1.0.0"
