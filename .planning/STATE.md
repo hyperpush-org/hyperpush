@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v15.0
 milestone_name: Package Dogfood
 status: in_progress
-last_updated: "2026-03-02T01:47:17.000Z"
+last_updated: "2026-03-02T01:57:00.000Z"
 progress:
   total_phases: 148
   completed_phases: 145
   total_plans: 394
-  completed_plans: 395
+  completed_plans: 396
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Expressive, readable concurrency -- writing concurrent programs should feel as natural and clean as writing sequential code, with the safety net of supervision and fault tolerance built into the language.
-**Current focus:** v15.0 Package Dogfood — Phase 146: Slug Library (Plan 02 of 2)
+**Current focus:** v15.0 Package Dogfood — Phase 146 complete, Phase 147 (publish) next
 
 ## Current Position
 
-Phase: 146 of 148 (Slug Library)
-Plan: 1 of 2 complete in current phase
-Status: In progress — Plan 01 complete, Plan 02 (TDD implementation) next
-Last activity: 2026-03-02 — Phase 146 Plan 01 complete (scaffold)
+Phase: 146 of 148 (Slug Library) — COMPLETE
+Plan: 2 of 2 complete in phase 146
+Status: Phase 146 complete — Phase 147 (publish mesh-slug to registry) is next
+Last activity: 2026-03-02 — Phase 146 Plan 02 complete (TDD implementation, 26 tests passing)
 
-Progress: [█░░░░░░░░░] 10% (v15.0)
+Progress: [██░░░░░░░░] 20% (v15.0)
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [█░░░░░░░░░] 10% (v15.0)
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 146-slug-library | 01 | 3min | 3 | 3 |
+| 146-slug-library | 02 | 6min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -56,6 +57,10 @@ Recent decisions affecting current work:
 - [v15.0 Roadmap]: Phase 147 (publish) must complete before Phase 148 (integrate) — Mesher install requires live registry entry
 - [146-01]: Mesh module export system uses FxHashMap<String, Scheme> keyed by name only; arity overloading across module imports NOT supported — slugify/2 named slugify_with_sep/2
 - [146-01]: println() is a Mesh builtin used directly; IO is not a module in the Mesh stdlib
+- [146-02]: Case arm bodies must appear on same line as -> arrow (Mesh parser constraint)
+- [146-02]: Mutual recursion between top-level functions not supported in Mesh (single-pass typechecker)
+- [146-02]: Lambda type annotations: fn(p) -> expr end (no type annotation on args, no do..end block)
+- [146-02]: split/filter-empty/join is the idiomatic Mesh pattern for slug normalization
 
 ### Pending Todos
 
@@ -74,5 +79,5 @@ None for v15.0.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 146 Plan 01 complete — Plan 02 (TDD implementation) ready
+Stopped at: Phase 146 Plan 02 complete — Phase 147 (publish mesh-slug to registry) ready
 Resume file: None
