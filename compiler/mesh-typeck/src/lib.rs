@@ -188,6 +188,10 @@ pub struct TypeckResult {
     /// Maps service_name -> ServiceExportInfo with resolved helper types.
     /// Populated during infer_service_def, consumed by collect_exports.
     pub local_service_exports: FxHashMap<String, ServiceExportInfo>,
+    /// Maps call-site TextRange -> mangled callee name (e.g. "slugify__2").
+    /// Non-empty only when the source file has arity-overloaded pub fns.
+    /// Consumed by the MIR lowerer to emit the correct mangled function reference.
+    pub overloaded_call_targets: FxHashMap<TextRange, String>,
 }
 
 impl TypeckResult {
@@ -238,6 +242,18 @@ pub fn collect_exports(
     let tree = parse.tree();
     let mut exports = ExportedSymbols::default();
 
+    // First pass: count pub fn occurrences by name to detect arity overloading.
+    let mut pub_fn_counts: FxHashMap<String, usize> = FxHashMap::default();
+    for item in tree.items() {
+        if let Item::FnDef(fn_def) = &item {
+            if fn_def.visibility().is_some() {
+                if let Some(name) = fn_def.name().and_then(|n| n.text()) {
+                    *pub_fn_counts.entry(name).or_insert(0) += 1;
+                }
+            }
+        }
+    }
+
     for item in tree.items() {
         match item {
             Item::FnDef(fn_def) => {
@@ -246,8 +262,18 @@ pub fn collect_exports(
                     let range = fn_def.syntax().text_range();
                     if let Some(ty) = typeck.types.get(&range) {
                         if fn_def.visibility().is_some() {
+                            // Mangle name if multiple pub fns share the same name (arity overloading).
+                            let export_name = if pub_fn_counts.get(&name).copied().unwrap_or(0) > 1 {
+                                let arity = fn_def
+                                    .param_list()
+                                    .map(|pl| pl.params().count())
+                                    .unwrap_or(0);
+                                format!("{}__{}", name, arity)
+                            } else {
+                                name
+                            };
                             exports.functions.insert(
-                                name,
+                                export_name,
                                 Scheme::normalize_from_ty(ty.clone()),
                             );
                         } else {

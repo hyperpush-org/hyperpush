@@ -1846,6 +1846,67 @@ pub fn infer_with_imports(parse: &Parse, import_ctx: &ImportContext) -> TypeckRe
     // Check for non-consecutive same-name function definitions.
     check_non_consecutive_clauses(&grouped, &mut ctx);
 
+    // Detect overloaded pub fn names (same name, different arity) for arity dispatch.
+    {
+        let mut pub_fn_counts: FxHashMap<String, usize> = FxHashMap::default();
+        for gi in &grouped {
+            let (name_opt, is_pub): (Option<String>, bool) = match gi {
+                GroupedItem::Single(Item::FnDef(fn_)) => (
+                    fn_.name().and_then(|n| n.text()),
+                    fn_.visibility().is_some(),
+                ),
+                GroupedItem::MultiClause { clauses } => (
+                    clauses.first().and_then(|f| f.name().and_then(|n| n.text())),
+                    clauses.first().map(|f| f.visibility().is_some()).unwrap_or(false),
+                ),
+                _ => (None, false),
+            };
+            if is_pub {
+                if let Some(name) = name_opt {
+                    *pub_fn_counts.entry(name).or_insert(0) += 1;
+                }
+            }
+        }
+        for (name, count) in &pub_fn_counts {
+            if *count > 1 {
+                ctx.overloaded_pub_fn_names.insert(name.clone());
+            }
+        }
+    }
+
+    // Pre-register all top-level fn names so mutual recursion works.
+    // Each fn gets a fresh monomorphic placeholder in env. When infer_fn_def
+    // later processes the fn, it unifies the placeholder with the actual
+    // inferred type, propagating constraints from any earlier forward references.
+    // For arity-overloaded pub fns, register with mangled name__arity keys.
+    for gi in &grouped {
+        let (fn_name_opt, arity): (Option<String>, usize) = match gi {
+            GroupedItem::Single(Item::FnDef(fn_)) => (
+                fn_.name().and_then(|n| n.text()),
+                fn_.param_list().map(|pl| pl.params().count()).unwrap_or(0),
+            ),
+            GroupedItem::MultiClause { clauses } => {
+                let first = clauses.first();
+                (
+                    first.and_then(|f| f.name().and_then(|n| n.text())),
+                    first
+                        .map(|f| f.param_list().map(|pl| pl.params().count()).unwrap_or(0))
+                        .unwrap_or(0),
+                )
+            }
+            _ => (None, 0),
+        };
+        if let Some(name) = fn_name_opt {
+            let pre_var = ctx.fresh_var();
+            if ctx.overloaded_pub_fn_names.contains(&name) {
+                let mangled = format!("{}__{}", name, arity);
+                env.insert(mangled, Scheme::mono(pre_var));
+            } else {
+                env.insert(name, Scheme::mono(pre_var));
+            }
+        }
+    }
+
     // Build a map from original item index to grouped item index.
     // Each grouped item knows which original item indices it consumed.
     let mut item_idx_to_grouped: FxHashMap<usize, usize> = FxHashMap::default();
@@ -1972,6 +2033,7 @@ pub fn infer_with_imports(parse: &Parse, import_ctx: &ImportContext) -> TypeckRe
         imported_functions: ctx.imported_functions,
         imported_service_methods: ctx.imported_service_methods,
         local_service_exports: ctx.local_service_exports,
+        overloaded_call_targets: ctx.overloaded_call_targets,
     }
 }
 
@@ -4287,6 +4349,11 @@ fn infer_fn_def(
         .and_then(|n| n.text())
         .unwrap_or_else(|| "<anonymous>".to_string());
 
+    // Save any pre-registered mutual-recursion placeholder before we overwrite the env entry.
+    let pre_registered = env
+        .lookup(&fn_name)
+        .and_then(|s| if s.vars.is_empty() { Some(s.ty.clone()) } else { None });
+
     ctx.enter_level();
 
     let self_var = ctx.fresh_var();
@@ -4414,6 +4481,11 @@ fn infer_fn_def(
     let fn_ty = Ty::Fun(param_types, Box::new(ret_ty));
 
     ctx.unify(self_var, fn_ty.clone(), ConstraintOrigin::Builtin)?;
+
+    // Propagate the pre-registered mutual-recursion placeholder to the actual type.
+    if let Some(pre_var) = pre_registered {
+        let _ = ctx.unify(pre_var, fn_ty.clone(), ConstraintOrigin::Builtin);
+    }
 
     ctx.leave_level();
     let scheme = ctx.generalize(fn_ty.clone());

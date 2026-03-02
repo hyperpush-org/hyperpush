@@ -5,7 +5,8 @@
 //! and scheme instantiation.
 
 use ena::unify::InPlaceUnificationTable;
-use rustc_hash::FxHashMap;
+use rowan::TextRange;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::error::{ConstraintOrigin, TypeError};
 use crate::ty::{Scheme, Ty, TyCon, TyVar};
@@ -51,6 +52,13 @@ pub struct InferCtx {
     /// Pushed when entering a function/closure body, popped when leaving.
     /// `None` means the return type is not yet known (will be inferred).
     pub fn_return_type_stack: Vec<Option<Ty>>,
+    /// Pub fn names that have multiple definitions with different arities.
+    /// Used to mangle exported names as name__N for arity overloading.
+    pub overloaded_pub_fn_names: FxHashSet<String>,
+    /// Maps call-site TextRange -> mangled callee name (e.g. "slugify__2").
+    /// Populated during inference for arity-overloaded calls.
+    /// Consumed by the MIR lowerer to emit the correct function reference.
+    pub overloaded_call_targets: FxHashMap<TextRange, String>,
 }
 
 impl InferCtx {
@@ -69,6 +77,8 @@ impl InferCtx {
             local_service_exports: FxHashMap::default(),
             current_module: None,
             fn_return_type_stack: Vec::new(),
+            overloaded_pub_fn_names: FxHashSet::default(),
+            overloaded_call_targets: FxHashMap::default(),
         }
     }
 

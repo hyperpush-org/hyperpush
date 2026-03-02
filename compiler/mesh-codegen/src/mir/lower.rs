@@ -272,6 +272,14 @@ struct Lowerer<'a> {
     /// assert_raises). Detected in lower_source_file's pre-scan pass by looking
     /// for `fn __test_body_*` function definitions (injected by the preprocessor).
     is_test_mode: bool,
+    /// Maps call-site TextRange -> mangled callee name (e.g. "slugify__2").
+    /// Populated by the typechecker for arity-overloaded calls; used here to
+    /// emit the correct mangled function reference in lower_call_expr.
+    overloaded_call_targets: HashMap<rowan::TextRange, String>,
+    /// Pub fn names that have multiple definitions at different arities.
+    /// Detected in the lower_source_file pre-pass; used in lower_fn_def
+    /// to emit the mangled MIR function name (e.g. "slugify__1").
+    overloaded_pub_fn_names: std::collections::HashSet<String>,
 }
 
 /// Walk through Let/Block wrappers to find the effective return type of a MIR expression.
@@ -330,6 +338,10 @@ impl<'a> Lowerer<'a> {
             current_fn_return_type: None,
             try_counter: 0,
             is_test_mode: false,
+            overloaded_call_targets: typeck.overloaded_call_targets.iter()
+                .map(|(k, v)| (*k, v.clone()))
+                .collect(),
+            overloaded_pub_fn_names: std::collections::HashSet::new(),
         }
     }
 
