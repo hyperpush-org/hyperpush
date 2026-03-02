@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Package Dogfood
 status: unknown
-last_updated: "2026-03-02T05:47:44.733Z"
+last_updated: "2026-03-02T06:03:37Z"
 progress:
   total_phases: 124
   completed_phases: 124
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 148 of 148 (Integrate)
-Plan: 0 of ? complete in phase 148 (next to start)
-Status: Phase 147 complete — all 3 plans done, checkpoint 2 approved by human, DIST-04 satisfied; ready for Phase 148
-Last activity: 2026-03-02 — Phase 147 final checkpoint approved: mesh-slug published, installed, compiled, "hello-world" confirmed
+Plan: 1 of 2 complete in phase 148
+Status: Phase 148-01 complete — mesher declared mesh-slug@1.0.0 dependency and installed from live registry; INTG-01 + INTG-02 satisfied
+Last activity: 2026-03-02 — 148-01 complete: mesh-slug added to mesher/mesh.toml, meshpkg install succeeded, mesh.lock generated
 
 Progress: [███░░░░░░░] 30% (v15.0)
 
@@ -44,6 +44,7 @@ Progress: [███░░░░░░░] 30% (v15.0)
 | 147-publish-and-verify | 01 | 12min | 2 | 2 |
 | 147-publish-and-verify | 02 | 25min | 3 | 1 |
 | 147-publish-and-verify | 03 | 3min | 1 | 5 |
+| 148-mesher-integration | 01 | 1min | 1 | 3 |
 
 ## Accumulated Context
 
@@ -67,6 +68,7 @@ Recent decisions affecting current work:
 - [Phase 147-01]: Root-level .mpl files added to meshpkg tarball before src/ block; installed packages discovered from .mesh/packages/*/ in meshc build_project()
 - [Phase 147-02]: Registry publish requires GitHub-scoped name in mesh.toml ({owner}/{package}); meshpkg login --token stores to ~/.mesh/credentials; 409 on re-publish is acceptable (immutable registry)
 - [Phase 147-03]: Scoped packages install to .mesh/packages/{owner}/{name}@{version}/ (two-level layout); discovery.rs Phase 1b must walk two levels deep; default meshpkg registry is api.packages.meshlang.dev
+- [Phase 148-01]: mesher/mesh.toml now declares "snowdamiz/mesh-slug" = "1.0.0"; meshpkg install succeeds without --registry flag; credentials from ~/.mesh/credentials used automatically; sha256 checksum in mesh.lock matches e2e consumer verification
 
 ### Pending Todos
 
@@ -85,5 +87,5 @@ None for v15.0.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed Phase 147 — all plans done, final checkpoint approved; Phase 148 (integrate) is next
+Stopped at: Completed 148-01-PLAN.md (mesher dependency declaration + install)
 Resume file: None
