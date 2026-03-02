@@ -19,8 +19,8 @@ Build, publish, and consume a real Mesh package (mesh-slug) to validate the end-
 ### Distribution
 
 - [x] **DIST-01**: mesh-slug has a valid `mesh.toml` manifest with name, version, and description fields
-- [ ] **DIST-02**: User can publish mesh-slug to the package registry via `meshpkg publish`
-- [ ] **DIST-03**: mesh-slug appears in search results on packages.meshlang.dev after publishing
+- [x] **DIST-02**: User can publish mesh-slug to the package registry via `meshpkg publish`
+- [x] **DIST-03**: mesh-slug appears in search results on packages.meshlang.dev after publishing
 - [x] **DIST-04**: User can install mesh-slug in a project via `meshpkg install mesh-slug`
 
 ### Mesher Integration
@@ -54,8 +54,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SLUG-04 | Phase 146 | Complete |
 | SLUG-05 | Phase 146 | Complete |
 | DIST-01 | Phase 147 | Complete |
-| DIST-02 | Phase 147 | Pending |
-| DIST-03 | Phase 147 | Pending |
+| DIST-02 | Phase 147 | Complete |
+| DIST-03 | Phase 147 | Complete |
 | DIST-04 | Phase 147 | Complete |
 | INTG-01 | Phase 148 | Pending |
 | INTG-02 | Phase 148 | Pending |
