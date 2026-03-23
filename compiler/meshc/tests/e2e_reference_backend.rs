@@ -53,22 +53,33 @@ fn assert_reference_backend_build_succeeds() {
 }
 
 fn reference_backend_binary() -> PathBuf {
-    repo_root().join("reference-backend").join("reference-backend")
+    repo_root()
+        .join("reference-backend")
+        .join("reference-backend")
 }
 
-fn run_reference_backend_migrations(database_url: &str) {
+fn run_reference_backend_migration(database_url: &str, command: &str) -> Output {
     let root = repo_root();
     let meshc = find_meshc();
-    let output = Command::new(&meshc)
+    Command::new(&meshc)
         .current_dir(&root)
         .env("DATABASE_URL", database_url)
-        .args(["migrate", "reference-backend", "up"])
+        .args(["migrate", "reference-backend", command])
         .output()
-        .expect("failed to invoke meshc migrate up reference-backend");
+        .unwrap_or_else(|e| {
+            panic!(
+                "failed to invoke meshc migrate reference-backend {}: {}",
+                command, e
+            )
+        })
+}
 
+fn assert_reference_backend_migration_succeeds(database_url: &str, command: &str) {
+    let output = run_reference_backend_migration(database_url, command);
     assert!(
         output.status.success(),
-        "meshc migrate up reference-backend failed:\nstdout: {}\nstderr: {}",
+        "meshc migrate reference-backend {} failed:\nstdout: {}\nstderr: {}",
+        command,
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
@@ -162,27 +173,6 @@ fn assert_startup_logs(combined: &str, database_url: &str) {
     );
 }
 
-fn response_body(response: &str) -> &str {
-    response.split("\r\n\r\n").nth(1).unwrap_or("")
-}
-
-fn compact_json(text: &str) -> String {
-    text.chars().filter(|c| !c.is_whitespace()).collect()
-}
-
-fn extract_json_string_field(body: &str, field: &str) -> String {
-    let needle = format!("\"{}\":\"", field);
-    let start = body
-        .find(&needle)
-        .unwrap_or_else(|| panic!("field '{}' not found in response body: {}", field, body))
-        + needle.len();
-    let tail = &body[start..];
-    let end = tail
-        .find('"')
-        .unwrap_or_else(|| panic!("field '{}' missing closing quote in body: {}", field, body));
-    tail[..end].to_string()
-}
-
 fn assert_reference_backend_runtime_starts(database_url: &str) {
     assert_reference_backend_build_succeeds();
 
@@ -198,7 +188,7 @@ fn assert_reference_backend_runtime_starts(database_url: &str) {
         stderr
     );
     assert!(
-        response.contains(r#"{"status":"ok"}"#),
+        response.contains(r#""status":"ok""#),
         "expected JSON health payload, got: {}\nstdout: {}\nstderr: {}",
         response,
         stdout,
@@ -207,117 +197,67 @@ fn assert_reference_backend_runtime_starts(database_url: &str) {
     assert_startup_logs(&combined, database_url);
 }
 
-fn assert_reference_backend_jobs_round_trip(database_url: &str) {
-    run_reference_backend_migrations(database_url);
-    assert_reference_backend_build_succeeds();
+fn run_reference_backend_smoke_script(database_url: &str) -> Output {
+    let root = repo_root();
+    Command::new("bash")
+        .current_dir(&root)
+        .arg("reference-backend/scripts/smoke.sh")
+        .env("DATABASE_URL", database_url)
+        .env("PORT", "18080")
+        .env("JOB_POLL_MS", "500")
+        .output()
+        .expect("failed to invoke reference-backend/scripts/smoke.sh")
+}
 
-    let child = spawn_reference_backend(database_url);
-    let health_response = wait_for_reference_backend();
-    assert!(
-        health_response.contains("200"),
-        "expected HTTP 200 from /health before jobs round trip, got: {}",
-        health_response
-    );
+fn assert_reference_backend_postgres_smoke(database_url: &str) {
+    assert_reference_backend_migration_succeeds(database_url, "status");
+    assert_reference_backend_migration_succeeds(database_url, "up");
 
-    let create_payload = r#"{"kind":"demo","attempt":1}"#;
-    let create_response = send_http_request("POST", "/jobs", Some(create_payload))
-        .expect("failed to create job via POST /jobs");
-    let create_body = response_body(&create_response);
-    let create_compact = compact_json(create_body);
-    assert!(
-        create_response.contains("201"),
-        "expected HTTP 201 from POST /jobs, got: {}",
-        create_response
-    );
-    assert!(
-        create_compact.contains(r#""status":"pending""#),
-        "expected pending status in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""attempts":0"#),
-        "expected attempts=0 in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""last_error":null"#),
-        "expected last_error=null in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""processed_at":null"#),
-        "expected processed_at=null in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""payload":{"#),
-        "expected nested payload object in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""kind":"demo""#),
-        "expected payload.kind in create response, got: {}",
-        create_body
-    );
-    assert!(
-        create_compact.contains(r#""attempt":1"#),
-        "expected payload.attempt in create response, got: {}",
-        create_body
-    );
-
-    let job_id = extract_json_string_field(create_body, "id");
-    let get_path = format!("/jobs/{}", job_id);
-    let get_response = send_http_request("GET", &get_path, None)
-        .expect("failed to fetch job via GET /jobs/:id");
-    let get_body = response_body(&get_response);
-    let get_compact = compact_json(get_body);
+    let output = run_reference_backend_smoke_script(database_url);
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    let combined = format!("{stdout}{stderr}");
 
     assert!(
-        get_response.contains("200"),
-        "expected HTTP 200 from GET /jobs/:id, got: {}",
-        get_response
+        output.status.success(),
+        "reference-backend smoke script failed:\nstdout: {}\nstderr: {}",
+        stdout,
+        stderr
     );
     assert!(
-        get_compact.contains(&format!(r#""id":"{}""#, job_id)),
-        "expected stable job id in GET response, got: {}",
-        get_body
-    );
-    assert!(
-        get_compact.contains(r#""status":"pending""#),
-        "expected pending status in GET response, got: {}",
-        get_body
-    );
-    assert!(
-        get_compact.contains(r#""payload":{"#),
-        "expected nested payload object in GET response, got: {}",
-        get_body
-    );
-    assert!(
-        get_compact.contains(r#""kind":"demo""#),
-        "expected payload.kind in GET response, got: {}",
-        get_body
-    );
-    assert!(
-        get_compact.contains(r#""attempt":1"#),
-        "expected payload.attempt in GET response, got: {}",
-        get_body
-    );
-
-    let (stdout, stderr, combined) = stop_reference_backend(child);
-    assert_startup_logs(&combined, database_url);
-    assert!(
-        combined.contains(&format!("[reference-backend] Job created id={} status=pending", job_id)),
-        "expected job-create log line, got:\n{}",
+        combined.contains("[smoke] building reference-backend"),
+        "expected smoke build step, got:\n{}",
         combined
     );
     assert!(
-        combined.contains(&format!("[reference-backend] Job fetched id={} status=pending attempts=0", job_id)),
-        "expected job-fetch log line, got:\n{}",
+        combined.contains("[smoke] starting reference-backend on :18080"),
+        "expected smoke start step, got:\n{}",
         combined
     );
     assert!(
-        !stdout.is_empty() || stderr.is_empty() || !combined.is_empty(),
-        "expected collected process output to remain inspectable"
+        combined.contains("[smoke] health ready:"),
+        "expected smoke health step, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains("[smoke] created job:"),
+        "expected smoke create step, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains("[smoke] processed job after attempts="),
+        "expected smoke processed step, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains(r#""status":"processed""#),
+        "expected processed job payload in smoke output, got:\n{}",
+        combined
+    );
+    assert!(
+        !combined.contains(database_url),
+        "smoke output must not echo DATABASE_URL\nlogs:\n{}",
+        combined
     );
 }
 
@@ -346,5 +286,5 @@ fn e2e_reference_backend_runtime_starts() {
 fn e2e_reference_backend_postgres_smoke() {
     let database_url = std::env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set for e2e_reference_backend_postgres_smoke");
-    assert_reference_backend_jobs_round_trip(&database_url);
+    assert_reference_backend_postgres_smoke(&database_url);
 }

@@ -64,7 +64,7 @@
   - Do: Implement a timer-recursive worker patterned after Mesher’s long-running actors instead of `Job.async`, have it claim pending jobs and mark them processed, surface per-job diagnostics through storage/API responses, update health output to reflect worker readiness, and add a package-local smoke script that starts the binary, hits the API, and waits for the state transition.
   - Verify: `DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} PORT=18080 JOB_POLL_MS=500 bash reference-backend/scripts/smoke.sh`
   - Done when: posting a job causes the persisted row to transition from `pending` to `processed` without manual DB edits, and the smoke script fails loudly on startup, HTTP, migration, or worker-processing regressions.
-- [ ] **T05: Finish compiler-facing e2e proof and canonical package documentation** `est:1h`
+- [x] **T05: Finish compiler-facing e2e proof and canonical package documentation** `est:1h`
   - Why: Downstream slices still need one mechanical proof target and one authoritative command reference; T01 only seeded the test file, and the blocker means runtime-start proof now has to be explicit rather than implied.
   - Files: `compiler/meshc/tests/e2e_reference_backend.rs`, `reference-backend/README.md`, `reference-backend/.env.example`
   - Do: Extend the seeded Rust test file so it covers the build-only path, the non-empty-`DATABASE_URL` runtime-start regression, and the ignored Postgres smoke path; reuse existing compiler e2e helpers instead of inventing a new harness; document the exact prerequisite/build/migrate/run/smoke commands in the package README; and publish an `.env.example` that matches the code and test expectations.

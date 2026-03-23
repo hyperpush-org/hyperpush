@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T04",
+  "unitId": "M028/S01/T04",
+  "timestamp": 1774251565825,
+  "passed": false,
+  "discoverySource": "none",
+  "checks": [],
+  "retryAttempt": 1,
+  "maxRetries": 2,
+  "runtimeErrors": [
+    {
+      "source": "bg-shell",
+      "severity": "crash",
+      "message": "[m028-reference-backend-v2] exitCode=138 errors: /bin/bash: line 1: 93971 Bus error: 10           PORT=18080 JOB_POLL_MS=500 ./reference-backend/reference-backend",
+      "blocking": true
+    },
+    {
+      "source": "bg-shell",
+      "severity": "crash",
+      "message": "[m028-reference-backend-v3] exitCode=134 errors: thread caused non-unwinding panic. aborting.",
+      "blocking": true
+    }
+  ]
+}

@@ -16,14 +16,13 @@
 //! Pool handles are opaque u64 values (Box::into_raw), same pattern as
 //! PgConn/SqliteConn handles.
 
-use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
 use parking_lot::{Condvar, Mutex};
 
 use super::pg::{
-    pg_simple_command, mesh_pg_close, mesh_pg_connect, mesh_pg_execute, mesh_pg_query,
-    mesh_pg_query_as, PgConn,
+    mesh_pg_close, mesh_pg_connect, mesh_pg_execute, mesh_pg_query, mesh_pg_query_as,
+    pg_simple_command, PgConn,
 };
 use crate::io::alloc_result;
 use crate::string::{mesh_string_new, MeshString};
@@ -38,7 +37,7 @@ struct PooledConn {
 
 struct PoolInner {
     url: String,
-    idle: VecDeque<PooledConn>,
+    idle: Vec<PooledConn>,
     active_count: usize,
     total_created: usize,
     #[allow(dead_code)]
@@ -122,11 +121,11 @@ pub extern "C" fn mesh_pool_open(
         let timeout = (timeout_ms.max(100)) as u64;
 
         // Pre-create min_conns connections
-        let mut idle = VecDeque::with_capacity(min);
+        let mut idle = Vec::with_capacity(min);
         for _ in 0..min {
             match create_connection(url_str) {
                 Ok(handle) => {
-                    idle.push_back(PooledConn {
+                    idle.push(PooledConn {
                         handle,
                         last_used: Instant::now(),
                     });
@@ -187,7 +186,7 @@ pub extern "C" fn mesh_pool_checkout(pool_handle: u64) -> *mut u8 {
             }
 
             // Try to get an idle connection
-            if let Some(conn) = inner.idle.pop_front() {
+            if let Some(conn) = inner.idle.pop() {
                 // Health check: validate connection before returning
                 if health_check(conn.handle) {
                     inner.active_count += 1;
@@ -274,7 +273,7 @@ pub extern "C" fn mesh_pool_checkin(pool_handle: u64, conn_handle: u64) {
         // Return to idle
         let mut inner = pool.inner.lock();
         inner.active_count -= 1;
-        inner.idle.push_back(PooledConn {
+        inner.idle.push(PooledConn {
             handle: conn_handle,
             last_used: Instant::now(),
         });
@@ -410,5 +409,51 @@ pub extern "C" fn mesh_pool_close(pool_handle: u64) {
 
         // Wake all blocked checkouts so they see closed=true
         pool.available.notify_all();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::collections::list::{mesh_list_append, mesh_list_new};
+    use crate::gc::mesh_rt_init;
+    use crate::io::MeshResult;
+    use crate::string::mesh_string_new;
+
+    fn mk_str(s: &[u8]) -> *mut MeshString {
+        mesh_string_new(s.as_ptr(), s.len() as u64)
+    }
+
+    #[test]
+    #[ignore]
+    fn test_pool_execute_postgres_round_trip() {
+        mesh_rt_init();
+
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must be set for test_pool_execute_postgres_round_trip");
+        let url = mk_str(database_url.as_bytes());
+        let open_result = mesh_pool_open(url, 1, 2, 5000);
+        let open = unsafe { &*(open_result as *const MeshResult) };
+        assert_eq!(open.tag, 0, "pool open should succeed");
+        let pool = open.value as u64;
+
+        let create_sql = mk_str(
+            b"CREATE TEMP TABLE IF NOT EXISTS mesh_pool_smoke (id INTEGER PRIMARY KEY, name TEXT)",
+        );
+        let empty_params = mesh_list_new();
+        let create_result = mesh_pool_execute(pool, create_sql, empty_params);
+        let create = unsafe { &*(create_result as *const MeshResult) };
+        assert_eq!(create.tag, 0, "pool execute should succeed");
+
+        let insert_sql = mk_str(b"INSERT INTO mesh_pool_smoke (id, name) VALUES ($1, $2)");
+        let mut insert_params = mesh_list_new();
+        insert_params = mesh_list_append(insert_params, mk_str(b"1") as u64);
+        insert_params = mesh_list_append(insert_params, mk_str(b"mesh") as u64);
+        let insert_result = mesh_pool_execute(pool, insert_sql, insert_params);
+        let insert = unsafe { &*(insert_result as *const MeshResult) };
+        assert_eq!(insert.tag, 0, "pool insert should succeed");
+        assert_eq!(insert.value as i64, 1, "pool insert should affect one row");
+
+        mesh_pool_close(pool);
     }
 }

@@ -50,3 +50,9 @@ Lock the now-working package into the repo’s verification surface and document
 - `compiler/meshc/tests/e2e_reference_backend.rs` — Rust e2e coverage for build, runtime-start regression, and ignored Postgres smoke verification of the package
 - `reference-backend/README.md` — authoritative package-local build/migrate/run/smoke instructions
 - `reference-backend/.env.example` — example env contract shared by docs, smoke flow, and tests
+
+## Observability Impact
+
+- Signals changed: the compiler-facing smoke proof now exercises the package’s real migration and smoke-script surfaces instead of relying on a bespoke pending-only HTTP round-trip, and the package README/.env example publish the same command contract the tests expect.
+- How a future agent inspects this: run `cargo test -p meshc e2e_reference_backend_builds --test e2e_reference_backend -- --nocapture`, `DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc e2e_reference_backend_runtime_starts --test e2e_reference_backend -- --ignored --nocapture`, `DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc e2e_reference_backend_postgres_smoke --test e2e_reference_backend -- --ignored --nocapture`, and compare them with `reference-backend/README.md`, `reference-backend/.env.example`, and `reference-backend/scripts/smoke.sh`.
+- Failure states now visible: env-contract drift, migration command drift, or a smoke-path regression will fail through one compiler-facing test target and one documented package command set instead of hiding behind stale or divergent examples.
