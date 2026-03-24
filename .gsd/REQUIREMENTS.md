@@ -81,17 +81,6 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: unmapped
 - Notes: Bug is in typechecker span resolution, not parsing. Single-line calls with same args work.
 
-### R018 — `from Module import (\n  a,\n  b,\n  c\n)` must parse correctly. Currently the import parser breaks on newline after comma, forcing all imports onto single lines (up to 310 characters in mesher).
-- Class: quality-attribute
-- Status: active
-- Description: `from Module import (\n  a,\n  b,\n  c\n)` must parse correctly. Currently the import parser breaks on newline after comma, forcing all imports onto single lines (up to 310 characters in mesher).
-- Why it matters: 310-character import lines are unreadable and unfriendly to code review.
-- Source: user
-- Primary owning slice: M031/S02
-- Supporting slices: none
-- Validation: unmapped
-- Notes: Parser fix in `parse_from_import_decl` — need to handle parenthesized groups where newlines are insignificant.
-
 ### R019 — `fn_call(a, b, c,)` and multiline call formatting with trailing commas must parse correctly.
 - Class: quality-attribute
 - Status: active
@@ -248,6 +237,17 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: Validated by M031/S01/T01: added `suppress_trailing_closure` flag to parser with save/restore in all 4 control-flow condition sites. 5 e2e tests pass (if/while/case/for with fn-call conditions, plus trailing-closure regression).
 - Notes: Must not break trailing closures used by test framework (`test("name") do ... end`, `describe("name") do ... end`).
 
+### R018 — `from Module import (\n  a,\n  b,\n  c\n)` must parse correctly. Currently the import parser breaks on newline after comma, forcing all imports onto single lines (up to 310 characters in mesher).
+- Class: quality-attribute
+- Status: validated
+- Description: `from Module import (\n  a,\n  b,\n  c\n)` must parse correctly. Currently the import parser breaks on newline after comma, forcing all imports onto single lines (up to 310 characters in mesher).
+- Why it matters: 310-character import lines are unreadable and unfriendly to code review.
+- Source: user
+- Primary owning slice: M031/S02
+- Supporting slices: none
+- Validation: Validated by M031/S02 — parenthesized multiline imports parse into the same AST shape as flat imports; 3 parser snapshot tests and 3 e2e tests prove single-line, multiline, and trailing-comma paren imports compile and run correctly.
+- Notes: Parser fix in `parse_from_import_decl` — need to handle parenthesized groups where newlines are insignificant.
+
 ## Deferred
 
 ### R020 — Mesh eventually offers a stronger debugger/profiler/trace surface suitable for deeper production diagnostics.
@@ -361,7 +361,7 @@ This file is the explicit capability and coverage contract for the project.
 | R015 | core-capability | validated | M031/S01 | none | Validated by M031/S01/T02: added `types.insert` in `infer_if` for both return paths. 5 e2e tests pass (Int, String, Bool, 3-level chain, let binding). String-return test serves as crash sentinel. |
 | R016 | core-capability | validated | M031/S01 | none | Validated by M031/S01/T01: added `suppress_trailing_closure` flag to parser with save/restore in all 4 control-flow condition sites. 5 e2e tests pass (if/while/case/for with fn-call conditions, plus trailing-closure regression). |
 | R017 | core-capability | active | M031/S01 | none | unmapped |
-| R018 | quality-attribute | active | M031/S02 | none | unmapped |
+| R018 | quality-attribute | validated | M031/S02 | none | Validated by M031/S02 — parenthesized multiline imports parse into the same AST shape as flat imports; 3 parser snapshot tests and 3 e2e tests prove single-line, multiline, and trailing-comma paren imports compile and run correctly. |
 | R019 | quality-attribute | active | M031/S02 | none | unmapped |
 | R020 | operability | deferred | none | none | unmapped |
 | R021 | admin/support | deferred | none | none | unmapped |
@@ -377,7 +377,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 12
-- Mapped to slices: 12
-- Validated: 10 (R001, R002, R003, R004, R005, R006, R008, R009, R015, R016)
+- Active requirements: 11
+- Mapped to slices: 11
+- Validated: 11 (R001, R002, R003, R004, R005, R006, R008, R009, R015, R016, R018)
 - Unmapped active requirements: 0

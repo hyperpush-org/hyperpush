@@ -57,7 +57,7 @@ This milestone is complete only when all are true:
 - [x] **S01: Parser & Codegen Fixes** `risk:high` `depends:[]`
   > After this: `if is_big(15) do ... end` compiles; `else if` chains return correct values; multiline fn calls typecheck; proven by new e2e tests.
 
-- [ ] **S02: Trailing Commas & Multiline Imports** `risk:medium` `depends:[S01]`
+- [x] **S02: Trailing Commas & Multiline Imports** `risk:medium` `depends:[S01]`
   > After this: `from Module import (\n  a,\n  b\n)` works; trailing commas in fn args accepted; proven by new e2e tests and formatter support.
 
 - [ ] **S03: Reference-Backend Dogfood Cleanup** `risk:low` `depends:[S01,S02]`

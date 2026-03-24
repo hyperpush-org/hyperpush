@@ -17,7 +17,7 @@ The repository ships a broad backend-oriented language platform:
 - package and registry infrastructure plus a docs/website surface
 - dogfooded backend applications: `reference-backend/` (API + DB + jobs) and `mesher/` (error monitoring platform)
 
-M028 established the backend trust baseline with recovery proof, deployment proof, tooling trust, and documentation. M031/S01 fixed three compiler bugs that blocked idiomatic Mesh patterns: trailing-closure disambiguation in control-flow conditions (`if fn_call() do`), `else if` chain value correctness, and multiline function call type resolution. The remaining M031 gap is DX ergonomics: trailing commas, multiline imports, and dogfood cleanup across both codebases.
+M028 established the backend trust baseline with recovery proof, deployment proof, tooling trust, and documentation. M031/S01 fixed three compiler bugs that blocked idiomatic Mesh patterns: trailing-closure disambiguation in control-flow conditions (`if fn_call() do`), `else if` chain value correctness, and multiline function call type resolution. M031/S02 added parenthesized multiline imports (`from Module import (\n  a,\n  b\n)`) and trailing-comma formatter support. The remaining M031 gap is dogfood cleanup across both codebases and expanded language test coverage.
 
 ## Architecture / Key Patterns
 
