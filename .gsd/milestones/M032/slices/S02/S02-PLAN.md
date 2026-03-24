@@ -42,13 +42,13 @@
 
 ## Tasks
 
-- [x] **T01: Repair inferred-export lowering and freeze regression coverage** `est:3h`
+- [ ] **T01: Repair inferred-export lowering and freeze regression coverage** `est:3h`
   - Why: The slice only counts if it fixes the actual ABI/root-cause bug rather than swapping one verifier symptom for another. The repair needs durable proof on both the local single-file path and the imported cross-module path.
   - Files: `compiler/meshc/tests/e2e.rs`, `compiler/meshc/src/main.rs`, `compiler/mesh-codegen/src/lib.rs`, `compiler/mesh-codegen/src/mir/lower.rs`, `compiler/mesh-codegen/src/mir/types.rs`
   - Do: Replace the old `xmod_identity` failure-only proof with passing `m032_inferred_*` coverage in `compiler/meshc/tests/e2e.rs`: local inferred identity must round-trip both `Int` and `String`, imported inferred identity must do the same through a real multifile build, and the tests must stay narrow enough that `e2e_cross_module_polymorphic` / `e2e_cross_module_service` remain the adjacency controls instead of being rewritten. Then thread concrete function-usage evidence from `compiler/meshc/src/main.rs` through `mesh_codegen::lower_to_mir_raw(...)` into the MIR lowerer so imported functions can recover unresolved parameter and return types from call-site evidence; extend `lower_fn_def(...)` to repair unresolved returns as well as parameters, and do not hide real unresolved types with verifier suppression or broad generic machinery.
   - Verify: `cargo test -p meshc --test e2e m032_inferred -- --nocapture`; `cargo test -p meshc --test e2e e2e_cross_module_polymorphic -- --nocapture`; `cargo test -p meshc --test e2e e2e_cross_module_service -- --nocapture`
   - Done when: the new `m032_inferred_*` tests pass with correct stdout on both local and imported fixtures, and the existing cross-module service/polymorphic controls still pass unchanged.
-- [x] **T02: Dogfood the repaired inferred export in mesher and replay automation** `est:2h`
+- [ ] **T02: Dogfood the repaired inferred export in mesher and replay automation** `est:2h`
   - Why: R013 and R035 are not satisfied by compiler tests alone. Mesher needs to consume the repaired path in real product code, and the repo’s public proof surface has to stop claiming the blocker is still live.
   - Files: `mesher/storage/writer.mpl`, `mesher/services/writer.mpl`, `scripts/verify-m032-s01.sh`
   - Do: Move `flush_batch` and any storage-local helper it needs out of `mesher/services/writer.mpl` into `mesher/storage/writer.mpl` so `Services.Writer` imports and calls a real inferred-parameter export instead of keeping all inferred helpers local. Keep retry policy, service state, and timer logic where they are; this task is about truthful module boundaries, not redesigning the writer service. Rewrite the stale `main.mpl` / service-export comment in `mesher/storage/writer.mpl` around the actual remaining raw-SQL boundary, then flip `scripts/verify-m032-s01.sh` so `xmod_identity` is a success path with exact stdout while the still-real retained-limit checks stay intact.

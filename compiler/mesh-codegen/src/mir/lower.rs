@@ -12214,7 +12214,7 @@ impl<'a> Lowerer<'a> {
         //   3. Calls __service_msg_arg(ptr, index) -> i64 (extracts arg N)
         //   4. Dispatches on tag via if/else chain
         //
-        // These helper functions are runtime functions we can add.
+        // These helper functiuntime functions we can add.
         //
         // MOST PRAGMATIC: Since all values are i64, we generate the loop as an actor
         // that uses raw receive and does all dispatch inline. The code generator
