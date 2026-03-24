@@ -100,8 +100,8 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M031/S04
 - Supporting slices: none
-- Validation: unmapped
-- Notes: ~72 `let _ =`, ~32 `<>` (some legitimately needed for raw SQL/JSON), 310-char import lines.
+- Validation: Partially validated by M031/S04: zero `let _ =` (72 removed across 6 files), 11 clear-win `<>` sites replaced with interpolation (D029-designated SQL/JSONB/crypto sites preserved), 3 nested else/if flattened to `else if`. Multiline imports deferred — meshc fmt collapses them back to single-line (formatter bug, not parser). Build succeeds; 313 e2e tests pass.
+- Notes: 72 `let _ =` removed, 11 `<>` → interpolation, 3 else if flattened. Multiline imports blocked on formatter fix (see KNOWLEDGE.md entry). Pipe operators were not in scope for S04 tasks — mesher already uses pipes where natural. The requirement's multiline-import criterion cannot be fully validated until the formatter walker handles FROM_IMPORT_DECL with IMPORT_LIST inside parens.
 
 ### R025 — New e2e tests must cover: bare expression statements, `else if` chains (Int/String/Bool), `if fn_call() do`, `while fn_call() do`, `case fn_call() do`, `for x in fn_call() do`, `not fn_call()` in conditions, multiline fn calls, multiline imports, trailing commas, struct update in service handlers, pipe chains.
 - Class: quality-attribute
@@ -367,7 +367,7 @@ This file is the explicit capability and coverage contract for the project.
 | R021 | admin/support | deferred | none | none | unmapped |
 | R022 | operability | deferred | M027/S02 (provisional) | none | unmapped |
 | R023 | quality-attribute | validated | M031/S03 | none | Validated by M031/S03: `rg 'let _ =' reference-backend/ -g '*.mpl'` returns 0 matches, `rg '== true' reference-backend/ -g '*.mpl'` returns 0 matches, all 8 WorkerState full reconstructions replaced with struct update syntax, all nested if/else chains flattened to else if, long import converted to multiline. Build, formatter, project tests, and 313 e2e tests pass clean. |
-| R024 | quality-attribute | active | M031/S04 | none | unmapped |
+| R024 | quality-attribute | active | M031/S04 | none | Partially validated by M031/S04: zero `let _ =` (72 removed across 6 files), 11 clear-win `<>` sites replaced with interpolation (D029-designated SQL/JSONB/crypto sites preserved), 3 nested else/if flattened to `else if`. Multiline imports deferred — meshc fmt collapses them back to single-line (formatter bug, not parser). Build succeeds; 313 e2e tests pass. |
 | R025 | quality-attribute | active | M031/S05 | M031/S01, M031/S02 | unmapped |
 | R030 | anti-feature | out-of-scope | none | none | n/a |
 | R031 | anti-feature | out-of-scope | none | none | n/a |

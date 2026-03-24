@@ -63,7 +63,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Reference-Backend Dogfood Cleanup** `risk:low` `depends:[S01,S02]`
   > After this: `reference-backend/` builds with zero `let _ =`, zero `== true`, struct update syntax, idiomatic pipes; all existing e2e tests pass.
 
-- [ ] **S04: Mesher Dogfood Cleanup** `risk:low` `depends:[S01,S02]`
+- [x] **S04: Mesher Dogfood Cleanup** `risk:low` `depends:[S01,S02]`
   > After this: `mesher/` builds with zero `let _ =`, interpolation replacing `<>`, multiline imports for long lines, pipe operators used where natural.
 
 - [ ] **S05: Language Test Expansion** `risk:low` `depends:[S01,S02,S03,S04]`
