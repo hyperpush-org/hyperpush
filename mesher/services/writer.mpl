@@ -58,8 +58,8 @@ fn flush_with_retry(pool :: PoolHandle, project_id :: String, events) -> Int ! S
 end
 
 # --- Buffer management helpers ---
-# Kept as standalone functions so cast handler bodies remain minimal
-# (avoids complex expressions inside service dispatch codegen).
+# Kept as standalone functions for local reuse and to keep the service block
+# readable; the equivalent append/capacity/rebuild logic now compiles inline.
 
 fn writer_store(state :: WriterState, event_json :: String) -> WriterState do
   let appended = List.append(state.buffer, event_json)

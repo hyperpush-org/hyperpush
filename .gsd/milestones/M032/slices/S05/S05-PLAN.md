@@ -44,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Freeze the last two supported paths and correct the remaining overbroad Mesher comments** `est:1h`
+- [x] **T01: Freeze the last two supported paths and correct the remaining overbroad Mesher comments** `est:1h`
   - Why: S05 cannot publish a truthful retained-limit ledger while `mesher/ingestion/routes.mpl` and `mesher/services/writer.mpl` still overstate Mesh limitations and the evidence for the real current behavior lives only in research notes.
   - Files: `compiler/meshc/tests/e2e.rs`, `mesher/ingestion/routes.mpl`, `mesher/services/writer.mpl`
   - Do: Add two named `e2e` regressions that prove nested wrapper-list `from_json` decoding and inline writer-style cast-body logic already work; then rewrite the bulk-ingest and writer-helper comments to match that proof without touching the real route-closure or timer keep-sites.

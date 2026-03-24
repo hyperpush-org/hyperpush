@@ -6870,6 +6870,123 @@ fn e2e_m032_supported_cast_if_else() {
     assert_eq!(output, "1\n2\n");
 }
 
+/// Proves `deriving(Json)` wrapper structs can decode nested JSON array payloads
+/// through a `List < ... >` field; the remaining mesher bulk-route limit is the
+/// bare top-level array endpoint shape, not array decoding in general.
+#[test]
+fn e2e_m032_supported_nested_wrapper_list_from_json() {
+    let output = compile_and_run(
+        r##"
+struct BulkEvent do
+  id :: String
+  count :: Int
+end deriving(Json)
+
+struct BulkEnvelope do
+  source :: String
+  events :: List < BulkEvent >
+end deriving(Json)
+
+fn main() do
+  let json_str = """{"source":"sdk","events":[{"id":"evt-1","count":2},{"id":"evt-2","count":5}]}"""
+  let result = BulkEnvelope.from_json(json_str)
+  case result do
+    Ok( payload) -> do
+      let first = List.get(payload.events, 0)
+      let second = List.get(payload.events, 1)
+      println(payload.source)
+      println("#{List.length(payload.events)}")
+      println("#{first.id}:#{first.count}")
+      println("#{second.id}:#{second.count}")
+    end
+    Err( e) -> println("Error: #{e}")
+  end
+end
+"##,
+    );
+    assert_eq!(output, "sdk\n2\nevt-1:2\nevt-2:5\n");
+}
+
+/// Proves writer-style cast handlers can inline buffer append/capacity logic and
+/// rebuild service state directly, so `mesher/services/writer.mpl` keeps its
+/// helper for readability rather than codegen survival.
+#[test]
+fn e2e_m032_supported_inline_writer_cast_body() {
+    let output = compile_and_run(
+        r##"
+struct WriterProbeState do
+  buffer :: List < String >
+  buffer_len :: Int
+  batch_size :: Int
+  max_buffer :: Int
+end
+
+service WriterProbe do
+  fn init(batch_size :: Int, max_buffer :: Int) -> WriterProbeState do
+    WriterProbeState {
+      buffer : List.new(),
+      buffer_len : 0,
+      batch_size : batch_size,
+      max_buffer : max_buffer
+    }
+  end
+
+  cast Store(item :: String) do|state|
+    let appended = List.append(state.buffer, item)
+    let new_len = state.buffer_len + 1
+    let buf = if new_len > state.max_buffer do
+      List.drop(appended, new_len - state.max_buffer)
+    else
+      appended
+    end
+    let blen = if new_len > state.max_buffer do
+      state.max_buffer
+    else
+      new_len
+    end
+    if blen >= state.batch_size do
+      WriterProbeState {
+        buffer : List.new(),
+        buffer_len : 0,
+        batch_size : state.batch_size,
+        max_buffer : state.max_buffer
+      }
+    else
+      WriterProbeState {
+        buffer : buf,
+        buffer_len : blen,
+        batch_size : state.batch_size,
+        max_buffer : state.max_buffer
+      }
+    end
+  end
+
+  call Snapshot() :: String do|state|
+    let joined = String.join(state.buffer, ",")
+    (state, "#{state.buffer_len}:#{joined}")
+  end
+end
+
+fn main() do
+  let capped = WriterProbe.start(99, 2)
+  WriterProbe.store(capped, "one")
+  println(WriterProbe.snapshot(capped))
+  WriterProbe.store(capped, "two")
+  println(WriterProbe.snapshot(capped))
+  WriterProbe.store(capped, "three")
+  println(WriterProbe.snapshot(capped))
+
+  let flushing = WriterProbe.start(2, 5)
+  WriterProbe.store(flushing, "alpha")
+  println(WriterProbe.snapshot(flushing))
+  WriterProbe.store(flushing, "beta")
+  println(WriterProbe.snapshot(flushing))
+end
+"##,
+    );
+    assert_eq!(output, "1:one\n2:one,two\n2:two,three\n1:alpha\n0:\n");
+}
+
 // ── M032/S02: inferred-export regression coverage ─────────────────────
 
 /// Local inferred identity must keep its concrete call-site ABI through MIR lowering.

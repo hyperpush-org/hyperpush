@@ -297,9 +297,9 @@ end
 
 # Helper: handle bulk after authentication succeeds.
 # Validates size (5MB limit for bulk), then routes the entire bulk payload
-# to EventProcessor for persistence. Individual JSON array element parsing
-# is not supported at the Mesh language level; the StorageWriter stores
-# the complete bulk JSON for downstream processing.
+# to EventProcessor for persistence. Wrapper structs can carry `List < ... >`
+# fields already; this endpoint still keeps the raw body because it does not
+# decode a bare top-level bulk array before handing work to StorageWriter.
 
 fn handle_bulk_authed(project_id :: String, rate_limiter_pid, processor_pid, writer_pid, request) do
   let allowed = RateLimiter.check_limit(rate_limiter_pid, project_id)
