@@ -20,10 +20,17 @@
 - `cargo test -p mesh-fmt --lib` — formatter tests pass including new paren import formatting tests
 - `cargo run -p meshc -- build reference-backend` — still builds
 - `cargo run -p meshc -- build mesher` — still builds
+- `cargo test -p mesh-parser --test parser_tests from_import_paren` — parenthesized import parse-error diagnostics are clear on malformed input
+
+## Observability / Diagnostics
+
+- **Parse errors:** Malformed parenthesized imports (`from M import (a, b` without closing paren) emit a clear `expected R_PAREN` diagnostic with span info — the same error surface as other delimiter mismatches.
+- **Failure visibility:** Snapshot tests pin the exact CST shape, so any accidental regression in the import-list node structure will show a diff in CI.
+- **No runtime signals:** This is a compile-time-only feature; no runtime observability changes.
 
 ## Tasks
 
-- [ ] **T01: Parse parenthesized imports and add e2e tests for both features** `est:45m`
+- [x] **T01: Parse parenthesized imports and add e2e tests for both features** `est:45m`
   - Why: R018 is blocked — the parser rejects `(` after `import`. R019 already works but has zero test coverage. Both need e2e proof.
   - Files: `compiler/mesh-parser/src/parser/items.rs`, `compiler/mesh-parser/tests/parser_tests.rs`, `compiler/meshc/tests/e2e.rs`
   - Do: In `parse_from_import_decl`, after consuming `import`, check `p.at(L_PAREN)` — if true, advance (bumps `paren_depth`, making newlines insignificant). Parse name list as before. Add `R_PAREN` to the break condition after comma. After loop, expect `R_PAREN`. Add parser snapshot tests for: paren single-line, paren multiline, paren with trailing comma. Add e2e tests using `compile_multifile_and_run` for: paren import basic, paren import multiline, paren import trailing comma, trailing comma in fn call single-line, trailing comma in fn call multiline.

@@ -582,6 +582,21 @@ fn from_import() {
     assert_snapshot!(source_and_debug("from Math import sqrt, pow"));
 }
 
+#[test]
+fn from_import_paren() {
+    assert_snapshot!(source_and_debug("from Math import (sqrt, pow)"));
+}
+
+#[test]
+fn from_import_paren_trailing_comma() {
+    assert_snapshot!(source_and_debug("from Math import (sqrt, pow,)"));
+}
+
+#[test]
+fn from_import_paren_multiline() {
+    assert_snapshot!(source_and_debug("from Math import (\n  sqrt,\n  pow\n)"));
+}
+
 // ── Struct Definitions ──────────────────────────────────────────────
 
 #[test]

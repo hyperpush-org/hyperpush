@@ -191,6 +191,14 @@ pub(crate) fn parse_from_import_decl(p: &mut Parser) {
     if !p.has_error() {
         let list = p.open();
 
+        // Optional parenthesized form: `from Module import (a, b)`
+        // Advancing past L_PAREN bumps paren_depth, making newlines
+        // insignificant inside the parens automatically.
+        let has_parens = p.at(SyntaxKind::L_PAREN);
+        if has_parens {
+            p.advance(); // L_PAREN
+        }
+
         // Reject glob import: `from Module import *`
         if p.at(SyntaxKind::STAR) {
             p.error("glob imports are not allowed; import names explicitly");
@@ -205,7 +213,8 @@ pub(crate) fn parse_from_import_decl(p: &mut Parser) {
             p.close(name, SyntaxKind::NAME);
 
             while p.eat(SyntaxKind::COMMA) {
-                if p.at(SyntaxKind::NEWLINE) || p.at(SyntaxKind::EOF) {
+                if p.at(SyntaxKind::NEWLINE) || p.at(SyntaxKind::EOF) || p.at(SyntaxKind::R_PAREN)
+                {
                     break;
                 }
                 let name = p.open();
@@ -214,6 +223,10 @@ pub(crate) fn parse_from_import_decl(p: &mut Parser) {
             }
         } else {
             p.error("expected import name");
+        }
+
+        if has_parens {
+            p.expect(SyntaxKind::R_PAREN);
         }
 
         p.close(list, SyntaxKind::IMPORT_LIST);

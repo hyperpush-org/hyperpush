@@ -6525,3 +6525,123 @@ end
     let output = compile_and_run(source);
     assert_eq!(output, "84\n");
 }
+
+// ── Phase 42: Parenthesized Imports & Trailing Comma Coverage ─────────
+
+/// Parenthesized import on a single line: `from Math import (add, mul)`
+#[test]
+fn e2e_multiline_import_paren_basic() {
+    let output = compile_multifile_and_run(&[
+        (
+            "math.mpl",
+            r#"
+pub fn add(a :: Int, b :: Int) -> Int do
+  a + b
+end
+
+pub fn mul(a :: Int, b :: Int) -> Int do
+  a * b
+end
+"#,
+        ),
+        (
+            "main.mpl",
+            r#"
+from Math import (add, mul)
+
+fn main() do
+  let sum = add(2, 3)
+  let product = mul(4, 5)
+  println("${sum}")
+  println("${product}")
+end
+"#,
+        ),
+    ]);
+    assert_eq!(output, "5\n20\n");
+}
+
+/// Parenthesized import with names on separate lines.
+#[test]
+fn e2e_multiline_import_paren_multiline() {
+    let output = compile_multifile_and_run(&[
+        (
+            "math.mpl",
+            r#"
+pub fn add(a :: Int, b :: Int) -> Int do
+  a + b
+end
+
+pub fn mul(a :: Int, b :: Int) -> Int do
+  a * b
+end
+"#,
+        ),
+        (
+            "main.mpl",
+            "from Math import (\n  add,\n  mul\n)\n\nfn main() do\n  let sum = add(10, 20)\n  let product = mul(3, 7)\n  println(\"${sum}\")\n  println(\"${product}\")\nend\n",
+        ),
+    ]);
+    assert_eq!(output, "30\n21\n");
+}
+
+/// Parenthesized import with trailing comma.
+#[test]
+fn e2e_multiline_import_paren_trailing_comma() {
+    let output = compile_multifile_and_run(&[
+        (
+            "math.mpl",
+            r#"
+pub fn add(a :: Int, b :: Int) -> Int do
+  a + b
+end
+
+pub fn mul(a :: Int, b :: Int) -> Int do
+  a * b
+end
+"#,
+        ),
+        (
+            "main.mpl",
+            "from Math import (\n  add,\n  mul,\n)\n\nfn main() do\n  println(\"${add(1, 2)}\")\n  println(\"${mul(3, 4)}\")\nend\n",
+        ),
+    ]);
+    assert_eq!(output, "3\n12\n");
+}
+
+/// Trailing comma in function call args — single line.
+#[test]
+fn e2e_trailing_comma_call_single_line() {
+    let source = r#"
+fn add(a :: Int, b :: Int) -> Int do
+  a + b
+end
+
+fn main() do
+  let result = add(1, 2,)
+  println("${result}")
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "3\n");
+}
+
+/// Trailing comma in function call args — multiline.
+#[test]
+fn e2e_trailing_comma_call_multiline() {
+    let source = r#"
+fn add(a :: Int, b :: Int) -> Int do
+  a + b
+end
+
+fn main() do
+  let result = add(
+    10,
+    20,
+  )
+  println("${result}")
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "30\n");
+}
