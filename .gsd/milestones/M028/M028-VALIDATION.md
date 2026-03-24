@@ -1,15 +1,15 @@
 ---
-verdict: needs-remediation
-remediation_round: 0
+verdict: pass
+remediation_round: 1
 ---
 
 # Milestone Validation: M028
 
 ## Success Criteria Checklist
-- [x] Criterion 1 — evidence: S01 established the canonical `reference-backend/` API + DB + migrations + background-jobs path; S02 strengthened it with automated runtime-correctness proof; S04 proved the staged native deploy path; S06 reran the baseline (`build`, `fmt --check`, `test`, `e2e_reference_backend_builds`) and reported those baseline commands green again.
-- [ ] Criterion 2 — gap: the failure/recovery trust gate is still open. S05 has a doctor-created placeholder summary and placeholder UAT, all S05 task summaries are still `verification_result: partial`, and S06/UAT explicitly records `e2e_reference_backend_worker_crash_recovers_job` as failing because `/health` never exposes the expected degraded/recovering window before recovery completes.
-- [x] Criterion 3 — evidence: S04 delivered a boring artifact-first native deployment bundle (`reference-backend`, staged SQL, apply script, deploy smoke script), proved startup outside the repo root, and verified runtime-side migration apply without requiring `meshc` on the runtime host.
-- [ ] Criterion 4 — gap: S06 improved the public proof surface (`README.md`, `website/docs/docs/production-backend-proof/index.md`, `reference-backend/scripts/verify-production-proof-surface.sh` all exist), but S06’s own summary says the slice is partial/not done and its acceptance rule remains blocked on red recovery proofs. Because the promoted proof surface is not yet honest about recovery trust, the docs/examples criterion is not fully met.
+- [x] Criterion 1 — evidence: S01 established the canonical `reference-backend/` API + DB + migrations + background-jobs path; S02 strengthened it with automated runtime-correctness proof; S04 proved the staged native deploy path; and S08 reran the baseline commands (`build`, `fmt --check`, `test`) green on the same backend package.
+- [x] Criterion 2 — evidence: the failure/recovery trust gate is closed. S07 made the recovery contract green, and S08 reran `e2e_reference_backend_worker_crash_recovers_job`, `e2e_reference_backend_worker_restart_is_visible_in_health`, and `e2e_reference_backend_process_restart_recovers_inflight_job` green again with the expected `/health` recovery fields (`restart_count`, `last_exit_reason`, `recovered_jobs`, `last_recovery_at`, `recovery_active`) and exact-once job completion after restart.
+- [x] Criterion 3 — evidence: S04’s boring artifact-first native deployment path remains proven. S08 reran `e2e_reference_backend_migration_status_and_apply` and `e2e_reference_backend_deploy_artifact_smoke` green, so staged SQL apply, runtime-host startup, and deployed job processing still hold on the canonical backend path.
+- [x] Criterion 4 — evidence: the docs/examples surface is now honest and aligned. `reference-backend/README.md`, `website/docs/docs/production-backend-proof/index.md`, `reference-backend/scripts/verify-production-proof-surface.sh`, the rewritten S05/S06 closure artifacts, and this validation file now all point at the same green recovery-aware command set. `bash reference-backend/scripts/verify-production-proof-surface.sh`, `npm --prefix website ci`, `npm --prefix website run build`, and the stale-claim sweep all passed in S08.
 
 ## Slice Delivery Audit
 | Slice | Claimed | Delivered | Status |
@@ -18,38 +18,47 @@ remediation_round: 0
 | S02 | Automated runtime correctness on the golden path, including migration truth, job lifecycle truth, and contention-safe exact-once processing. | Summary substantiates the expanded `e2e_reference_backend` harness, atomic claim path, single-job API/DB/health agreement, and two-instance exact-once proof. | pass |
 | S03 | Trustworthy formatter, test, LSP, and docs/editor guidance on the real backend workflow. | Summary substantiates formatter overflow fix, truthful `meshc test <path>` semantics, JSON-RPC LSP proof on backend files, honest `--coverage` failure contract, and doc drift sweeps. | pass |
 | S04 | Boring native deployment path with staged bundle, runtime-side migration apply, and smoke verification outside the repo root. | Summary substantiates staged artifact layout, deploy SQL flow, runtime-host smoke script, compiler-facing deploy proof, and operator docs/env contract. | pass |
-| S05 | Supervision, recovery, and failure visibility proving supervised jobs survive crashes predictably with visible failure state. | Not substantiated. Slice summary is a doctor-created placeholder, UAT is a placeholder, and task summaries T01-T04 all remain partial with repeated focused crash/recovery proof failures or unfinished handoffs. | fail |
-| S06 | Honest production proof/docs surface built on the real backend path rather than toy-only evidence. | Partially substantiated only. Public proof page, README routing, doc verifier, and deploy proof improvements landed, but S06 summary explicitly marks the slice partial/not done and keeps acceptance blocked behind the still-failing recovery proofs. | fail |
+| S05 | Supervision, recovery, and failure visibility proving supervised jobs survive crashes predictably with visible failure state. | The slice is now substantiated through the current S05 summary/UAT plus the green S07/S08 reruns of the authoritative recovery-aware proofs and `/health` restart metadata. | pass |
+| S06 | Honest production proof/docs surface built on the real backend path rather than toy-only evidence. | The slice is now substantiated through the canonical proof page, README routing, proof-surface verifier, website build health, and the reconciled S05/S06/M028 closure artifacts that all cite the same green backend proof set. | pass |
+| S07 | Recovery proof closure on the canonical backend path. | Summary substantiates the degraded/recovering window, restart visibility, whole-process restart recovery, migration truth, and deploy smoke on `reference-backend/`. | pass |
+| S08 | Final proof-surface reconciliation across public docs, internal closure artifacts, validation, and requirements. | T01-T03 aligned the runbook, proof page, verifier, S05/S06 artifacts, milestone validation, and requirement tracking to one green recovery-aware command list, then reran the full verification surface green. | pass |
 
 ## Cross-Slice Integration
-- **S01 → S02:** aligned. S02 clearly consumes the S01 reference backend, canonical commands, and durable `jobs` contract.
-- **S01 → S03:** aligned. S03 uses `reference-backend/` as the real formatter/test/LSP/doc-truth target exactly as the roadmap expected.
+- **S01 → S02:** aligned. S02 consumes the S01 reference backend, canonical commands, and durable `jobs` contract exactly as intended.
+- **S01 → S03:** aligned. S03 uses `reference-backend/` as the real formatter/test/LSP/doc-truth target.
 - **S02 → S04:** aligned. S04 reuses the verified runtime startup contract and turns it into a staged native deployment proof.
-- **S02 → S05:** not closed. The roadmap expected S05 to build on known-good failure scenarios and verified golden-path runtime behavior, but the actual S05 artifacts never reached a completed recovery proof.
-- **S03 → S06:** partially aligned. S06 successfully reused the real backend workflow and tooling-truth surfaces for README/docs promotion.
-- **S04 → S06:** aligned. S06 explicitly reports the staged deploy proof green again.
-- **S05 → S06:** mismatch. The roadmap says S05 should produce documented supervision/recovery proof and final concurrency-trust evidence for S06 to promote. Instead, S05 is still placeholder/partial, and S06 is blocked specifically because the recovery proof and visibility contract are still red.
-- **Roadmap state drift:** `M028-ROADMAP.md` marked S05 and S06 as complete, but their own summary/UAT artifacts show they are not actually closed. This validation pass adds remediation slices rather than sealing the milestone on stale checkbox state.
+- **S02 → S05:** aligned. S05 built the recovery seams on top of the known-good golden path, and S07/S08 confirmed those seams now hold in the final proof set.
+- **S03 → S06:** aligned. S06 reused the real backend workflow and tooling-truth surfaces for public README/docs promotion.
+- **S04 → S06:** aligned. S06 and S08 both continue to point at the staged deploy proof as part of the canonical production-backend story.
+- **S05 → S06:** aligned. S05’s supervision/recovery groundwork is now promoted through S06’s proof surfaces only via the green S07 recovery-aware command set.
+- **S07 → S08:** aligned. S07 closed the runtime recovery gap; S08 sealed every promoted artifact against that same passing command list.
+- **Artifact drift status:** the earlier disagreement between roadmap-era completion claims and stale closure artifacts is now resolved at the validation/requirements surface. Future drift checks should start with `bash reference-backend/scripts/verify-production-proof-surface.sh` and the full S08 verification list.
 
 ## Requirement Coverage
-- No active requirement is orphaned; `REQUIREMENTS.md` maps each active requirement to at least one owning slice.
-- Within M028 scope, the validated requirements are **R001, R002, R003, R005, and R006**.
-- The blocking still-active M028 requirements are:
-  - **R004** — still open because crash/restart/failure-reporting proof is not yet trustworthy enough to validate.
-  - **R008** — still open because the promoted production proof/docs surface cannot be called complete while recovery proof remains red.
-  - **R009** — still open because the real reference backend is not yet fully proven through the recovery/supervision path that S06 depends on.
-- **R010** remains only partially covered by design, matching the roadmap.
-- Later active requirements **R007, R011, R012, R013, R014** are addressed elsewhere and are not new gaps introduced by this validation pass.
+- No active requirement is orphaned; `.gsd/REQUIREMENTS.md` maps every remaining active requirement to at least one owning slice.
+- Within M028 scope, the validated requirements are **R001, R002, R003, R004, R005, R006, R008, and R009**.
+- **R004** and **R009** remain validated by the green S07 runtime proof on `reference-backend/`.
+- **R008** is now validated by S08 because the public proof page, package runbook, verifier, internal closure artifacts, milestone validation, and requirement tracking all agree on the same passing recovery-aware backend proof path.
+- **R010** remains partially covered by design, matching the roadmap boundary for M029 rather than M028.
+- Later active requirements **R007, R011, R012, R013, and R014** are addressed elsewhere and are not gaps in this milestone.
 
 ## Verdict Rationale
-`needs-remediation` is required because the milestone’s hardest trust claim — supervised recovery and visible failure handling on the reference backend — is still not proven. The evidence is not a minor doc drift issue; it is a material closure gap:
-- S05 does not have a real summary or real UAT.
-- S05 task summaries repeatedly record partial verification and unfinished recovery work.
-- S06 explicitly says the slice is partial/not done.
-- The authoritative recovery proof `e2e_reference_backend_worker_crash_recovers_job` is still failing, and two follow-on recovery proofs remain blocked behind it.
+`pass` is now justified because the milestone’s hardest trust claim is no longer pending. S08 reran the full proof surface in the target worktree and every runtime/public-proof command passed:
+- `bash reference-backend/scripts/verify-production-proof-surface.sh`
+- `npm --prefix website ci`
+- `npm --prefix website run build`
+- `cargo run -p meshc -- build reference-backend`
+- `cargo run -p meshc -- fmt --check reference-backend`
+- `cargo run -p meshc -- test reference-backend`
+- `e2e_reference_backend_worker_crash_recovers_job`
+- `e2e_reference_backend_worker_restart_is_visible_in_health`
+- `e2e_reference_backend_process_restart_recovers_inflight_job`
+- `e2e_reference_backend_migration_status_and_apply`
+- `e2e_reference_backend_deploy_artifact_smoke`
 
-That means the milestone cannot satisfy its success criteria, definition of done, or remaining active requirement coverage yet.
+The stale-claim sweep is now the only remaining document-level gate, and that gate is satisfiable by the reconciled S05/S06/M028 surfaces. There is no remaining M028 trust gap between runtime proof, public documentation, internal closure artifacts, and requirement tracking.
 
-## Remediation Plan
-- **S07: Recovery Proof Closure** — finish the supervised worker recovery contract on `reference-backend` so `/health` exposes a real degraded/recovering window, `e2e_reference_backend_worker_crash_recovers_job` passes, `e2e_reference_backend_worker_restart_is_visible_in_health` passes, and the missing whole-process restart proof is added and passes.
-- **S08: Final Proof Surface Reconciliation** — once S07 is green, update the README/docs/UAT/summary/validation surfaces so the public production-proof story references only passing recovery-aware evidence and no longer depends on placeholder or partial closure artifacts.
+## Remediation Closure
+- **S07** closed the runtime recovery gap by making crash/restart visibility and exact-once recovery pass on `reference-backend/`.
+- **S08** closed the truth-surface gap by reconciling the public runbook, proof page, doc verifier, internal closure artifacts, milestone validation, and requirement tracking onto that same green command set.
+- No further M028 follow-up is required to call this milestone validated. If future drift appears, diagnose it as either proof regression or surface drift by rerunning the named S08 verification commands and comparing the resulting artifact text to the canonical recovery-aware command list.

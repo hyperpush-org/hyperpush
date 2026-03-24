@@ -67,3 +67,9 @@ PY`
 
 - `.gsd/milestones/M028/M028-VALIDATION.md` — final green milestone validation with no stale remediation language
 - `.gsd/REQUIREMENTS.md` — R008 marked validated by the reconciled proof surface
+
+## Observability Impact
+
+- Signals changed: the authoritative milestone-closure signals become document-level status fields rather than open remediation markers — `verdict: pass` in `.gsd/milestones/M028/M028-VALIDATION.md`, `Status: validated` in the `R008` section of `.gsd/REQUIREMENTS.md`, and the existing recovery-aware command list remaining the named proof source.
+- How to inspect later: rerun `bash reference-backend/scripts/verify-production-proof-surface.sh`, the serial S08 verification commands, the stale-claim sweep, and the targeted Python assertion that checks `R008` plus `verdict: pass`.
+- Failure visibility added: future agents can distinguish runtime proof regression from document drift by comparing command exits with the sealed artifact text — if commands fail, it is a proof regression; if commands pass but `M028-VALIDATION.md`/`.gsd/REQUIREMENTS.md` disagree, it is closure-surface drift.

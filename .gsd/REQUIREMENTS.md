@@ -15,17 +15,6 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: mapped
 - Notes: This sits after the M028 trust baseline but is already part of the capability contract.
 
-### R008 — Mesh documentation and examples show a production-style backend path and do not rely mainly on toy examples to make the language look ready.
-- Class: launchability
-- Status: active
-- Description: Mesh documentation and examples show a production-style backend path and do not rely mainly on toy examples to make the language look ready.
-- Why it matters: The user explicitly said “docs/examples don’t prove real use” would be a failure.
-- Source: user
-- Primary owning slice: M028/S06
-- Supporting slices: M028/S01, M028/S03, M028/S04, M028/S05
-- Validation: mapped
-- Notes: S03 advanced the documentation truth surface by syncing README, website tooling/testing/cheatsheet docs, reference-backend docs, and the VS Code README to the verified `meshc fmt`, project-directory `meshc test`, honest `--coverage` contract, and JSON-RPC-proven LSP feature set. S06 added the production proof page, README/generic-doc routing, and doc-truth verifier, and S07 restored the green recovery-aware backend proofs. R008 remains open because S08 still needs to reconcile the public README/docs/UAT promotion surfaces so they point only at those now-green recovery-aware proof paths.
-
 ### R010 — The project can point to specific ways Mesh is easier to deploy, measurably fast, and nicer for backend development rather than vaguely claiming it is “better than Elixir.”
 - Class: differentiator
 - Status: active
@@ -136,7 +125,7 @@ This file is the explicit capability and coverage contract for the project.
 - Primary owning slice: M028/S06
 - Supporting slices: M028/S01, M028/S02, M028/S05, M028/S07
 - Validation: Validated by M028/S07 on top of the existing S01-S06 proof surface. The `reference-backend/` package now has green end-to-end build/fmt/test, migration/deploy smoke, worker-crash recovery, restart-visibility, and whole-process restart proofs in `compiler/meshc/tests/e2e_reference_backend.rs`, so Mesh is being judged through one real backend that exercises compiler, runtime, HTTP, Postgres, migrations, background jobs, and recovery instead of isolated subsystem demos.
-- Notes: The reference backend is now a genuinely recovery-aware end-to-end proof target. S08 still needs to reconcile README/docs/UAT promotion to point only at the green recovery-aware paths, but the backend proof itself is now validated.
+- Notes: The reference backend is now a genuinely recovery-aware end-to-end proof target, and S08 has reconciled the promoted README/docs/UAT/validation surfaces to point only at that green recovery-aware path.
 
 ### R005 — Mesh’s native-binary workflow is proven through a deployment path that feels closer to shipping a Go app than to assembling a fragile language stack.
 - Class: launchability
@@ -159,6 +148,17 @@ This file is the explicit capability and coverage contract for the project.
 - Supporting slices: M030/S01 (provisional), M030/S02 (provisional)
 - Validation: S03 closure reran the full tooling trust gate on `reference-backend/`: `cargo test -p mesh-fmt -- --nocapture`, `cargo test -p meshc --test e2e_fmt -- --nocapture`, `cargo run -p meshc -- fmt --check reference-backend`, `cargo run -p meshc -- test reference-backend`, `! cargo run -p meshc -- test --coverage reference-backend`, `cargo test -p meshc --test tooling_e2e -- --nocapture`, `cargo test -p meshc --test e2e_lsp -- --nocapture`, `cargo test -p mesh-lsp -- --nocapture`, and the stale-string sweep over README/website/VS Code/reference-backend docs all passed.
 - Notes: The toolchain should be judged against the real reference backend, not only tiny fixtures.
+
+### R008 — Mesh documentation and examples show a production-style backend path and do not rely mainly on toy examples to make the language look ready.
+- Class: launchability
+- Status: validated
+- Description: Mesh documentation and examples show a production-style backend path and do not rely mainly on toy examples to make the language look ready.
+- Why it matters: The user explicitly said “docs/examples don’t prove real use” would be a failure.
+- Source: user
+- Primary owning slice: M028/S06
+- Supporting slices: M028/S01, M028/S03, M028/S04, M028/S05, M028/S07, M028/S08
+- Validation: Validated by M028/S08 through the reconciled production-proof surface: `bash reference-backend/scripts/verify-production-proof-surface.sh`, `npm --prefix website ci`, `npm --prefix website run build`, `cargo run -p meshc -- build reference-backend`, `cargo run -p meshc -- fmt --check reference-backend`, `cargo run -p meshc -- test reference-backend`, ignored compiler e2e proofs `e2e_reference_backend_worker_crash_recovers_job`, `e2e_reference_backend_worker_restart_is_visible_in_health`, `e2e_reference_backend_process_restart_recovers_inflight_job`, `e2e_reference_backend_migration_status_and_apply`, and `e2e_reference_backend_deploy_artifact_smoke`, plus the stale-claim sweep over `.gsd/milestones/M028/M028-VALIDATION.md` and the reconciled S05/S06 closure artifacts. The public proof page, package runbook, verifier, internal closure artifacts, milestone validation, and requirement tracking now all point at the same green recovery-aware `reference-backend/` path.
+- Notes: S06 built the canonical proof-surface hierarchy, S07 made the backend recovery proof green, and S08 sealed every promoted docs/examples surface onto that same passing command set.
 
 ## Deferred
 
@@ -252,7 +252,7 @@ This file is the explicit capability and coverage contract for the project.
 | R005 | launchability | validated | M028/S04 | M028/S06 | Validated by M028/S04 through live native-deployment proof for `reference-backend/`: `cargo test -p meshc --test e2e_reference_backend e2e_reference_backend_builds -- --nocapture`, staged bundle verification via `reference-backend/scripts/stage-deploy.sh`, `cargo test -p meshc e2e_self_contained_binary -- --nocapture`, ignored operational proof `cargo test -p meshc --test e2e_reference_backend e2e_reference_backend_deploy_artifact_smoke -- --ignored --nocapture`, missing-artifact diagnostics in `apply-deploy-migrations.sh`, and operator-facing docs/env contract in `reference-backend/README.md` and `reference-backend/.env.example`. Proof covers build-host staging, runtime-host `psql` migration apply without `meshc`, staged binary startup outside the repo root, `/health`, job creation + processing, `_mesh_migrations` recording, and log redaction of `DATABASE_URL`. |
 | R006 | quality-attribute | validated | M028/S03 | M030/S01 (provisional), M030/S02 (provisional) | S03 closure reran the full tooling trust gate on `reference-backend/`: `cargo test -p mesh-fmt -- --nocapture`, `cargo test -p meshc --test e2e_fmt -- --nocapture`, `cargo run -p meshc -- fmt --check reference-backend`, `cargo run -p meshc -- test reference-backend`, `! cargo run -p meshc -- test --coverage reference-backend`, `cargo test -p meshc --test tooling_e2e -- --nocapture`, `cargo test -p meshc --test e2e_lsp -- --nocapture`, `cargo test -p mesh-lsp -- --nocapture`, and the stale-string sweep over README/website/VS Code/reference-backend docs all passed. |
 | R007 | launchability | active | M030/S01 (provisional) | M030/S02 (provisional) | mapped |
-| R008 | launchability | active | M028/S06 | M028/S01, M028/S03, M028/S04, M028/S05 | mapped |
+| R008 | launchability | validated | M028/S06 | M028/S01, M028/S03, M028/S04, M028/S05, M028/S07, M028/S08 | Validated by M028/S08 through the reconciled production-proof surface: `bash reference-backend/scripts/verify-production-proof-surface.sh`, `npm --prefix website ci`, `npm --prefix website run build`, `cargo run -p meshc -- build reference-backend`, `cargo run -p meshc -- fmt --check reference-backend`, `cargo run -p meshc -- test reference-backend`, ignored compiler e2e proofs `e2e_reference_backend_worker_crash_recovers_job`, `e2e_reference_backend_worker_restart_is_visible_in_health`, `e2e_reference_backend_process_restart_recovers_inflight_job`, `e2e_reference_backend_migration_status_and_apply`, and `e2e_reference_backend_deploy_artifact_smoke`, plus the stale-claim sweep over `.gsd/milestones/M028/M028-VALIDATION.md` and the reconciled S05/S06 closure artifacts. |
 | R009 | differentiator | validated | M028/S06 | M028/S01, M028/S02, M028/S05, M028/S07 | Validated by M028/S07 on top of the existing S01-S06 proof surface. The `reference-backend/` package now has green end-to-end build/fmt/test, migration/deploy smoke, worker-crash recovery, restart-visibility, and whole-process restart proofs in `compiler/meshc/tests/e2e_reference_backend.rs`, so Mesh is being judged through one real backend that exercises compiler, runtime, HTTP, Postgres, migrations, background jobs, and recovery instead of isolated subsystem demos. |
 | R010 | differentiator | active | M029/S01 (provisional) | M028/S04, M028/S06, M029/S02 (provisional) | mapped |
 | R011 | differentiator | active | M029/S02 (provisional) | M029/S03 (provisional) | mapped |
@@ -269,7 +269,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 8
-- Mapped to slices: 8
-- Validated: 6 (R001, R002, R003, R004, R005, R006)
+- Active requirements: 6
+- Mapped to slices: 6
+- Validated: 8 (R001, R002, R003, R004, R005, R006, R008, R009)
 - Unmapped active requirements: 0
