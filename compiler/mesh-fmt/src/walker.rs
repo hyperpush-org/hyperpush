@@ -87,11 +87,11 @@ pub fn walk_node(node: &SyntaxNode) -> FormatIR {
         SyntaxKind::LIST_LITERAL => walk_list_literal(node),
         SyntaxKind::ASSOC_TYPE_BINDING => walk_assoc_type_binding(node),
         SyntaxKind::TRY_EXPR => walk_tokens_inline(node),
+        SyntaxKind::PATH => walk_path(node),
         // Simple leaf-like nodes: just emit their tokens inline.
         SyntaxKind::LITERAL
         | SyntaxKind::NAME
         | SyntaxKind::NAME_REF
-        | SyntaxKind::PATH
         | SyntaxKind::TYPE_ANNOTATION
         | SyntaxKind::VISIBILITY
         | SyntaxKind::WILDCARD_PAT
@@ -1330,6 +1330,32 @@ fn walk_import_decl(node: &SyntaxNode) -> FormatIR {
     walk_tokens_inline(node)
 }
 
+fn walk_path(node: &SyntaxNode) -> FormatIR {
+    let mut parts = Vec::new();
+
+    for child in node.children_with_tokens() {
+        match child {
+            NodeOrToken::Token(tok) => match tok.kind() {
+                SyntaxKind::EOF | SyntaxKind::NEWLINE => {}
+                SyntaxKind::COMMENT | SyntaxKind::DOC_COMMENT | SyntaxKind::MODULE_DOC_COMMENT => {
+                    if !parts.is_empty() {
+                        parts.push(sp());
+                    }
+                    parts.push(ir::text(tok.text()));
+                }
+                _ => {
+                    parts.push(ir::text(tok.text()));
+                }
+            },
+            NodeOrToken::Node(n) => {
+                parts.push(walk_node(&n));
+            }
+        }
+    }
+
+    ir::concat(parts)
+}
+
 fn walk_import_list(node: &SyntaxNode) -> FormatIR {
     // Check whether this import list is wrapped in parens.
     let has_parens = node.children_with_tokens().any(|child| {
@@ -2280,6 +2306,26 @@ mod tests {
     fn from_import() {
         let result = fmt("from Math import sqrt, pow");
         assert_eq!(result, "from Math import sqrt, pow\n");
+    }
+
+    #[test]
+    fn walk_path_preserves_dotted_import_and_impl_paths() {
+        let single_line_import = fmt("from Api.Router import build_router");
+        assert_eq!(single_line_import, "from Api.Router import build_router\n");
+
+        let multiline_import = fmt("from Api.Router import (\nbuild_router,\nhealth_router\n)");
+        assert_eq!(
+            multiline_import,
+            "from Api.Router import (\n  build_router,\n  health_router\n)\n"
+        );
+
+        let qualified_impl = fmt(
+            "impl Foo.Bar for Baz.Qux do\nfn run(self) do\nself\nend\nend",
+        );
+        assert_eq!(
+            qualified_impl,
+            "impl Foo.Bar for Baz.Qux do\n  fn run(self) do\n    self\n  end\nend\n"
+        );
     }
 
     #[test]

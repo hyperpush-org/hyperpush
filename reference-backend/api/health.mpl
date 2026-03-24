@@ -1,4 +1,4 @@
-from Jobs. Worker import (
+from Jobs.Worker import (
   get_worker_boot_id,
   get_worker_failed_jobs,
   get_worker_last_error,

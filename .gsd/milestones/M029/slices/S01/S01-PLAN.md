@@ -23,6 +23,14 @@
 - `cargo test -q -p meshc --test e2e e2e_multiline_import_paren -- --nocapture`
 - `cargo run -q -p meshc -- fmt --check reference-backend`
 - `! rg -n "^from .*\\. " reference-backend -g '*.mpl'`
+- `cargo test -q -p mesh-fmt --lib walk_path_preserves_dotted_import_and_impl_paths -- --nocapture`
+
+## Observability / Diagnostics
+
+- Primary inspection surface is exact-output formatter coverage in `compiler/mesh-fmt/src/walker.rs`; failures must show expected vs actual text for dotted imports, parenthesized multiline imports, and qualified impl headers.
+- Secondary inspection surface is `meshc fmt --check reference-backend`, whose stderr diff should expose any regression that reintroduces `Foo. Bar` spacing or collapses multiline import layout.
+- The repo-level sweep `rg -n "^from .*\\. " reference-backend -g '*.mpl'` is the cheap corruption detector for already-formatted backend files.
+- No new runtime logging or secret-bearing output is introduced in this slice; diagnostics must stay limited to formatter test assertions, unified diffs, and source grep results.
 
 ## Integration Closure
 
@@ -32,7 +40,7 @@
 
 ## Tasks
 
-- [ ] **T01: Route PATH nodes through dot-aware formatter logic** `est:45m`
+- [x] **T01: Route PATH nodes through dot-aware formatter logic** `est:45m`
   - Why: The live corruption comes from `SyntaxKind::PATH` still falling through `walk_tokens_inline`, so dotted module names in imports and impl headers need a localized formatter fix before any dogfood cleanup is trustworthy.
   - Files: `compiler/mesh-fmt/src/walker.rs`, `compiler/mesh-parser/src/parser/items.rs`, `compiler/mesh-fmt/src/lib.rs`
   - Do: Add a dedicated `PATH` formatting path in `compiler/mesh-fmt/src/walker.rs`, keep the generic token spacer unchanged unless a new failing proof forces broader surgery, and add walker-level exact-output regressions for dotted imports and qualified impl headers.

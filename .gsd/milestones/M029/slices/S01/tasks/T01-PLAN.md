@@ -42,3 +42,9 @@ Localize the formatter fix to `PATH` nodes so dotted module names stop going thr
 ## Expected Output
 
 - `compiler/mesh-fmt/src/walker.rs` — dedicated `PATH` formatting logic plus exact-output unit regressions for dotted imports and qualified impl headers
+
+## Observability Impact
+
+- The future inspection surface for this task is the walker-level exact-output test suite in `compiler/mesh-fmt/src/walker.rs`; when `PATH` formatting regresses, the failing assertions should show the exact spaced output (`Foo. Bar`) versus the canonical expected output (`Foo.Bar`).
+- `SyntaxKind::PATH` formatting becomes locally inspectable in one dispatcher branch instead of being hidden inside generic inline token spacing, which reduces the search space for future formatter regressions.
+- This task adds no runtime logs and must not emit secrets; diagnostics stay confined to formatter unit-test output and `meshc fmt --check` diffs.
