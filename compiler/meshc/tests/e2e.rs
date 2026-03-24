@@ -6304,3 +6304,114 @@ end
         stdout
     );
 }
+
+// ---------------------------------------------------------------------------
+// else-if chain value correctness (T02 — M031/S01)
+// ---------------------------------------------------------------------------
+
+/// else if chain returning Int values — verify correct branch is picked.
+#[test]
+fn e2e_else_if_chain_int_value() {
+    let source = r#"
+fn main() do
+  let x = 2
+  let result = if x == 1 do
+    10
+  else if x == 2 do
+    20
+  else
+    30
+  end
+  println("${result}")
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "20\n");
+}
+
+/// else if chain returning String values — must not crash (previously caused
+/// misaligned pointer dereference when inner if type was lost).
+#[test]
+fn e2e_else_if_chain_string_value() {
+    let source = r#"
+fn main() do
+  let x = 3
+  let result = if x == 1 do
+    "one"
+  else if x == 2 do
+    "two"
+  else
+    "other"
+  end
+  println(result)
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "other\n");
+}
+
+/// else if chain returning Bool values.
+#[test]
+fn e2e_else_if_chain_bool_value() {
+    let source = r#"
+fn main() do
+  let x = 1
+  let result = if x == 1 do
+    true
+  else if x == 2 do
+    false
+  else
+    false
+  end
+  if result do
+    println("yes")
+  else
+    println("no")
+  end
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "yes\n");
+}
+
+/// 3-level else if chain (if / else if / else if / else).
+#[test]
+fn e2e_else_if_three_level_chain() {
+    let source = r#"
+fn main() do
+  let x = 3
+  let result = if x == 1 do
+    "first"
+  else if x == 2 do
+    "second"
+  else if x == 3 do
+    "third"
+  else
+    "other"
+  end
+  println(result)
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "third\n");
+}
+
+/// else if result used directly in a let binding and further computation.
+#[test]
+fn e2e_else_if_let_binding() {
+    let source = r#"
+fn main() do
+  let x = 5
+  let label = if x < 3 do
+    "small"
+  else if x < 10 do
+    "medium"
+  else
+    "large"
+  end
+  println("size: ${label}")
+end
+"#;
+    let output = compile_and_run(source);
+    assert_eq!(output, "size: medium\n");
+}

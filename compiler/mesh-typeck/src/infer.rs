@@ -7044,8 +7044,17 @@ fn infer_if(
         };
         ctx.unify(then_ty.clone(), else_ty, origin)?;
 
+        // Store the resolved type for this if-expression so that codegen can
+        // look it up via `resolve_range`.  Without this, recursive `infer_if`
+        // calls (for `else if` chains) bypass `infer_expr` and never populate
+        // the `types` map, causing codegen to fall back to `MirType::Unit`.
+        types.insert(if_.syntax().text_range(), ctx.resolve(then_ty.clone()));
+
         Ok(then_ty)
     } else {
+        // No else branch — store Unit for consistency.
+        types.insert(if_.syntax().text_range(), ctx.resolve(then_ty.clone()));
+
         Ok(then_ty)
     }
 }

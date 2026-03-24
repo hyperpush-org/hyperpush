@@ -44,7 +44,7 @@ cargo run -p meshc -- build mesher
   - Verify: `cargo test -p meshc --test e2e` passes 303+ tests; `cargo test -p mesh-parser --lib` passes; new trailing-closure tests pass
   - Done when: `if is_big(15) do ... end` compiles and runs correctly; `test("name") do ... end` still works
 
-- [ ] **T02: Fix `else if` chain codegen to produce correct branch values** `est:45m`
+- [x] **T02: Fix `else if` chain codegen to produce correct branch values** `est:45m`
   - Why: R015 — `else if` chains return garbage values or crash because `infer_if`'s recursive call bypasses `infer_expr`, so the inner if-expression's type is never stored in the `types` map. Codegen falls back to `MirType::Unit`.
   - Files: `compiler/mesh-typeck/src/infer.rs`, `compiler/meshc/tests/e2e.rs`
   - Do: In `infer_if` (line 6976), add a `types.insert(if_.syntax().text_range(), resolved_result)` before returning — matching what `infer_expr` does at line 5986. Add e2e tests for `else if` chains with Int, String, and Bool return types, including 3-level chains and `let` bindings.
@@ -57,6 +57,13 @@ cargo run -p meshc -- build mesher
   - Do: Diagnose the exact failure point by adding a test that compiles a multiline call and checking where the type is lost (compare `TextRange` storage vs lookup). Fix the root cause — likely in `infer_call` or the `types.insert` path. Add e2e tests for multiline user-defined function calls with Int and String return types, 2+ args on separate lines, and mixed single/multiline calls.
   - Verify: `cargo test -p meshc --test e2e` passes; new `multiline_call` tests pass
   - Done when: `add(\n  1,\n  2\n)` resolves to `Int` (not `()`); multiline calls work equivalently to single-line calls
+
+## Observability / Diagnostics
+
+- **Compile-time:** When `infer_if` fails to store a type, codegen emits `MirType::Unit` for the if-expression; at runtime this manifests as garbage values (Int) or misaligned pointer crashes (String). The fix makes the type visible in the `types` map, so codegen resolves the correct `MirType`.
+- **Parse-time:** Trailing-closure disambiguation failures surface as "expected expression" at the `do` token position — the parser tried to continue past the call site.
+- **Test surface:** `cargo test -p meshc --test e2e else_if` isolates the `else if` chain correctness gate. `cargo test -p meshc --test e2e trailing_closure` isolates trailing-closure disambiguation. Both can be run independently for targeted diagnosis.
+- **Failure-path verification:** The String-return `else_if` test exercises the crash path that previously caused misaligned pointer dereferences — it serves as a sentinel for type-map regression.
 
 ## Files Likely Touched
 
