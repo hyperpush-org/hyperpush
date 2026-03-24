@@ -17,11 +17,19 @@
 - `cargo run -q -p meshc -- build mesher`
 - `cargo run -q -p meshc -- build reference-backend`
 - `! rg -n '^from .*\. ' mesher reference-backend -g '*.mpl'`
+- `(cargo run -q -p meshc -- fmt --check mesher > /tmp/m029-s03-fmt-mesher.log 2>&1 && test ! -s /tmp/m029-s03-fmt-mesher.log) || (rg -n 'error|panic|from .*\. ' /tmp/m029-s03-fmt-mesher.log && false)`
 - `test -f .gsd/milestones/M029/slices/S03/S03-UAT.md`
+
+## Observability / Diagnostics
+
+- Runtime signals: none added; this slice is source-shape and formatter/build compliance work.
+- Inspection surfaces: the long-import grep across `mesher/`, the spaced-dotted-path grep across `mesher/` and `reference-backend/`, `cargo run -q -p meshc -- fmt --check mesher`, `cargo run -q -p meshc -- fmt --check reference-backend`, both build commands, and `/tmp/m029-s03-fmt-mesher.log` for captured formatter diagnostics when the Mesher formatter gate fails.
+- Failure visibility: the long-import grep exposes missed single-line imports, the dotted-path grep exposes formatter corruption like `Storage. Queries`, the captured `fmt --check` log preserves the first formatter/build failure signal for post-mortem inspection, and the build commands expose any syntax/type drift introduced while normalizing imports.
+- Redaction constraints: no secrets should appear in these checks; keep evidence limited to repo paths, formatter output, and compiler diagnostics.
 
 ## Tasks
 
-- [ ] **T01: Rewrite entrypoint and ingestion imports to canonical multiline form** `est:25m`
+- [x] **T01: Rewrite entrypoint and ingestion imports to canonical multiline form** `est:25m`
   - Why: This closes the smallest manual-edit surface first and anchors S03 on the proven `reference-backend/api/health.mpl` import shape before any bulk formatter rewrites happen.
   - Files: `reference-backend/api/health.mpl`, `mesher/main.mpl`, `mesher/ingestion/routes.mpl`
   - Do: Rewrite the four overlong imports in `mesher/main.mpl` and the long `Storage.Queries` import in `mesher/ingestion/routes.mpl` to match the backend multiline anchor exactly, preserving imported names and order, and do not touch compiler code or `reference-backend/` source.

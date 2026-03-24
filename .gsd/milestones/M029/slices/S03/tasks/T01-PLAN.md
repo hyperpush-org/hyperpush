@@ -33,6 +33,12 @@ Rewrite the smallest remaining manual import surface in Mesher before any bulk f
 - `! rg -n '^from .{121,}' mesher/main.mpl mesher/ingestion/routes.mpl`
 - `! rg -n '^from .*\. ' mesher/main.mpl mesher/ingestion/routes.mpl`
 
+## Observability Impact
+
+- Signals added/changed: none; this task only normalizes import layout in two Mesher source files.
+- How a future agent inspects this: compare the rewritten imports against `reference-backend/api/health.mpl`, then rerun the two targeted `rg` checks on `mesher/main.mpl` and `mesher/ingestion/routes.mpl`.
+- Failure state exposed: the overlong-import grep catches any missed single-line imports, while the spaced-dotted-path grep catches formatter-shape corruption such as `Storage. Queries` introduced during manual edits.
+
 ## Inputs
 
 - `reference-backend/api/health.mpl` — canonical multiline import style anchor proven safe in S01

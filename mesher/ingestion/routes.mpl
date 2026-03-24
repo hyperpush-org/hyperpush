@@ -10,7 +10,22 @@ from Services.RateLimiter import RateLimiter
 from Services.EventProcessor import EventProcessor
 from Types.Project import Project
 from Types.Issue import Issue
-from Storage.Queries import resolve_issue, archive_issue, unresolve_issue, assign_issue, discard_issue, delete_issue, list_issues_by_status, check_new_issue, get_event_alert_rules, should_fire_by_cooldown, fire_alert, check_sample_rate, count_unresolved_issues, get_issue_project_id
+from Storage.Queries import (
+  resolve_issue,
+  archive_issue,
+  unresolve_issue,
+  assign_issue,
+  discard_issue,
+  delete_issue,
+  list_issues_by_status,
+  check_new_issue,
+  get_event_alert_rules,
+  should_fire_by_cooldown,
+  fire_alert,
+  check_sample_rate,
+  count_unresolved_issues,
+  get_issue_project_id
+)
 from Api.Helpers import require_param, get_registry
 
 # Helper: build 401 response
