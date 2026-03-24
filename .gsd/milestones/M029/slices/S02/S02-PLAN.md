@@ -18,14 +18,15 @@
 ## Verification
 
 - `cargo run -q -p meshc -- build mesher`
+- `! rg -n '<>' mesher/api/alerts.mpl mesher/api/detail.mpl mesher/api/search.mpl`
 - `diff -u <(rg -n '<>' mesher -g '*.mpl' | cut -d: -f1-2 | sort) <(printf '%s\n' mesher/storage/queries.mpl:486 mesher/storage/queries.mpl:787 mesher/storage/schema.mpl:11 mesher/storage/schema.mpl:12 mesher/storage/schema.mpl:13)`
 - `! rg -n 'List\.map\(rows,|Ok\(List\.map\(' mesher -g '*.mpl'`
 
 ## Observability / Diagnostics
 
 - Runtime signals: none added; the truth surface is compiler success plus exact-location grep proofs.
-- Inspection surfaces: `cargo run -q -p meshc -- build mesher`, the repo-wide `<>` diff against the five designated keep sites, and the zero-match wrapping-map grep.
-- Failure visibility: build errors expose syntax/type drift; the `<>` diff exposes accidental new concatenation sites; the wrapping-map grep exposes non-idiomatic `List.map(rows, ...)` survivors.
+- Inspection surfaces: `cargo run -q -p meshc -- build mesher`, the targeted API `<>` grep for `mesher/api/alerts.mpl`, `mesher/api/detail.mpl`, and `mesher/api/search.mpl`, the repo-wide `<>` diff against the five designated keep sites, and the zero-match wrapping-map grep.
+- Failure visibility: build errors expose syntax/type drift; the targeted API grep exposes accidental serializer concatenation survivors in T01 scope; the `<>` diff exposes accidental new concatenation sites slice-wide; the wrapping-map grep exposes non-idiomatic `List.map(rows, ...)` survivors.
 - Redaction constraints: none beyond normal repo hygiene; this slice should not introduce secret-bearing output.
 
 ## Integration Closure
@@ -36,7 +37,7 @@
 
 ## Tasks
 
-- [ ] **T01: Rewrite API serializers with type-preserving JSON and interpolation** `est:1h`
+- [x] **T01: Rewrite API serializers with type-preserving JSON and interpolation** `est:1h`
   - Why: The highest-risk cleanup is in the alert/detail/search helpers, where raw JSONB fields and scalar text fields are mixed and a naive `json {}` rewrite would silently quote the wrong values.
   - Files: `mesher/api/alerts.mpl`, `mesher/api/detail.mpl`, `mesher/api/search.mpl`
   - Do: Replace the remaining `<>` JSON assembly in the three API files using `json {}` only where values are true scalar/option payloads and `#{}` interpolation where query rows already carry raw JSON text, preserving nullable timestamp/id handling, pagination cursor fields, nested prebuilt JSON, and the dynamic tag JSON key path.

@@ -75,7 +75,7 @@ fn row_to_tag_event_json(row) -> String do
   let message = Map.get(row, "message")
   let tags = Map.get(row, "tags")
   let received_at = Map.get(row, "received_at")
-  "{\"id\":\"" <> id <> "\",\"issue_id\":\"" <> issue_id <> "\",\"level\":\"" <> level <> "\",\"message\":\"" <> message <> "\",\"tags\":" <> tags <> ",\"received_at\":\"" <> received_at <> "\"}"
+  """{"id":"#{id}","issue_id":"#{issue_id}","level":"#{level}","message":"#{message}","tags":#{tags},"received_at":"#{received_at}"}"""
 end
 
 # Convert a per-issue event row to JSON (minimal fields).
@@ -87,14 +87,13 @@ fn row_to_issue_event_json(row) -> String do
   json { id: id, level: level, message: message, received_at: received_at }
 end
 
-
 # Helper: extract last_seen and id from the last row for pagination cursor.
 fn extract_cursor_from_last(rows, last_seen_key :: String, id_key :: String) -> String do
   let total = List.length(rows)
   let last_row = List.get(rows, total - 1)
   let next_cursor = Map.get(last_row, last_seen_key)
   let next_cursor_id = Map.get(last_row, id_key)
-  ",\"next_cursor\":\"" <> next_cursor <> "\",\"next_cursor_id\":\"" <> next_cursor_id <> "\",\"has_more\":true}"
+  ""","next_cursor":"#{next_cursor}","next_cursor_id":"#{next_cursor_id}","has_more":true}"""
 end
 
 # Build paginated response JSON with cursor metadata.
@@ -102,9 +101,9 @@ end
 fn build_paginated_response(json_array :: String, rows, limit :: Int) -> String do
   let count = List.length(rows)
   if count == limit do
-    "{\"data\":" <> json_array <> extract_cursor_from_last(rows, "last_seen", "id")
+    """{"data":#{json_array}#{extract_cursor_from_last(rows, "last_seen", "id")}"""
   else
-    "{\"data\":" <> json_array <> ",\"has_more\":false}"
+    """{"data":#{json_array},"has_more":false}"""
   end
 end
 
@@ -112,9 +111,9 @@ end
 fn build_event_paginated_response(json_array :: String, rows, limit :: Int) -> String do
   let count = List.length(rows)
   if count == limit do
-    "{\"data\":" <> json_array <> extract_cursor_from_last(rows, "received_at", "id")
+    """{"data":#{json_array}#{extract_cursor_from_last(rows, "received_at", "id")}"""
   else
-    "{\"data\":" <> json_array <> ",\"has_more\":false}"
+    """{"data":#{json_array},"has_more":false}"""
   end
 end
 
@@ -235,7 +234,7 @@ fn check_tag_params(pool, project_id :: String, key :: String, value :: String, 
   else if val_empty do
     missing_tag_response()
   else
-    let tag_json = "{\"" <> key <> "\":\"" <> value <> "\"}"
+    let tag_json = """{"#{key}":"#{value}"}"""
     do_tag_filter(pool, project_id, tag_json, limit_str)
   end
 end

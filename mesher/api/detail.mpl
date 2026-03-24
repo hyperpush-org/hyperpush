@@ -29,7 +29,7 @@ fn event_detail_to_json(row) -> String do
   let sdk_name = Map.get(row, "sdk_name")
   let sdk_version = Map.get(row, "sdk_version")
   let received_at = Map.get(row, "received_at")
-  "{\"id\":\"" <> id <> "\",\"project_id\":\"" <> project_id <> "\",\"issue_id\":\"" <> issue_id <> "\",\"level\":\"" <> level <> "\",\"message\":\"" <> message <> "\",\"fingerprint\":\"" <> fingerprint <> "\",\"exception\":" <> exception <> ",\"stacktrace\":" <> stacktrace <> ",\"breadcrumbs\":" <> breadcrumbs <> ",\"tags\":" <> tags <> ",\"extra\":" <> extra <> ",\"user_context\":" <> user_context <> ",\"sdk_name\":\"" <> sdk_name <> "\",\"sdk_version\":\"" <> sdk_version <> "\",\"received_at\":\"" <> received_at <> "\"}"
+  """{"id":"#{id}","project_id":"#{project_id}","issue_id":"#{issue_id}","level":"#{level}","message":"#{message}","fingerprint":"#{fingerprint}","exception":#{exception},"stacktrace":#{stacktrace},"breadcrumbs":#{breadcrumbs},"tags":#{tags},"extra":#{extra},"user_context":#{user_context},"sdk_name":"#{sdk_name}","sdk_version":"#{sdk_version}","received_at":"#{received_at}"}"""
 end
 
 # Format a nullable neighbor ID for JSON output.
@@ -38,7 +38,7 @@ fn format_neighbor_id(val :: String) -> String do
   if String.length(val) == 0 do
     "null"
   else
-    "\"" <> val <> "\""
+    "\"#{val}\""
   end
 end
 
@@ -48,12 +48,16 @@ fn neighbors_to_json(row) -> String do
   let prev_id = Map.get(row, "prev_id")
   let next_str = format_neighbor_id(next_id)
   let prev_str = format_neighbor_id(prev_id)
-  "{\"next_id\":" <> next_str <> ",\"prev_id\":" <> prev_str <> "}"
+  """{"next_id":#{next_str},"prev_id":#{prev_str}}"""
 end
 
 # Combine event detail JSON with navigation JSON into final response.
 fn build_detail_response(detail_json :: String, nav_json :: String) -> String do
-  "{\"event\":" <> detail_json <> ",\"navigation\":" <> nav_json <> "}"
+  """{"event":#{detail_json},"navigation":#{nav_json}}"""
+end
+
+fn empty_navigation_json() -> String do
+  """{"next_id":null,"prev_id":null}"""
 end
 
 # Helper: build response from navigation rows.
@@ -63,7 +67,7 @@ fn build_nav_response(detail_json :: String, nav_rows) do
     let nav_json = neighbors_to_json(nav_row)
     HTTP.response(200, build_detail_response(detail_json, nav_json))
   else
-    HTTP.response(200, build_detail_response(detail_json, "{\"next_id\":null,\"prev_id\":null}"))
+    HTTP.response(200, build_detail_response(detail_json, empty_navigation_json()))
   end
 end
 
@@ -74,7 +78,7 @@ fn add_navigation(pool, event_id :: String, issue_id :: String, received_at :: S
   let nav_result = get_event_neighbors(pool, issue_id, received_at, event_id)
   case nav_result do
     Ok(nav_rows) -> build_nav_response(detail_json, nav_rows)
-    Err(_) -> HTTP.response(200, build_detail_response(detail_json, "{\"next_id\":null,\"prev_id\":null}"))
+    Err(_) -> HTTP.response(200, build_detail_response(detail_json, empty_navigation_json()))
   end
 end
 
