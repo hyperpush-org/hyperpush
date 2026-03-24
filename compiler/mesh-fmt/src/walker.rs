@@ -941,13 +941,37 @@ fn walk_block_def(node: &SyntaxNode) -> FormatIR {
     ir::concat(parts)
 }
 
+fn normalize_child_spec_line(line: &str) -> Option<String> {
+    let trimmed = line.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    if trimmed == "end" {
+        return Some("end".to_string());
+    }
+
+    if let Some(rest) = trimmed.strip_prefix("child") {
+        let rest = rest.trim();
+        if let Some(name) = rest.strip_suffix("do") {
+            let name = name.trim();
+            if !name.is_empty() {
+                return Some(format!("child {name} do"));
+            }
+        }
+        return Some(trimmed.to_string());
+    }
+
+    if let Some((key, value)) = trimmed.split_once(':') {
+        return Some(format!("{}: {}", key.trim(), value.trim()));
+    }
+
+    Some(trimmed.to_string())
+}
+
 fn walk_child_spec_def(node: &SyntaxNode) -> FormatIR {
-    let raw = node.text().to_string();
-    let lines: Vec<String> = raw
-        .lines()
-        .map(|line| line.trim().to_string())
-        .filter(|line| !line.is_empty())
-        .collect();
+    let text = node.text().to_string();
+    let lines: Vec<String> = text.lines().filter_map(normalize_child_spec_line).collect();
 
     if lines.is_empty() {
         return FormatIR::Empty;
@@ -967,10 +991,7 @@ fn walk_child_spec_def(node: &SyntaxNode) -> FormatIR {
     let mut parts = vec![header];
     if !body_lines.is_empty() {
         let mut body_parts = Vec::new();
-        for (i, line) in body_lines.into_iter().enumerate() {
-            if i > 0 {
-                body_parts.push(ir::hardline());
-            }
+        for line in body_lines {
             body_parts.push(ir::hardline());
             body_parts.push(ir::text(&line));
         }

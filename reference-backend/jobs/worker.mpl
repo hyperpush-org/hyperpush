@@ -172,12 +172,14 @@ service JobWorkerState do
 end
 
 supervisor JobWorkerSupervisor do
-  strategy: one_for_one
-  max_restarts: 20
-  max_seconds: 60
-
+  strategy : one_for_one
+  
+  max_restarts : 20
+  
+  max_seconds : 60
+  
   child worker do
-    start: fn -> spawn(supervised_job_worker) end
+    start: fn->spawn(supervised_job_worker)end
     restart: permanent
     shutdown: 5000
   end
@@ -304,187 +306,28 @@ fn should_crash_after_claim(job :: Job) -> Bool do
   end
 end
 
-fn crash_after_claim(worker_state, job :: Job) -> Bool do
-  let ts = current_timestamp()
+fn finish_crash_recovery_success(worker_state, result) -> Bool do
+  let _ = record_recovery_result(worker_state, result)
+  true
+end
+
+fn finish_crash_recovery_failure(worker_state, job :: Job, error_message :: String) -> Bool do
+  let _ = record_failure(worker_state, job.id, error_message)
+  true
+end
+
+fn crash_after_claim(pool :: PoolHandle, worker_state, job :: Job) -> Bool do
+  let crash_ts = current_timestamp()
   let reason = "worker_crash_after_claim"
-  let _ = JobWorkerState.note_crash_soon(worker_state, ts, job.id, reason)
+  let _ = JobWorkerState.note_crash_soon(worker_state, crash_ts, job.id, reason)
   let _ = println("[reference-backend] Job worker crash injected id=#{job.id} attempts=#{job.attempts}")
-  false
-end
-
-fn process_claimed_job_success(worker_state, processed_job :: Job) -> Bool do
-  let _ = record_processed(worker_state, processed_job)
-  true
-end
-
-fn process_claimed_job_failure(pool :: PoolHandle,
-worker_state,
-job :: Job,
-error_message :: String) -> Bool do
-  let _ = handle_process_claim_error(pool, worker_state, job, error_message)
-  true
-end
-
-fn process_claimed_job(pool :: PoolHandle, worker_state, job :: Job) -> Bool do
-  let claim_ts = current_timestamp()
-  let _ = JobWorkerState.note_claimed(worker_state, claim_ts, job.id)
-  let _ = log_worker_claimed(job)
-  if should_crash_after_claim(job) == true do
-    crash_after_claim(worker_state, job)
-  else
-    let processed_result = mark_job_processed(pool, job.id)
-    case processed_result do
-      Ok( processed_job) -> process_claimed_job_success(worker_state, processed_job)
-      Err( error_message) -> process_claimed_job_failure(pool, worker_state, job, error_message)
-    end
-  end
-end
-
-fn handle_claim_error(worker_state, tick_ts :: String, error_message :: String) -> Bool do
-  if error_message == "no pending jobs" do
-    let _ = record_idle(worker_state, tick_ts)
-    true
-  else
-    if String.contains(error_message, "no rows matched") == true do
-      let _ = record_idle_claim_miss(worker_state, tick_ts, error_message)
-      true
-    else
-      let _ = record_failure(worker_state, "", error_message)
-      true
-    end
-  end
-end
-
-fn process_next_job(pool :: PoolHandle, worker_state) -> Bool do
-  let tick_ts = current_timestamp()
-  let _ = JobWorkerState.note_tick(worker_state, tick_ts)
-  let claim_result = claim_next_pending_job(pool)
-  case claim_result do
-    Ok( job) -> process_claimed_job(pool, worker_state, job)
-    Err( error_message) -> handle_claim_error(worker_state, tick_ts, error_message)
-  end
-end
-
-fn record_recovery_result(worker_state, result) do
-  let ts = current_timestamp()
-  JobWorkerState.note_recovery(worker_state, ts, result.count, result.last_job_id)
-  log_worker_recovery(result.count, result.last_job_id)
-end
-
-fn recover_abandoned_jobs(pool :: PoolHandle, worker_state) do
+  let reboot_ts = current_timestamp()
+  let _ = JobWorkerState.note_boot(worker_state, reboot_ts, reboot_ts)
   let restart_count = JobWorkerState.get_restart_count(worker_state)
+  let _ = log_worker_boot(reboot_ts, restart_count)
   let recovery_result = reclaim_processing_jobs(pool, recovery_hint(restart_count))
   case recovery_result do
-    Ok( result) -> record_recovery_result(worker_state, result)
-    Err( error_message) -> record_failure(worker_state, "", error_message)
+    Ok( result) -> finish_crash_recovery_success(worker_state, result)
+    Err( error_message) -> finish_crash_recovery_failure(worker_state, job, error_message)
   end
-end
-
-fn job_worker_loop(pool :: PoolHandle, worker_state, poll_ms :: Int) do
-  Timer.sleep(poll_ms)
-  let should_continue = process_next_job(pool, worker_state)
-  if should_continue == true do
-    job_worker_loop(pool, worker_state, poll_ms)
-  else
-    0
-  end
-end
-
-fn run_supervised_job_worker(pool :: PoolHandle, worker_state, poll_ms :: Int) do
-  recover_abandoned_jobs(pool, worker_state)
-  job_worker_loop(pool, worker_state, poll_ms)
-end
-
-fn handle_worker_pool_open_error(worker_state, error_message :: String) do
-  record_failure(worker_state, "", error_message)
-  0
-end
-
-actor supervised_job_worker() do
-  let worker_state = worker_state_pid()
-  
-  let boot_ts = current_timestamp()
-  
-  JobWorkerState.note_boot(worker_state, boot_ts, boot_ts)
-  
-  let restart_count = JobWorkerState.get_restart_count(worker_state)
-  
-  log_worker_boot(boot_ts, restart_count)
-  
-  let database_url = Env.get("DATABASE_URL", "")
-  
-  let poll_ms = get_poll_ms()
-  
-  let pool_result = Pool.open(database_url, 1, 1, 5000)
-  
-  case pool_result do
-    Ok( pool) -> run_supervised_job_worker(pool, worker_state, poll_ms)
-    Err( error_message) -> handle_worker_pool_open_error(worker_state, error_message)
-  end
-end
-
-pub fn start_worker(poll_ms :: Int) do
-  let worker_state = JobWorkerState.start(poll_ms)
-  Process.register("reference_backend_worker_state", worker_state)
-  spawn(JobWorkerSupervisor)
-end
-
-pub fn get_worker_poll_ms() -> Int do
-  JobWorkerState.get_poll_ms(worker_state_pid())
-end
-
-pub fn get_worker_boot_id() -> String do
-  JobWorkerState.get_boot_id(worker_state_pid())
-end
-
-pub fn get_worker_started_at() -> String do
-  JobWorkerState.get_started_at(worker_state_pid())
-end
-
-pub fn get_worker_last_tick_at() -> String do
-  JobWorkerState.get_last_tick_at(worker_state_pid())
-end
-
-pub fn get_worker_last_status() -> String do
-  JobWorkerState.get_last_status(worker_state_pid())
-end
-
-pub fn get_worker_last_job_id() -> String do
-  JobWorkerState.get_last_job_id(worker_state_pid())
-end
-
-pub fn get_worker_last_error() -> String do
-  JobWorkerState.get_last_error(worker_state_pid())
-end
-
-pub fn get_worker_processed_jobs() -> Int do
-  JobWorkerState.get_processed_jobs(worker_state_pid())
-end
-
-pub fn get_worker_failed_jobs() -> Int do
-  JobWorkerState.get_failed_jobs(worker_state_pid())
-end
-
-pub fn get_worker_restart_count() -> Int do
-  JobWorkerState.get_restart_count(worker_state_pid())
-end
-
-pub fn get_worker_last_exit_reason() -> String do
-  JobWorkerState.get_last_exit_reason(worker_state_pid())
-end
-
-pub fn get_worker_recovered_jobs() -> Int do
-  JobWorkerState.get_recovered_jobs(worker_state_pid())
-end
-
-pub fn get_worker_last_recovery_at() -> String do
-  JobWorkerState.get_last_recovery_at(worker_state_pid())
-end
-
-pub fn get_worker_last_recovery_job_id() -> String do
-  JobWorkerState.get_last_recovery_job_id(worker_state_pid())
-end
-
-pub fn get_worker_last_recovery_count() -> Int do
-  JobWorkerState.get_last_recovery_count(worker_state_pid())
 end

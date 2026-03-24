@@ -119,6 +119,14 @@ mod idempotency_tests {
     }
 
     #[test]
+    fn idempotent_supervisor_child_spec() {
+        assert_idempotent(
+            "supervisor child spec",
+            "supervisor MySup do\nstrategy: one_for_one\nmax_restarts: 20\nmax_seconds: 60\nchild worker do\nstart: fn -> spawn(worker_loop) end\nrestart: permanent\nshutdown: 5000\nend\nend",
+        );
+    }
+
+    #[test]
     fn idempotent_service_definition() {
         assert_idempotent(
             "service definition",

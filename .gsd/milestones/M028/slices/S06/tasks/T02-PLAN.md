@@ -48,3 +48,9 @@ Once T01 restores truth, Mesh needs one canonical public story for backend evalu
 - `website/docs/docs/production-backend-proof/index.md` — canonical public production-backend proof page
 - `website/docs/.vitepress/config.mts` — sidebar wiring for the new proof page
 - `README.md` — repo landing page with an early production backend proof entrypoint
+
+## Observability Impact
+
+- Signals exposed: the public proof surfaces must point directly at the runtime truth sources — `GET /health`, `GET /jobs/:id`, `jobs`, `_mesh_migrations`, and the named deploy/recovery harnesses in `compiler/meshc/tests/e2e_reference_backend.rs`.
+- Future inspection path: a future agent can verify this task by reading `README.md`, the website proof page, and `reference-backend/README.md`, then rerunning the linked proof commands/scripts to confirm the docs still land on the same real backend surfaces.
+- Failure visibility added: documentation drift becomes visible through the named grep/runtime checks in this task instead of vague prose review because the docs now route readers to exact commands, tests, and scripts.
