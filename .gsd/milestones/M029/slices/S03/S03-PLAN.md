@@ -53,7 +53,7 @@
   - Do: Run the fixed formatter over `mesher/ingestion/` and `mesher/storage/`, accept only mechanical canonicalization in those files, and treat any dotted-path or multiline-import regression as a stop signal rather than expanding back into compiler work.
   - Verify: `cargo run -q -p meshc -- fmt mesher/ingestion && cargo run -q -p meshc -- fmt mesher/storage && cargo run -q -p meshc -- fmt --check mesher/ingestion && cargo run -q -p meshc -- fmt --check mesher/storage && ! rg -n '^from .{121,}' mesher/ingestion/routes.mpl && ! rg -n '^from .*\. ' mesher/ingestion mesher/storage -g '*.mpl'`
   - Done when: The nine files round-trip cleanly through the formatter wave, `routes.mpl` stays multiline, and no spaced dotted imports appear in ingestion or storage modules.
-- [ ] **T05: Canonicalize Mesher service modules with the fixed formatter** `est:30m`
+- [x] **T05: Canonicalize Mesher service modules with the fixed formatter** `est:30m`
   - Why: `mesher/services/` is its own eight-file formatter-red cluster, and splitting it out keeps the bulk rewrite reviewable while preserving the multiline imports added to `project.mpl` and `user.mpl`.
   - Files: `mesher/services/event_processor.mpl`, `mesher/services/org.mpl`, `mesher/services/project.mpl`, `mesher/services/rate_limiter.mpl`, `mesher/services/retention.mpl`, `mesher/services/stream_manager.mpl`, `mesher/services/user.mpl`, `mesher/services/writer.mpl`
   - Do: Run the fixed formatter over `mesher/services/`, accept the canonicalization rewrite for those eight files, and confirm the long imports in `project.mpl` and `user.mpl` are still parenthesized multiline after formatting.

@@ -54,3 +54,9 @@ Run the third bounded formatter wave across `mesher/services/`. This task accept
 - `mesher/services/stream_manager.mpl` — canonical formatter output for the service module
 - `mesher/services/user.mpl` — canonical formatter output with multiline import preserved
 - `mesher/services/writer.mpl` — canonical formatter output for the service module
+
+## Observability Impact
+
+- Runtime signals changed: none. This task is limited to Mesher service-layer source-shape canonicalization.
+- How to inspect later: rerun the scoped formatter round-trip on `mesher/services`, then use the targeted greps on `mesher/services/project.mpl`, `mesher/services/user.mpl`, and the full services directory to confirm the multiline imports and dotted module paths stayed clean.
+- Failure state made visible: `cargo run -q -p meshc -- fmt --check mesher/services`, `! rg -n '^from .{121,}' mesher/services/project.mpl mesher/services/user.mpl`, and `! rg -n '^from .*\. ' mesher/services -g '*.mpl'` distinguish a task-local formatter regression from the remaining slice backlog outside this wave.
