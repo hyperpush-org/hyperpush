@@ -69,6 +69,12 @@ This milestone is complete only when all are true:
 - [x] **S06: Honest Production Proof and Documentation** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
   > After this: Mesh has a production-style backend proof surface — reference app, docs, examples, and verification — rather than toy-only evidence.
 
+- [ ] **S07: Recovery Proof Closure** `risk:high` `depends:[S02,S04]`
+  > After this: the reference backend exposes a real degraded/recovering window, worker crash/restart/process-restart proofs pass, and the unfinished S05 concurrency-trust contract is closed with real evidence.
+
+- [ ] **S08: Final Proof Surface Reconciliation** `risk:medium` `depends:[S03,S04,S07]`
+  > After this: the README/docs/UAT/validation surfaces point only at green recovery-aware proof paths, replacing placeholder or partial closure claims so the milestone can be sealed honestly.
+
 ## Boundary Map
 
 ### S01 → S02
