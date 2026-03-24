@@ -17,7 +17,7 @@ The repository already ships a broad backend-oriented language platform:
 - package and registry infrastructure plus a docs/website surface
 - dogfooded backend applications and benchmarks inside the repo
 
-The current gap is not feature count. The current gap was trust, and M028 has now closed the first serious backend trust baseline end to end. The repo contains a working `reference-backend/` package that builds, starts, migrates, serves HTTP, persists jobs in Postgres, and runs durable background jobs; the compiler-facing Rust harness proves migration truth, HTTP/DB/health agreement, two-instance exact-once processing, worker-crash recovery, restart visibility, whole-process restart recovery, and deploy smoke; the same backend now has trustworthy formatter, test-runner, LSP, and doc/editor proof surfaces instead of toy-only tooling claims; the package ships an artifact-first boring deployment path with a staged native binary, checked-in deploy SQL, thin runtime scripts, and staged-bundle smoke proof outside the repo root; and S08 reconciled the public README/docs/UAT/validation surfaces so they all point at the same green recovery-aware proof path. The next project gap is therefore post-baseline work: sharpen Mesh’s backend differentiators, package/dependency trust, and broader backend ergonomics on top of a now-validated M028 proof surface.
+The current gap is not feature count. The current gap is still trust, although M028 materially improved the repo’s baseline. The repo now contains a real `reference-backend/` package that builds, starts, migrates, serves HTTP, persists jobs in Postgres, and runs durable background jobs; the compiler-facing Rust harness now covers migration truth, HTTP/DB/health agreement, multi-instance exact-once processing, worker-crash recovery, restart visibility, whole-process restart recovery, and deploy smoke; the same backend now has materially stronger formatter, test-runner, LSP, and doc/editor proof surfaces; and the public README/docs/runbook surface now points at this backend instead of relying on toy examples. But M028 is not sealed yet: closeout reruns reconfirmed build/fmt/test/migrate/smoke, docs proof-surface verification, website build, and multi-instance exact-once behavior, while the serial recovery gate still flakes on `e2e_reference_backend_worker_crash_recovers_job` because `/health` can go stale before processed-state accounting aligns after recovery. The immediate project gap is therefore to stabilize that recovery proof in the full serial acceptance sequence, then continue with post-baseline backend ergonomics and differentiators.
 
 ## Architecture / Key Patterns
 
@@ -33,7 +33,7 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 ## Milestone Sequence
 
-- [x] M028: Language Baseline Audit & Hardening — define the production-ready backend baseline and prove the canonical backend path honestly
+- [ ] M028: Language Baseline Audit & Hardening — slice work landed, but closure is still blocked by a serial recovery-proof instability in `e2e_reference_backend_worker_crash_recovers_job`
 - [ ] M029: Backend Ergonomics — improve the language/runtime/DX where real backend pressure exposes friction
 - [ ] M030: Tooling & Package Trust — make fmt/LSP/tests/coverage/dependency flow credible for daily backend work
 - [ ] M031: Production Backend Maturity — extend proof to long-running services, realtime, and distributed backends credibly

@@ -276,10 +276,16 @@ fn hold_after_claim_ticks(worker_state, remaining_ms :: Int, step_ms :: Int) do
   end
 end
 
+fn pause_after_recovery_ms(poll_ms :: Int) -> Int do
+  recovery_reclaim_grace_ms(poll_ms) + (poll_ms * 8)
+end
+
 fn pause_after_recovery(worker_state, recovered_jobs :: Int) do
   if recovered_jobs > 0 do
     let poll_ms = JobWorkerState.get_poll_ms(worker_state)
-    Timer.sleep(recovery_reclaim_grace_ms(poll_ms))
+    let pause_ms = pause_after_recovery_ms(poll_ms)
+    let step_ms = hold_after_claim_step_ms(poll_ms)
+    hold_after_claim_ticks(worker_state, pause_ms, step_ms)
     0
   else
     0
@@ -400,7 +406,7 @@ end
 
 fn should_crash_after_claim(job :: Job) -> Bool do
   if String.contains(job.payload, "crash_after_claim_once") == true do
-    parse_attempts(job.attempts) == 1
+    job.attempts == "1"
   else
     false
   end
@@ -423,11 +429,39 @@ fn hold_after_claim(worker_state, job :: Job) do
   hold_after_claim_ticks(worker_state, hold_ms, step_ms)
 end
 
+actor supervised_job_worker() do
+  let worker_state = worker_state_pid()
+  
+  let boot_ts = current_timestamp()
+  
+  let _ = JobWorkerState.note_boot(worker_state, boot_ts, boot_ts)
+  
+  let restart_count = JobWorkerState.get_restart_count(worker_state)
+  
+  let _ = log_worker_boot(boot_ts, restart_count)
+  
+  let database_url = Env.get("DATABASE_URL", "")
+  
+  let pool_result = Pool.open(database_url, 1, 4, 5000)
+  
+  case pool_result do
+    Ok( pool) -> handle_worker_pool_open(worker_state, restart_count, pool)
+    Err( error_message) -> handle_worker_pool_open_error(worker_state, error_message)
+  end
+end
+
+fn crash_restart_delay_ms(worker_state) -> Int do
+  let poll_ms = JobWorkerState.get_poll_ms(worker_state)
+  worker_tick_stale_threshold_ms(poll_ms) + poll_ms
+end
+
 fn crash_after_claim(worker_state, job :: Job) -> Bool do
   let crash_ts = current_timestamp()
   let reason = "worker_crash_after_claim"
   let _ = JobWorkerState.note_crash_soon(worker_state, crash_ts, job.id, reason)
   let _ = println("[reference-backend] Job worker crash injected id=#{job.id} attempts=#{job.attempts}")
+  Timer.sleep(crash_restart_delay_ms(worker_state))
+  let _ = spawn(supervised_job_worker)
   false
 end
 
@@ -534,27 +568,6 @@ fn handle_worker_pool_open_error(worker_state, error_message :: String) do
   0
 end
 
-actor supervised_job_worker() do
-  let worker_state = worker_state_pid()
-  
-  let boot_ts = current_timestamp()
-  
-  let _ = JobWorkerState.note_boot(worker_state, boot_ts, boot_ts)
-  
-  let restart_count = JobWorkerState.get_restart_count(worker_state)
-  
-  let _ = log_worker_boot(boot_ts, restart_count)
-  
-  let database_url = Env.get("DATABASE_URL", "")
-  
-  let pool_result = Pool.open(database_url, 1, 4, 5000)
-  
-  case pool_result do
-    Ok( pool) -> handle_worker_pool_open(worker_state, restart_count, pool)
-    Err( error_message) -> handle_worker_pool_open_error(worker_state, error_message)
-  end
-end
-
 actor job_worker_supervisor_loop() do
   let worker_state = worker_state_pid()
   
@@ -576,7 +589,7 @@ pub fn start_worker(job_poll_ms :: Int) do
   let worker_state = JobWorkerState.start(job_poll_ms)
   let _ = Process.register("reference_backend_worker_state", worker_state)
   let _ = spawn(supervised_job_worker)
-  spawn(job_worker_supervisor_loop)
+  0
 end
 
 pub fn get_worker_poll_ms() -> Int do
