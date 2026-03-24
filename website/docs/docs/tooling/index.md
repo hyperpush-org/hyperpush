@@ -7,6 +7,8 @@ description: Formatter, REPL, package manager, LSP, and editor support for Mesh
 
 Mesh ships with a complete developer toolchain built into the `meshc` binary. Everything you need for productive development -- formatting, interactive exploration, project management, and editor integration -- is available out of the box.
 
+> **Production backend proof:** This page documents the tools individually. For the named backend proof commands that tie `meshc fmt`, `meshc test`, staged deploy smoke, and doc-truth verification together, start with [Production Backend Proof](/docs/production-backend-proof/) and `reference-backend/README.md`.
+
 ## Formatter
 
 The Mesh formatter canonically formats your source code, enforcing a consistent style across your project:

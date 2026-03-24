@@ -7,6 +7,8 @@ description: SQLite, PostgreSQL, connection pooling, and struct mapping in Mesh
 
 Mesh has built-in support for SQLite and PostgreSQL databases. You can run queries, manage transactions, pool connections, and map database rows directly to structs -- all without external dependencies.
 
+> **Production backend proof:** This guide covers the database APIs themselves. For the repo-backed proof that wires Postgres migrations, runtime health, deploy artifacts, and supervised job processing together, use [Production Backend Proof](/docs/production-backend-proof/) and `reference-backend/README.md`.
+
 ## SQLite
 
 SQLite is an embedded database that stores data in a single file (or in memory). Use the `Sqlite` module for all SQLite operations.

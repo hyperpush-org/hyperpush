@@ -9,7 +9,7 @@
 **Expressive, readable concurrency.**
 *Elixir-style syntax. Static type inference. Native single binaries.*
 
-[Documentation](https://meshlang.dev) • [Get Started](#quick-start) • [Contributing](#contributing)
+[Documentation](https://meshlang.dev) • [Production Proof](https://meshlang.dev/docs/production-backend-proof/) • [Get Started](#quick-start) • [Contributing](#contributing)
 
 </div>
 
@@ -34,7 +34,7 @@ Mesh compiles directly to a standalone native binary—no virtual machine to ins
 - **Message Passing:** Actors communicate exclusively via immutable messages. No shared memory, no data races.
 - **Distributed Mesh:** Seamlessly cluster nodes. Send messages to remote actors as easily as local ones using location-transparent PIDs.
 
-### Production Ready
+### Backend-Capable Runtime
 - **Native Binaries:** Compiles to a single, self-contained executable. Easy to deploy (copy-paste).
 - **Batteries Included:**
   - Built-in **PostgreSQL** & **SQLite** drivers with connection pooling.
@@ -113,6 +113,13 @@ fn main() do
 end
 ```
 
+## Production Backend Proof
+
+The quick-start examples above are intentionally small. If you want the real backend proof surface instead of inferring readiness from tutorials, start here:
+
+- [Production Backend Proof](https://meshlang.dev/docs/production-backend-proof/) — public map of the named build, deploy, supervision, and documentation-proof checks
+- [`reference-backend/README.md`](https://github.com/snowdamiz/mesh-lang/blob/main/reference-backend/README.md) — the deepest repo runbook with the authoritative backend commands and proof targets
+
 ## Performance
 
 Measured on dedicated Fly.io `performance-2x` VMs (2 vCPU, 4 GB RAM), each server running alone (isolated), load generator in the same region over Fly.io's private WireGuard network. 100 concurrent connections, 30 s timed runs × 4 (run 1 excluded, runs 2–5 averaged).
@@ -128,7 +135,9 @@ Measured on dedicated Fly.io `performance-2x` VMs (2 vCPU, 4 GB RAM), each serve
 
 ## Documentation
 
-Full documentation, including guides and API references, is available at **[meshlang.dev](https://meshlang.dev)** (placeholder link).
+Full documentation, including guides and API references, is available at **[meshlang.dev](https://meshlang.dev)**.
+
+For the canonical backend proof story, use **[Production Backend Proof](https://meshlang.dev/docs/production-backend-proof/)** and the repo runbook at [`reference-backend/README.md`](https://github.com/snowdamiz/mesh-lang/blob/main/reference-backend/README.md).
 
 ## Project Status
 

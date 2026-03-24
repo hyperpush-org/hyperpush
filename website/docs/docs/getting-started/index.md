@@ -6,6 +6,8 @@ title: Getting Started
 
 This guide will take you from zero to running your first Mesh program. By the end, you will have Mesh installed, understand the basic project structure, and have compiled and run a working program.
 
+> **Production backend proof:** This guide stays focused on first steps. If you are evaluating Mesh as a real backend runtime, start with [Production Backend Proof](/docs/production-backend-proof/) and the repo runbook at `reference-backend/README.md`.
+
 ## What is Mesh?
 
 Mesh is a statically-typed, compiled programming language designed for expressive, readable concurrency. It combines the actor model from Erlang/Elixir with a modern type system, pattern matching, and native compilation via LLVM.
@@ -19,13 +21,15 @@ Key properties of Mesh:
 
 ## Installation
 
-Install Mesh with a single command:
+Today the verified install path is building `meshc` from source:
 
 ```bash
-curl -sSf https://mesh-lang.org/install.sh | sh
+git clone https://github.com/snowdamiz/mesh-lang.git
+cd mesh-lang
+cargo install --path compiler/meshc
 ```
 
-This downloads the latest `meshc` binary and adds it to your PATH.
+This installs the current `meshc` binary into Cargo's bin directory so you can use the same toolchain the repo and proof surfaces exercise.
 
 ### Verifying Installation
 
@@ -156,6 +160,7 @@ This prints `11`. The expression `5 |> double |> add_one` is equivalent to `add_
 
 Now that you have Mesh installed and running, explore the language in depth:
 
+- [Production Backend Proof](/docs/production-backend-proof/) -- the canonical public proof surface for the real `reference-backend/` package
 - [Language Basics](/docs/language-basics/) -- variables, types, functions, pattern matching, control flow, and more
 - [Type System](/docs/type-system/) -- structs, sum types, generics, and type inference
 - [Concurrency](/docs/concurrency/) -- actors, message passing, supervision, and services

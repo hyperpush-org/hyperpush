@@ -7,6 +7,8 @@ description: Write and run tests in Mesh with meshc test — assertions, groupin
 
 Mesh includes a first-class testing framework accessible via `meshc test`. Test files use the `.test.mpl` extension and can contain individual tests, grouped tests with shared setup/teardown, mock actors, and receive assertions.
 
+> **Production backend proof:** This page covers the testing primitives. For the real backend proof targets — including `reference-backend/` package tests, ignored deploy/runtime proofs, and the documentation verifier — start with [Production Backend Proof](/docs/production-backend-proof/) and `reference-backend/README.md`.
+
 ## Running Tests
 
 ```bash

@@ -84,6 +84,7 @@ export default defineConfig({
           text: 'Getting Started',
           items: [
             { text: 'Introduction', link: '/docs/getting-started/', icon: 'BookOpen' } as any,
+            { text: 'Production Backend Proof', link: '/docs/production-backend-proof/', icon: 'ShieldCheck' } as any,
           ],
         },
         {

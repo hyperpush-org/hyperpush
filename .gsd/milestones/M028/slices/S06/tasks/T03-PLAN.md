@@ -56,3 +56,9 @@ The final step is to make the broader docs ecosystem route to the canonical proo
 - `website/docs/docs/tooling/index.md` — tooling guide cross-linking to the backend proof surface
 - `website/docs/docs/testing/index.md` — testing guide cross-linking to the backend proof surface
 - `reference-backend/scripts/verify-production-proof-surface.sh` — repeatable doc-truth verifier for the canonical backend proof links and stale-string sweep
+
+## Observability Impact
+
+- The new verifier script must emit named `[proof-docs]` phases so a future agent can tell whether failure was caused by a missing proof page, a missing cross-link in one of the generic docs, or a stale phrase that resurfaced.
+- The inspection surfaces for this task are the edited docs plus `reference-backend/scripts/verify-production-proof-surface.sh`; rerunning the script should identify the exact file and assertion that drifted.
+- The website build remains the integration signal for sidebar/frontmatter/link validity, while the verifier script becomes the narrower doc-truth signal for canonical proof routing and stale-string absence.

@@ -6,6 +6,8 @@ title: Concurrency
 
 Mesh uses the actor model for concurrency, inspired by Erlang/Elixir. Actors are lightweight processes that communicate via message passing. They are isolated, supervised, and fault-tolerant.
 
+> **Production backend proof:** This guide teaches the concurrency model. For the concrete supervision and recovery proof on a real backend worker, start with [Production Backend Proof](/docs/production-backend-proof/) and the deeper runbook in `reference-backend/README.md`.
+
 ## The Actor Model
 
 In Mesh, actors are independent units of computation that do not share memory. Each actor:
