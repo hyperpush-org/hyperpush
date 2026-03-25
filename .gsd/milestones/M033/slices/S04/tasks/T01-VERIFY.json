@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T01",
+  "unitId": "M033/S04/T01",
+  "timestamp": 1774478887445,
+  "passed": true,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "cargo test -p mesh-rt migration -- --nocapture\ncargo build -p meshc",
+      "exitCode": 0,
+      "durationMs": 3734,
+      "verdict": "pass"
+    }
+  ]
+}

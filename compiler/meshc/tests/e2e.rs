@@ -5457,13 +5457,13 @@ end
     assert_eq!(output, "column_ops_ok\n");
 }
 
-/// Migration index operations (create, drop) compile.
+/// Migration index operations (named, ordered create + drop) compile.
 #[test]
 fn e2e_migration_index_ops_compile() {
     let output = compile_and_run(
         r#"
 fn run_migration(pool :: PoolHandle) -> Int!String do
-  Migration.create_index(pool, "users", ["email"], "unique:true")?
+  Migration.create_index(pool, "issues", ["project_id", "last_seen:DESC"], "name:idx_issues_project_last_seen where:status = 'open'")?
   Migration.drop_index(pool, "users", ["email"])?
   Ok(0)
 end
@@ -5476,22 +5476,29 @@ end
     assert_eq!(output, "index_ops_ok\n");
 }
 
-/// Migration.execute (raw SQL escape hatch) compiles.
+/// PostgreSQL-specific schema helpers compile without falling back to raw Migration.execute.
 #[test]
-fn e2e_migration_execute_compiles() {
+fn e2e_migration_pg_schema_helpers_compile() {
     let output = compile_and_run(
         r#"
 fn run_migration(pool :: PoolHandle) -> Int!String do
-  Migration.execute(pool, "CREATE EXTENSION IF NOT EXISTS pgcrypto")?
+  Pg.create_extension(pool, "pgcrypto")?
+  Pg.create_range_partitioned_table(pool, "events", [
+    "id:UUID:NOT NULL DEFAULT gen_random_uuid()",
+    "tags:JSONB:NOT NULL DEFAULT '{}'",
+    "received_at:TIMESTAMPTZ:NOT NULL DEFAULT now()",
+    "PRIMARY KEY (id, received_at)"
+  ], "received_at")?
+  Pg.create_gin_index(pool, "events", "idx_events_tags", "tags", "jsonb_path_ops")?
   Ok(0)
 end
 
 fn main() do
-  println("execute_ok")
+  println("pg_schema_ok")
 end
 "#,
     );
-    assert_eq!(output, "execute_ok\n");
+    assert_eq!(output, "pg_schema_ok\n");
 }
 
 // ── Migration Scaffold Generation ─────────────────────────────────────
@@ -5571,6 +5578,14 @@ fn e2e_migrate_generate_creates_file() {
     assert!(
         content.contains("# Migration: create_users"),
         "Migration should contain name in comment header"
+    );
+    assert!(
+        content.contains("Pg.create_extension(pool, \"pgcrypto\")?"),
+        "Migration scaffold should teach Pg.create_extension for PostgreSQL extras"
+    );
+    assert!(
+        !content.contains("Migration.execute(pool, \"CREATE EXTENSION IF NOT EXISTS pgcrypto\")?"),
+        "Migration scaffold should not teach raw Migration.execute for PostgreSQL extras"
     );
 }
 

@@ -494,7 +494,9 @@ pub fn up(pool :: PoolHandle) -> Int!String do
   #
   #   Migration.add_column(pool, "users", "age:BIGINT")?
   #
-  #   Migration.execute(pool, "CREATE EXTENSION IF NOT EXISTS pgcrypto")?
+  #   # PostgreSQL-specific schema extras stay under Pg.* helpers.
+  #   Pg.create_extension(pool, "pgcrypto")?
+  #   Pg.create_gin_index(pool, "users", "idx_users_email_trgm", "email", "gin_trgm_ops")?
   Ok(0)
 end
 
@@ -662,6 +664,8 @@ mod tests {
         assert!(content.contains("pub fn down(pool :: PoolHandle) -> Int!String do"));
         assert!(content.contains("# Migration: create_users"));
         assert!(content.contains("Migration.create_table"));
+        assert!(content.contains("Pg.create_extension(pool, \"pgcrypto\")?"));
+        assert!(!content.contains("Migration.execute(pool, \"CREATE EXTENSION IF NOT EXISTS pgcrypto\")?"));
     }
 
     #[test]

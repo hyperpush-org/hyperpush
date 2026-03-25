@@ -48,7 +48,7 @@ Must-Haves:
   - Verify: cargo test -p mesh-rt migration -- --nocapture
 cargo build -p meshc
 
-- [ ] **T02: Rewrite the initial Mesher migration onto the new helper boundary** `est:2h`
+- [x] **T02: Rewrite the initial Mesher migration onto the new helper boundary** `est:2h`
   Why: The densest S04-owned raw DDL cluster is the initial migration, so it should move first once the helper seam exists.
 
 Steps:
