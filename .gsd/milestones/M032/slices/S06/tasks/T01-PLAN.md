@@ -30,12 +30,12 @@ Replace the doctor-generated `S01-UAT.md` placeholder with a real artifact-drive
 
 ## Verification
 
-- `bash -lc 'test -s .gsd/milestones/M032/slices/S01/S01-SUMMARY.md && test -s .gsd/milestones/M032/slices/S01/S01-UAT.md'`
-- `bash -lc '! rg -n "Recovery placeholder UAT|Doctor created this placeholder" .gsd/milestones/M032/slices/S01/S01-UAT.md'`
+- `test -s .gsd/milestones/M032/slices/S01/S01-SUMMARY.md && test -s .gsd/milestones/M032/slices/S01/S01-UAT.md`
+- `! rg -n "Recovery placeholder UAT|Doctor created this placeholder" .gsd/milestones/M032/slices/S01/S01-UAT.md`
 - `rg -n "verify-m032-s01|cargo test -q -p meshc --test e2e m032_|cargo test -q -p meshc --test e2e_stdlib m032_|xmod_identity|route closures|Timer.send_after|Zero-test false positives|\.tmp/m032-s01/verify" .gsd/milestones/M032/slices/S01/S01-UAT.md`
 - `rg -n "Stale Folklore|Real Blockers|Real Keep-Sites|Mixed-Truth Comments|Next-Slice Handoff|xmod_identity|route closures|Timer.send_after" .gsd/milestones/M032/slices/S01/S01-SUMMARY.md`
-- `bash -lc 'set -euo pipefail; log=$(mktemp); cargo test -q -p meshc --test e2e m032_ -- --nocapture 2>&1 | tee "$log"; rg -q "running [1-9][0-9]* tests" "$log"'`
-- `bash -lc 'set -euo pipefail; log=$(mktemp); cargo test -q -p meshc --test e2e_stdlib m032_ -- --nocapture 2>&1 | tee "$log"; rg -q "running [1-9][0-9]* tests" "$log"'`
+- `cargo test -q -p meshc --test e2e m032_ -- --nocapture 2>&1 | tee .tmp/m032-s01/verify/s06-e2e-filter.log && rg -q "running [1-9][0-9]* tests" .tmp/m032-s01/verify/s06-e2e-filter.log`
+- `cargo test -q -p meshc --test e2e_stdlib m032_ -- --nocapture 2>&1 | tee .tmp/m032-s01/verify/s06-e2e-stdlib-filter.log && rg -q "running [1-9][0-9]* tests" .tmp/m032-s01/verify/s06-e2e-stdlib-filter.log`
 - `bash scripts/verify-m032-s01.sh`
 
 ## Inputs

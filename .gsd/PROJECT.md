@@ -24,6 +24,7 @@ Recent milestone state:
 - M032/S03 retired the stale request/handler/control-flow folklore in the audited `mesher/` modules by dogfooding direct `Request.query(...)`, inline service-call `case`, and inline cast-handler `if/else`, while preserving the real route-closure, nested-`&&`, and timer keep-sites
 - M032/S04 retired the stale module-boundary `from_json` folklore in Mesher's event ingestion/storage comments, kept the real PostgreSQL JSONB/ORM keep-sites explicit, and revalidated the supported cross-module `from_json` path plus Mesher fmt/build on the cleaned codebase
 - M032/S05 replayed the full Mesher proof matrix, closed the supported-now versus retained-limit ledger, and left a short file-backed keep-list for the remaining Mesh and data-layer pressure sites
+- M032/S06 backfilled the missing S01 acceptance artifact, reran the live S01 proof bundle with non-zero test-count guards, and closed the last milestone evidence gap so M032 now seals cleanly
 
 The next planned work is M033:
 1. shape the neutral ORM/migration core plus explicit PG extras around the recurring `mesher/storage/queries.mpl` and `mesher/storage/writer.mpl` ORM boundary families
