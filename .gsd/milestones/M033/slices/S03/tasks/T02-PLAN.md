@@ -1,17 +1,10 @@
 ---
-estimated_steps: 4
+estimated_steps: 10
 estimated_files: 7
-skills_used:
-  - postgresql-database-engineering
-  - test
+skills_used: []
 ---
 
-# T02: Rewrite joined, aggregate, and list read queries onto the current builder surface
-
-**Slice:** S03 — Hard read-side coverage and honest raw-tail collapse
-**Milestone:** M033
-
-## Description
+# T02: Attempted the T02 composed-read proof expansion, fixed the probe-compatible boolean helpers, and recorded a storage-probe blocker for the remaining read families.
 
 Keep pushing the read-side cleanup on the families that already fit the current ORM surface but still lean on raw SELECT, ORDER BY, or GROUP BY fragments. This task is still Mesher-only work: use the current builder and explicit `Pg.*` seam rather than widening the neutral core. The important constraint is that the dashboard/detail/search/team/alerts callers must see the same row keys and ordering semantics they consume today.
 
@@ -28,6 +21,21 @@ Keep pushing the read-side cleanup on the families that already fit the current 
 - [ ] `compiler/meshc/tests/e2e_m033_s03.rs` contains named `e2e_m033_s03_composed_reads_*` proofs for the T02 families
 - [ ] Caller-visible row keys, ordering, and null/default semantics stay unchanged for the dashboard/detail/search/team/alerts surfaces
 
+## Inputs
+
+- ``compiler/meshc/tests/e2e_m033_s03.rs` — S03 harness seeded in T01`
+- ``mesher/storage/queries.mpl` — joined, aggregate, and list read helpers still using raw projections or raw ordering/grouping`
+- ``mesher/api/search.mpl` — caller contract for issue/event listing rows`
+- ``mesher/api/dashboard.mpl` — caller contract for aggregate rows and top-issues ordering`
+- ``mesher/api/detail.mpl` — caller contract for event detail row shapes`
+- ``mesher/api/alerts.mpl` — caller contract for alert list row shapes`
+- ``mesher/api/team.mpl` — caller contract for membership list row shapes`
+
+## Expected Output
+
+- ``compiler/meshc/tests/e2e_m033_s03.rs` — expanded `composed_reads` coverage for joined and aggregate read helpers`
+- ``mesher/storage/queries.mpl` — joined, aggregate, and list read helpers rewritten onto the current builder surface without changing caller-visible row shapes`
+
 ## Verification
 
 - `cargo test -p meshc --test e2e_m033_s03 composed_reads -- --nocapture`
@@ -38,18 +46,3 @@ Keep pushing the read-side cleanup on the families that already fit the current 
 - Signals added/changed: named `e2e_m033_s03_composed_reads_*` failures localize ordering, grouping, and row-key drift for the dashboard/detail/search/alerts/team families
 - How a future agent inspects this: rerun the `composed_reads` filter in `compiler/meshc/tests/e2e_m033_s03.rs` and inspect the rewritten helper blocks in `mesher/storage/queries.mpl`
 - Failure state exposed: aggregate/count mismatches, ordering drift, and null/default handling regressions become explicit at the storage boundary
-
-## Inputs
-
-- `compiler/meshc/tests/e2e_m033_s03.rs` — S03 harness seeded in T01
-- `mesher/storage/queries.mpl` — joined, aggregate, and list read helpers still using raw projections or raw ordering/grouping
-- `mesher/api/search.mpl` — caller contract for issue/event listing rows
-- `mesher/api/dashboard.mpl` — caller contract for aggregate rows and top-issues ordering
-- `mesher/api/detail.mpl` — caller contract for event detail row shapes
-- `mesher/api/alerts.mpl` — caller contract for alert list row shapes
-- `mesher/api/team.mpl` — caller contract for membership list row shapes
-
-## Expected Output
-
-- `compiler/meshc/tests/e2e_m033_s03.rs` — expanded `composed_reads` coverage for joined and aggregate read helpers
-- `mesher/storage/queries.mpl` — joined, aggregate, and list read helpers rewritten onto the current builder surface without changing caller-visible row shapes
