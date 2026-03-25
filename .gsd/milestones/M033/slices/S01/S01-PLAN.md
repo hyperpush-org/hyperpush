@@ -73,7 +73,7 @@
 - `mesher/api/settings.mpl`
 - `mesher/api/team.mpl`
 - `mesher/services/project.mpl`
-- `mesher/services/event_processor.mpl`
 - `mesher/ingestion/routes.mpl`
+- `mesher/services/event_processor.mpl`
 - `mesher/storage/writer.mpl`
 - `scripts/verify-m033-s01.sh`

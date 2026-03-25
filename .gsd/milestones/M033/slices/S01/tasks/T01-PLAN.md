@@ -3,6 +3,7 @@ estimated_steps: 4
 estimated_files: 9
 skills_used:
   - test
+  - rust-best-practices
 ---
 
 # T01: Ship the neutral expression contract through compiler and runtime
