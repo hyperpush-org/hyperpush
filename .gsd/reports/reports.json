@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "projectName": "mesh-lang",
+  "projectPath": "/Users/sn0w/Documents/dev/mesh-lang",
+  "gsdVersion": "2.43.0",
+  "entries": [
+    {
+      "filename": "M032-2026-03-25T01-01-09.html",
+      "generatedAt": "2026-03-25T01:01:09.695Z",
+      "milestoneId": "M032",
+      "milestoneTitle": "Mesher Limitation Truth & Mesh Dogfood Retirement",
+      "label": "M032: Mesher Limitation Truth & Mesh Dogfood Retirement",
+      "kind": "milestone",
+      "totalCost": 126.49549325,
+      "totalTokens": 224781834,
+      "totalDuration": 44981765,
+      "doneSlices": 33,
+      "totalSlices": 33,
+      "doneMilestones": 25,
+      "totalMilestones": 30,
+      "phase": "needs-discussion"
+    }
+  ]
+}
