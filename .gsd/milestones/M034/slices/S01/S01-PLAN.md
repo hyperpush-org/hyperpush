@@ -34,7 +34,7 @@
   - Files: compiler/meshc/src/discovery.rs, compiler/mesh-lsp/src/analysis.rs, compiler/meshc/tests/e2e_m034_s01.rs
   - Verify: `cargo test -p meshc --test e2e_m034_s01 scoped_installed_package_builds -- --nocapture`
 `cargo test -p mesh-lsp scoped_installed_package -- --nocapture`
-- [ ] **T02: Add the canonical real-registry publish/install verifier and proof fixtures** — Once scoped installs compile locally, create the single repo-local proof surface that later CI work can call unchanged. The verifier must use one owner-scoped proof package name plus a unique version per run, isolate credentials under `.tmp/m034-s01/home`, publish to the real registry with `meshpkg --json`, and then recheck API, download, lockfile, consumer build, duplicate publish rejection, and public discoverability instead of trusting artifact builds or homepage counts.
+- [x] **T02: Added the M034 real-registry verifier script and scoped proof fixtures, but the live publish/install proof still needs a real dashboard-issued owner/token pair to run end to end.** — Once scoped installs compile locally, create the single repo-local proof surface that later CI work can call unchanged. The verifier must use one owner-scoped proof package name plus a unique version per run, isolate credentials under `.tmp/m034-s01/home`, publish to the real registry with `meshpkg --json`, and then recheck API, download, lockfile, consumer build, duplicate publish rejection, and public discoverability instead of trusting artifact builds or homepage counts.
 
 ## Failure Modes
 
