@@ -223,8 +223,10 @@ export default function LeaderboardPage() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="rounded-xl border border-border bg-card overflow-hidden"
       >
+        {/* Scrollable wrapper for small viewports */}
+        <div className="overflow-x-auto">
         {/* Table header */}
-        <div className="grid grid-cols-[3rem_1fr_5rem_6rem_5rem_6rem] sm:grid-cols-[3rem_1fr_5rem_7rem_5rem_7rem_6rem] items-center gap-4 px-4 py-3 border-b border-border bg-muted/30 text-xs font-mono text-muted-foreground uppercase tracking-wider">
+        <div className="grid grid-cols-[3rem_1fr_5rem_6rem_5rem_6rem] sm:grid-cols-[3rem_1fr_5rem_7rem_5rem_7rem_6rem] items-center gap-4 px-4 py-3 border-b border-border bg-muted/30 text-xs font-mono text-muted-foreground uppercase tracking-wider min-w-[520px]">
           <span>#</span>
           <span>Developer</span>
           <span className="hidden sm:block">Level</span>
@@ -235,7 +237,7 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Rows */}
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border min-w-[520px]">
           {leaderboardData.map((dev, index) => (
             <motion.div
               key={dev.name}
@@ -286,6 +288,7 @@ export default function LeaderboardPage() {
             </motion.div>
           ))}
         </div>
+        </div> {/* end overflow-x-auto */}
       </motion.div>
 
       {/* Bottom note */}

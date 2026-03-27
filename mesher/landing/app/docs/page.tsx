@@ -316,7 +316,7 @@ export default function DocsPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-background border-r border-border p-6 pt-24 overflow-y-auto md:hidden"
+              className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-background border-r border-border p-6 pt-20 overflow-y-auto md:hidden"
             >
               <Sidebar onNavigate={() => setMobileNavOpen(false)} />
             </motion.div>
@@ -535,7 +535,8 @@ try {
                 </p>
 
                 <div className="rounded-xl border border-border overflow-hidden mb-8">
-                  <div className="grid grid-cols-3 gap-px bg-border">
+                  <div className="overflow-x-auto">
+                  <div className="grid grid-cols-3 gap-px bg-border min-w-[420px]">
                     <div className="bg-muted/50 p-4 text-xs font-mono text-muted-foreground uppercase tracking-wider">Flow</div>
                     <div className="bg-muted/50 p-4 text-xs font-mono text-muted-foreground uppercase tracking-wider">Source</div>
                     <div className="bg-muted/50 p-4 text-xs font-mono text-muted-foreground uppercase tracking-wider">Destination</div>
@@ -545,12 +546,13 @@ try {
                     { flow: "Bounty Payout", source: "Project Treasury", dest: "Developer Wallet" },
                     { flow: "Protocol Fee", source: "Token trades", dest: "hyperpush Protocol" },
                   ].map((row) => (
-                    <div key={row.flow} className="grid grid-cols-3 gap-px bg-border">
+                    <div key={row.flow} className="grid grid-cols-3 gap-px bg-border min-w-[420px]">
                       <div className="bg-background p-4 text-sm font-medium">{row.flow}</div>
                       <div className="bg-background p-4 text-sm text-muted-foreground">{row.source}</div>
                       <div className="bg-background p-4 text-sm text-muted-foreground">{row.dest}</div>
                     </div>
                   ))}
+                  </div> {/* end overflow-x-auto */}
                 </div>
 
                 <Callout type="info" title="No upfront cost">

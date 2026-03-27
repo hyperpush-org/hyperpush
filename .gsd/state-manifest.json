@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-03-27T16:43:47.789Z",
+  "exported_at": "2026-03-27T16:53:40.306Z",
   "milestones": [
     {
       "id": "M001",
@@ -3577,19 +3577,27 @@
       "milestone_id": "M034",
       "slice_id": "S08",
       "id": "T04",
-      "title": "Repair `release.yml` release-asset verification so the hosted candidate tag can pass on Unix, macOS, and Windows.",
-      "status": "pending",
-      "one_liner": "",
-      "narrative": "",
-      "verification_result": "",
+      "title": "Repaired release asset smoke verification to build `mesh-rt` locally and hash staged archives portably across Unix and Windows.",
+      "status": "complete",
+      "one_liner": "Repaired release asset smoke verification to build `mesh-rt` locally and hash staged archives portably across Unix and Windows.",
+      "narrative": "Used the saved hosted `release.yml` failure log from T02 to target the real breakpoints instead of guessing. In `.github/workflows/release.yml`, I replaced the Unix `sha256sum` assumption with an inline Python `hashlib` checksum generator that works on macOS and Linux, rewrote the Windows checksum selection to use separate `$meshcArchive` / `$meshpkgArchive` bindings instead of the broken `Select-Object -First 1,` form, and added an explicit Rust install plus `cargo build -q -p mesh-rt` step before the staged installer smoke runs. Then I updated `scripts/verify-m034-s02-workflows.sh` so the local release-workflow contract only passes when that repaired behavior is present, recorded the non-obvious release-smoke rule in `.gsd/KNOWLEDGE.md`, and saved the CI decision in `.gsd/DECISIONS.md`.",
+      "verification_result": "Ran the task-plan workflow contract gate exactly as written and wrote the proof log to `.tmp/m034-s08/release-workflow-proof.log`. Re-ran the adjacent S05 workflow verifier to confirm the release-lane repair did not regress the public-surface workflow contracts. Re-ran the canonical installer verifier locally (`bash scripts/verify-m034-s03.sh`) and replayed the hosted-style prebuilt-archive path with `M034_S03_PREBUILT_RELEASE_DIR=.tmp/m034-s08/prebuilt-release-assets bash scripts/verify-m034-s03.sh` to prove the repaired release workflow contract now satisfies the `libmesh_rt.a` requirement without relying on a locally built archive bundle.",
       "duration": "",
-      "completed_at": null,
+      "completed_at": "2026-03-27T16:53:40.130Z",
       "blocker_discovered": false,
-      "deviations": "",
-      "known_issues": "",
-      "key_files": [],
-      "key_decisions": [],
-      "full_summary_md": "",
+      "deviations": "None.",
+      "known_issues": "The repo-owned release workflow contract is repaired locally, but this task did not re-run the hosted `v0.1.0` tag workflow or capture the final `first-green` evidence bundle. That outward verification remains downstream work.",
+      "key_files": [
+        ".github/workflows/release.yml",
+        "scripts/verify-m034-s02-workflows.sh",
+        ".tmp/m034-s08/release-workflow-proof.log",
+        ".gsd/KNOWLEDGE.md"
+      ],
+      "key_decisions": [
+        "Build `mesh-rt` on the `verify-release-assets` job instead of widening the published release bundle, because installed `meshc` only needs the local `libmesh_rt.a` search path satisfied for the smoke build.",
+        "Generate Unix `SHA256SUMS` with Python `hashlib` and keep Windows archive selection in separate bindings so the hosted verifier stays portable across macOS, Linux, and PowerShell."
+      ],
+      "full_summary_md": "---\nid: T04\nparent: S08\nmilestone: M034\nkey_files:\n  - .github/workflows/release.yml\n  - scripts/verify-m034-s02-workflows.sh\n  - .tmp/m034-s08/release-workflow-proof.log\n  - .gsd/KNOWLEDGE.md\nkey_decisions:\n  - Build `mesh-rt` on the `verify-release-assets` job instead of widening the published release bundle, because installed `meshc` only needs the local `libmesh_rt.a` search path satisfied for the smoke build.\n  - Generate Unix `SHA256SUMS` with Python `hashlib` and keep Windows archive selection in separate bindings so the hosted verifier stays portable across macOS, Linux, and PowerShell.\nduration: \"\"\nverification_result: passed\ncompleted_at: 2026-03-27T16:53:40.131Z\nblocker_discovered: false\n---\n\n# T04: Repaired release asset smoke verification to build `mesh-rt` locally and hash staged archives portably across Unix and Windows.\n\n**Repaired release asset smoke verification to build `mesh-rt` locally and hash staged archives portably across Unix and Windows.**\n\n## What Happened\n\nUsed the saved hosted `release.yml` failure log from T02 to target the real breakpoints instead of guessing. In `.github/workflows/release.yml`, I replaced the Unix `sha256sum` assumption with an inline Python `hashlib` checksum generator that works on macOS and Linux, rewrote the Windows checksum selection to use separate `$meshcArchive` / `$meshpkgArchive` bindings instead of the broken `Select-Object -First 1,` form, and added an explicit Rust install plus `cargo build -q -p mesh-rt` step before the staged installer smoke runs. Then I updated `scripts/verify-m034-s02-workflows.sh` so the local release-workflow contract only passes when that repaired behavior is present, recorded the non-obvious release-smoke rule in `.gsd/KNOWLEDGE.md`, and saved the CI decision in `.gsd/DECISIONS.md`.\n\n## Verification\n\nRan the task-plan workflow contract gate exactly as written and wrote the proof log to `.tmp/m034-s08/release-workflow-proof.log`. Re-ran the adjacent S05 workflow verifier to confirm the release-lane repair did not regress the public-surface workflow contracts. Re-ran the canonical installer verifier locally (`bash scripts/verify-m034-s03.sh`) and replayed the hosted-style prebuilt-archive path with `M034_S03_PREBUILT_RELEASE_DIR=.tmp/m034-s08/prebuilt-release-assets bash scripts/verify-m034-s03.sh` to prove the repaired release workflow contract now satisfies the `libmesh_rt.a` requirement without relying on a locally built archive bundle.\n\n## Verification Evidence\n\n| # | Command | Exit Code | Verdict | Duration |\n|---|---------|-----------|---------|----------|\n| 1 | `bash -c 'set -euo pipefail; mkdir -p .tmp/m034-s08; bash scripts/verify-m034-s02-workflows.sh | tee .tmp/m034-s08/release-workflow-proof.log'` | 0 | ✅ pass | 1122ms |\n| 2 | `bash scripts/verify-m034-s05-workflows.sh` | 0 | ✅ pass | 1024ms |\n| 3 | `bash scripts/verify-m034-s03.sh` | 0 | ✅ pass | 27822ms |\n| 4 | `M034_S03_PREBUILT_RELEASE_DIR=.tmp/m034-s08/prebuilt-release-assets bash scripts/verify-m034-s03.sh` | 0 | ✅ pass | 7961ms |\n\n\n## Deviations\n\nNone.\n\n## Known Issues\n\nThe repo-owned release workflow contract is repaired locally, but this task did not re-run the hosted `v0.1.0` tag workflow or capture the final `first-green` evidence bundle. That outward verification remains downstream work.\n\n## Files Created/Modified\n\n- `.github/workflows/release.yml`\n- `scripts/verify-m034-s02-workflows.sh`\n- `.tmp/m034-s08/release-workflow-proof.log`\n- `.gsd/KNOWLEDGE.md`\n",
       "description": "Use the saved `release.yml` tag-run failure logs to repair the repo-owned release verification path instead of hand-waving around hosted drift. The fixes must cover the real blockers recorded by T02: the staged smoke path must truthfully satisfy the `libmesh_rt.a` requirement where the verifier expects it, checksum generation must no longer assume `sha256sum` on macOS, and the Windows checksum archive selection must use valid PowerShell syntax. Update the workflow-contract verifiers in the same task so local proof encodes the repaired hosted contract.\n\nSteps:\n1. Reproduce the failing `Verify release assets (...)` expectations from `.tmp/m034-s08/tag-rollout/release-v0.1.0-log-failed.txt` and the current `.github/workflows/release.yml` plus staged installer proof scripts.\n2. Repair the release workflow and any repo-owned helper scripts so the Unix/macOS/Windows verification jobs are truthful for the staged assets they consume.\n3. Update `scripts/verify-m034-s02-workflows.sh` and `scripts/verify-m034-s05-workflows.sh` if their current assertions encode the broken hosted behavior.\n4. Keep the documented installer mirrors in `website/docs/public/` aligned if the underlying helper logic changes.\n\nMust-haves:\n- No `Verify release assets (...)` step depends on a host-only checksum tool assumption.\n- The Windows checksum selection path is valid PowerShell instead of the broken `Select-Object -First 1,` form.\n- The repo-owned workflow verifiers pass only when the repaired release contract is present.",
       "estimate": "1h 15m",
       "files": [
@@ -4895,6 +4903,18 @@
       "decision": "How the packages-website Docker image produces runtime dependencies for Fly deploys",
       "choice": "Build with `npm ci`, run `npm run build`, then `npm prune --omit=dev` in the builder stage and copy the pruned `node_modules` into the runtime stage instead of running `npm install --omit=dev --ignore-scripts` in runtime",
       "rationale": "The hosted `deploy-services.yml` failure was caused by the runtime-stage install re-resolving the Svelte/Vite peer tree and hitting an `ERESOLVE` conflict. Pruning the already-built lockfile-resolved tree keeps the image truthful, avoids a second dependency resolution path, and preserves the existing workflow contract.",
+      "revisable": "Yes",
+      "made_by": "agent",
+      "superseded_by": null
+    },
+    {
+      "seq": 3408,
+      "id": "D099",
+      "when_context": "M034/S08/T04",
+      "scope": "ci",
+      "decision": "How the release asset smoke job should satisfy meshc's runtime-library dependency and generate staged checksums across platforms",
+      "choice": "In `release.yml`, the `verify-release-assets` job installs Rust, builds `mesh-rt` locally before running `scripts/verify-m034-s03.{sh,ps1}`, uses Python `hashlib` for Unix `SHA256SUMS`, and keeps Windows archive selection in valid per-variable PowerShell bindings instead of publishing or downloading an extra runtime-library release artifact.",
+      "rationale": "The staged smoke only consumes meshc/meshpkg archives, but installed `meshc` auto-detects `libmesh_rt.a` from the local Cargo target tree. Building `mesh-rt` on the verifier job satisfies the real runtime dependency without changing the public release bundle. Using Python for Unix hashing removes the macOS `sha256sum` assumption, and the explicit Windows bindings avoid the broken `Select-Object -First 1,` syntax that previously made the hosted tag lane red.",
       "revisable": "Yes",
       "made_by": "agent",
       "superseded_by": null
@@ -7837,6 +7857,50 @@
       "verdict": "✅ pass",
       "duration_ms": 1470,
       "created_at": "2026-03-27T16:43:47.307Z"
+    },
+    {
+      "id": 268,
+      "task_id": "T04",
+      "slice_id": "S08",
+      "milestone_id": "M034",
+      "command": "bash -c 'set -euo pipefail; mkdir -p .tmp/m034-s08; bash scripts/verify-m034-s02-workflows.sh | tee .tmp/m034-s08/release-workflow-proof.log'",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 1122,
+      "created_at": "2026-03-27T16:53:40.130Z"
+    },
+    {
+      "id": 269,
+      "task_id": "T04",
+      "slice_id": "S08",
+      "milestone_id": "M034",
+      "command": "bash scripts/verify-m034-s05-workflows.sh",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 1024,
+      "created_at": "2026-03-27T16:53:40.130Z"
+    },
+    {
+      "id": 270,
+      "task_id": "T04",
+      "slice_id": "S08",
+      "milestone_id": "M034",
+      "command": "bash scripts/verify-m034-s03.sh",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 27822,
+      "created_at": "2026-03-27T16:53:40.130Z"
+    },
+    {
+      "id": 271,
+      "task_id": "T04",
+      "slice_id": "S08",
+      "milestone_id": "M034",
+      "command": "M034_S03_PREBUILT_RELEASE_DIR=.tmp/m034-s08/prebuilt-release-assets bash scripts/verify-m034-s03.sh",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 7961,
+      "created_at": "2026-03-27T16:53:40.130Z"
     }
   ]
 }

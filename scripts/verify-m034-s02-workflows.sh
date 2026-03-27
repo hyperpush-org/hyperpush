@@ -625,8 +625,12 @@ if verify_release_assets.is_a?(Hash)
     unless checksum_unix["if"].to_s.include?("runner.os != 'Windows'")
       errors << "verify-release-assets Unix checksum step must stay non-Windows only"
     end
-    unless checksum_unix["run"].to_s.include?("sha256sum meshc-v*-${{ matrix.target }}.${{ matrix.archive_ext }} meshpkg-v*-${{ matrix.target }}.${{ matrix.archive_ext }} > SHA256SUMS")
-      errors << "verify-release-assets Unix checksum step must generate SHA256SUMS from the staged archives"
+    run_text = checksum_unix["run"].to_s
+    unless run_text.include?("python3 - <<'PY'") && run_text.include?("from hashlib import sha256") && run_text.include?("release-assets/SHA256SUMS") && run_text.include?("missing release archive")
+      errors << "verify-release-assets Unix checksum step must generate SHA256SUMS with the portable Python hasher"
+    end
+    if run_text.include?("sha256sum ")
+      errors << "verify-release-assets Unix checksum step must not depend on sha256sum"
     end
   else
     errors << "verify-release-assets job must generate SHA256SUMS on Unix runners"
@@ -638,11 +642,24 @@ if verify_release_assets.is_a?(Hash)
       errors << "verify-release-assets Windows checksum step must stay Windows only"
     end
     run_text = checksum_windows["run"].to_s
-    unless run_text.include?("Get-FileHash") && run_text.include?("SHA256SUMS") && run_text.include?("missing release archive")
+    unless run_text.include?("$meshcArchive = Get-ChildItem") && run_text.include?("$meshpkgArchive = Get-ChildItem") && run_text.include?("$files = @($meshcArchive, $meshpkgArchive)") && run_text.include?("Get-FileHash") && run_text.include?("SHA256SUMS") && run_text.include?("missing release archive")
       errors << "verify-release-assets Windows checksum step must hash the staged archives and fail clearly on missing files"
+    end
+    if run_text.include?("Select-Object -First 1,")
+      errors << "verify-release-assets Windows checksum step must not use the broken Select-Object -First 1, syntax"
     end
   else
     errors << "verify-release-assets job must generate SHA256SUMS on Windows runners"
+  end
+
+  install_rust = verify_find_step.call("Install Rust for smoke verifier")
+  unless install_rust.is_a?(Hash) && install_rust["uses"] == "dtolnay/rust-toolchain@stable"
+    errors << "verify-release-assets job must install Rust before building mesh-rt for the staged smoke"
+  end
+
+  build_mesh_rt = verify_find_step.call("Build mesh-rt for smoke verifier")
+  unless build_mesh_rt.is_a?(Hash) && build_mesh_rt["run"].to_s.strip == "cargo build -q -p mesh-rt"
+    errors << "verify-release-assets job must build mesh-rt so the staged smoke can find libmesh_rt.a"
   end
 
   verify_unix = verify_find_step.call("Verify staged installer assets (Unix)")
