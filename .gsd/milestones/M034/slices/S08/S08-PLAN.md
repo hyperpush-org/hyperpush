@@ -145,7 +145,7 @@ Must-haves:
   - Verify: bash -c 'set -euo pipefail; mkdir -p .tmp/m034-s08; bash scripts/verify-m034-s02-workflows.sh | tee .tmp/m034-s08/release-workflow-proof.log'
 bash scripts/verify-m034-s05-workflows.sh
 bash scripts/verify-m034-s03.sh
-- [ ] **T05: Retarget the candidate tags on the repaired rollout commit and refresh the hosted run snapshots.** — After T03 and T04 land, the old candidate-tag runs are still tied to the broken rollout commit, so they are not acceptable evidence. This task first confirms the repaired rollout SHA on local `HEAD` and `origin/main`, then asks for explicit approval before any outward mutation. After approval, retarget or recreate `v0.1.0` and `ext-v0.3.0` on the repaired rollout commit, monitor the hosted runs, and persist durable snapshots that distinguish the new runs from the stale red ones by ref name and `headSha`.
+- [x] **T05: Captured the remote-SHA blocker preventing a truthful candidate-tag reroll.** — After T03 and T04 land, the old candidate-tag runs are still tied to the broken rollout commit, so they are not acceptable evidence. This task first confirms the repaired rollout SHA on local `HEAD` and `origin/main`, then asks for explicit approval before any outward mutation. After approval, retarget or recreate `v0.1.0` and `ext-v0.3.0` on the repaired rollout commit, monitor the hosted runs, and persist durable snapshots that distinguish the new runs from the stale red ones by ref name and `headSha`.
 
 Steps:
 1. Confirm the intended rollout SHA from local `HEAD`, `origin/main`, and the version files that derive `v0.1.0` / `ext-v0.3.0`.
@@ -176,6 +176,7 @@ for workflow, ref_name in expected.items():
     assert entry['conclusion'] == 'success', (workflow, entry)
     assert entry['headSha'], (workflow, entry)
 PY
+  - Blocker: origin/main and both remote candidate tags still point at 6979a4a17221af8e39200b574aa2209ad54bc983, while local HEAD is 5e457f3cce9b58d34be6516164b093f253047510 and GitHub returns HTTP 422 for that SHA. release.yml and deploy-services.yml therefore remain red on the stale hosted reroll.
 - [ ] **T06: Capture the authoritative `first-green` hosted-evidence bundle and validate its manifest.** — Once T05 proves the repaired candidate tags are green, preserve that truth through the repo-owned wrapper exactly once. Reconfirm that `.tmp/m034-s06/evidence/first-green/` is still unused, rerun the S05/S06 contract tests if any wrapper or workflow-contract code changed earlier in the slice, then run `scripts/verify-m034-s06-remote-evidence.sh first-green` exactly once from the authenticated repo root. Validate the archived manifest and copied verifier artifacts so milestone closeout can consume the bundle directly without another hosted query.
 
 Steps:
