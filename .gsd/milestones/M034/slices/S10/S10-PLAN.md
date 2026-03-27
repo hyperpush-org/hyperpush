@@ -81,7 +81,7 @@ bash scripts/tests/verify-m034-s01-fetch-retry.sh
   - Verify: cargo test -p mesh-codegen link -- --nocapture
 pwsh -NoProfile -File scripts/tests/verify-m034-s03-last-exitcode.ps1
 bash scripts/verify-m034-s02-workflows.sh
-- [ ] **T03: Rerun the two hosted blocker lanes on the rollout SHA and refresh the evidence bundle** — Once T01 and T02 are green locally, refresh the hosted evidence on the already-approved rollout SHA so S10 ends with truthful green hosted lanes rather than only local fixes.
+- [x] **T03: Refreshed hosted blocker evidence and confirmed `release.yml` is still red on the rollout SHA while `authoritative-verification.yml` recovered.** — Once T01 and T02 are green locally, refresh the hosted evidence on the already-approved rollout SHA so S10 ends with truthful green hosted lanes rather than only local fixes.
 
 ## Failure Modes
 
@@ -120,3 +120,4 @@ bash scripts/verify-m034-s02-workflows.sh
   - Verify: gh run list -R snowdamiz/mesh-lang --workflow authoritative-verification.yml --limit 1 --json databaseId,status,conclusion,headSha,url
 gh run list -R snowdamiz/mesh-lang --workflow release.yml --limit 1 --json databaseId,status,conclusion,headSha,url
 bash -c 'set -euo pipefail; test -f .env; set -a; source .env; set +a; VERIFY_M034_S05_STOP_AFTER=remote-evidence bash scripts/verify-m034-s05.sh'
+  - Blocker: `release.yml` is still red on the approved rollout SHA `8e6d49dacc4f4cd64824b032078ae45aabfe9635`. The fresh hosted failure remains the Windows staged installer smoke step (`Verify staged installer assets (Windows)`) failing with `verification drift: installed meshc.exe build installer smoke fixture failed`. Another remediation task is required before the slice can pass.
