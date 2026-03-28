@@ -87,6 +87,21 @@ if grep -Eq '^(public-http|s01-live-proof)	' "$VERIFY_ROOT/phase-report.txt"; th
   fail "stop-after remote-evidence drifted into later S05 phases"
 fi
 
+ARCHIVE_STATUS="$(<"$VERIFY_ROOT/status.txt")"
+ARCHIVE_PHASE="$(<"$VERIFY_ROOT/current-phase.txt")"
+
+if [[ "$ARCHIVE_LABEL" == "first-green" ]]; then
+  if [[ "$S05_EXIT_CODE" -ne 0 ]]; then
+    fail "first-green requires a green stop-after remote-evidence bundle"
+  fi
+  if [[ "$ARCHIVE_STATUS" != "ok" ]]; then
+    fail "first-green requires status.txt = ok"
+  fi
+  if [[ "$ARCHIVE_PHASE" != "stopped-after-remote-evidence" ]]; then
+    fail "first-green requires current-phase.txt = stopped-after-remote-evidence"
+  fi
+fi
+
 mkdir -p "$STAGING_PATH"
 cp -R "$VERIFY_ROOT"/. "$STAGING_PATH"/
 

@@ -59,6 +59,17 @@ function createStubHarness(
     includeRemoteRuns = true,
     archiveLabel = "contract-red",
     remoteRunsPayload = defaultRemoteRunsPayload(),
+    status = "failed",
+    currentPhase = "remote-evidence",
+    failedPhase = "remote-evidence",
+    phaseReport = [
+      "prereq-sweep\tstarted",
+      "prereq-sweep\tpassed",
+      "candidate-tags\tstarted",
+      "candidate-tags\tpassed",
+      "remote-evidence\tstarted",
+      "remote-evidence\tfailed",
+    ],
   } = {},
 ) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-m034-s06-"));
@@ -72,6 +83,10 @@ function createStubHarness(
   const remoteRunsBlock = includeRemoteRuns
     ? `cat >"$VERIFY_ROOT/remote-runs.json" <<'JSON'\n${JSON.stringify(remoteRunsPayload, null, 2)}\nJSON`
     : 'rm -f "$VERIFY_ROOT/remote-runs.json"';
+  const failedPhaseBlock =
+    failedPhase === null
+      ? 'rm -f "$VERIFY_ROOT/failed-phase.txt"'
+      : `printf '${failedPhase}\\n' >"$VERIFY_ROOT/failed-phase.txt"`;
 
   fs.writeFileSync(
     stubPath,
@@ -86,16 +101,11 @@ fi
 VERIFY_ROOT="\${M034_S05_VERIFY_ROOT:?}"
 mkdir -p "$VERIFY_ROOT"
 printf 'stub invoked\n' >"${invokedMarker}"
-printf 'remote-evidence\n' >"$VERIFY_ROOT/current-phase.txt"
-printf 'failed\n' >"$VERIFY_ROOT/status.txt"
-printf 'remote-evidence\n' >"$VERIFY_ROOT/failed-phase.txt"
+printf '${currentPhase}\n' >"$VERIFY_ROOT/current-phase.txt"
+printf '${status}\n' >"$VERIFY_ROOT/status.txt"
+${failedPhaseBlock}
 cat >"$VERIFY_ROOT/phase-report.txt" <<'EOF'
-prereq-sweep	started
-prereq-sweep	passed
-candidate-tags	started
-candidate-tags	passed
-remote-evidence	started
-remote-evidence	failed
+${phaseReport.join("\n")}
 EOF
 cat >"$VERIFY_ROOT/candidate-tags.json" <<'JSON'
 ${JSON.stringify(
@@ -140,7 +150,7 @@ test("verify-m034-s05 exposes an explicit stop-after remote-evidence boundary", 
   );
 });
 
-test("remote-evidence helper archives a red hosted bundle and returns the verifier exit code", (t) => {
+test("remote-evidence helper archives a red hosted bundle for non-reserved labels and returns the verifier exit code", (t) => {
   const harness = createStubHarness(t, { exitCode: 1, includeRemoteRuns: true, archiveLabel: "contract-red" });
   const result = runHelper(harness.archiveLabel, {
     M034_S05_VERIFY_SCRIPT: harness.stubPath,
@@ -152,7 +162,7 @@ test("remote-evidence helper archives a red hosted bundle and returns the verifi
   assert.ok(fs.existsSync(harness.invokedMarker), "wrapper should invoke the S05 verifier when the label is new");
 
   const archiveRoot = path.join(harness.evidenceRoot, harness.archiveLabel);
-  assert.ok(fs.existsSync(path.join(archiveRoot, "remote-runs.json")), "red remote evidence should still be archived");
+  assert.ok(fs.existsSync(path.join(archiveRoot, "remote-runs.json")), "red remote evidence should still be archived for non-reserved labels");
   assert.ok(fs.existsSync(path.join(archiveRoot, "candidate-tags.json")), "candidate tags should be archived");
   assert.ok(fs.existsSync(path.join(archiveRoot, "remote-deploy-list.log")), "remote logs should be archived");
 
@@ -177,6 +187,54 @@ test("remote-evidence helper archives a red hosted bundle and returns the verifi
   assert.equal(manifest.remoteRunsSummary[0].headShaMatchesExpected, false);
   assert.equal(manifest.remoteRunsSummary[0].latestAvailableHeadSha, "5ddf3b2dce17abe08e1188d9b46e575d83525b50");
   assert.match(result.stdout, new RegExp(`archive: .*${harness.archiveLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+});
+
+test("remote-evidence helper refuses to spend first-green on a red hosted bundle", (t) => {
+  const harness = createStubHarness(t, { exitCode: 1, includeRemoteRuns: true, archiveLabel: "first-green" });
+  const result = runHelper(harness.archiveLabel, {
+    M034_S05_VERIFY_SCRIPT: harness.stubPath,
+    M034_S05_VERIFY_ROOT: harness.verifyRoot,
+    M034_S06_EVIDENCE_ROOT: harness.evidenceRoot,
+  });
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.ok(fs.existsSync(harness.invokedMarker), "first-green still runs the S05 verifier before refusing the archive");
+  assert.match(result.stderr, /first-green requires a green stop-after remote-evidence bundle/);
+  assert.ok(!fs.existsSync(path.join(harness.evidenceRoot, "first-green")), "red first-green attempts must not create the reserved archive directory");
+});
+
+test("remote-evidence helper archives first-green only after a green stop-after bundle", (t) => {
+  const harness = createStubHarness(t, {
+    exitCode: 0,
+    includeRemoteRuns: true,
+    archiveLabel: "first-green",
+    status: "ok",
+    currentPhase: "stopped-after-remote-evidence",
+    failedPhase: null,
+    phaseReport: [
+      "prereq-sweep\tstarted",
+      "prereq-sweep\tpassed",
+      "candidate-tags\tstarted",
+      "candidate-tags\tpassed",
+      "remote-evidence\tstarted",
+      "remote-evidence\tpassed",
+    ],
+  });
+  const result = runHelper(harness.archiveLabel, {
+    M034_S05_VERIFY_SCRIPT: harness.stubPath,
+    M034_S05_VERIFY_ROOT: harness.verifyRoot,
+    M034_S06_EVIDENCE_ROOT: harness.evidenceRoot,
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const archiveRoot = path.join(harness.evidenceRoot, "first-green");
+  assert.ok(fs.existsSync(path.join(archiveRoot, "manifest.json")), "green first-green should archive successfully");
+  const manifest = JSON.parse(fs.readFileSync(path.join(archiveRoot, "manifest.json"), "utf8"));
+  assert.equal(manifest.s05ExitCode, 0);
+  assert.equal(manifest.s05Status, "ok");
+  assert.equal(manifest.currentPhase, "stopped-after-remote-evidence");
+  assert.equal(manifest.failedPhase, null);
+  assert.deepEqual(manifest.phaseReport.slice(-2), ["remote-evidence\tstarted", "remote-evidence\tpassed"]);
 });
 
 test("remote-evidence helper fails closed when required hosted artifacts are missing", (t) => {

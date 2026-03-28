@@ -32,7 +32,7 @@ bash scripts/verify-m034-s02-workflows.sh
   - Files: scripts/verify-m034-s05.sh, scripts/verify-m034-s06-remote-evidence.sh, .tmp/m034-s05/verify/remote-runs.json, .tmp/m034-s12/t03/hosted-rollout-summary.json, .tmp/m034-s12/t03/diag-download/
   - Verify: VERIFY_M034_S05_STOP_AFTER=remote-evidence bash scripts/verify-m034-s05.sh
 test -s .tmp/m034-s12/t03/hosted-rollout-summary.json
-- [ ] **T04: Capture first-green once and finish the final assembly replay** — Once the hosted release lane is green, spend the one-shot `first-green` archive exactly once and finish the full `.env`-backed S05 closeout replay.
+- [x] **T04: Hardened the reserved `first-green` archive contract and documented the remaining hosted `release.yml` blocker instead of falsely claiming milestone closeout.** — Once the hosted release lane is green, spend the one-shot `first-green` archive exactly once and finish the full `.env`-backed S05 closeout replay.
 - Why: the milestone cannot claim delivery truth until both the hosted rollout evidence and the full assembled replay are fresh.
 - Do: capture `first-green`, run the full replay from a fresh verify root, and write a final closeout summary that links the replay back to the hosted archive.
 - Done when: `first-green` exists exactly once and the final replay passes through `remote-evidence`, `public-http`, and `s01-live-proof`.
@@ -45,3 +45,4 @@ grep -Fxq 'complete' .tmp/m034-s05/verify/current-phase.txt
 grep -Fxq $'remote-evidence	passed' .tmp/m034-s05/verify/phase-report.txt
 grep -Fxq $'public-http	passed' .tmp/m034-s05/verify/phase-report.txt
 grep -Fxq $'s01-live-proof	passed' .tmp/m034-s05/verify/phase-report.txt
+  - Blocker: Hosted `release.yml` run `23669185030` is still `completed/failure` on `refs/tags/v0.1.0` / SHA `1e83ea930fdfd346b9e56659dc50d2f759ec5da2`, so the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay still fails at `remote-evidence`. The milestone cannot truthfully capture `first-green` or complete final closeout until that hosted lane is rerun green with explicit user approval for the required GitHub mutation.

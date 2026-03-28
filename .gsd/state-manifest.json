@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-03-28T00:13:03.745Z",
+  "exported_at": "2026-03-28T00:36:54.243Z",
   "milestones": [
     {
       "id": "M001",
@@ -4663,19 +4663,28 @@
       "milestone_id": "M034",
       "slice_id": "S12",
       "id": "T04",
-      "title": "Capture first-green once and finish the final assembly replay",
-      "status": "pending",
-      "one_liner": "",
-      "narrative": "",
-      "verification_result": "",
+      "title": "Hardened the reserved `first-green` archive contract and documented the remaining hosted `release.yml` blocker instead of falsely claiming milestone closeout.",
+      "status": "complete",
+      "one_liner": "Hardened the reserved `first-green` archive contract and documented the remaining hosted `release.yml` blocker instead of falsely claiming milestone closeout.",
+      "narrative": "I refreshed the live `remote-evidence` gate and confirmed the hosted `release.yml` lane is still red on the approved `v0.1.0` SHA, which made the planned green closeout path unavailable. While exercising the reserved-label path, I found a local contract bug: `scripts/verify-m034-s06-remote-evidence.sh first-green` would still archive a red stop-after bundle. I fixed the helper so diagnostic labels may still archive red bundles, but the reserved `first-green` label now refuses to archive unless the stop-after verifier exits 0 and leaves `status.txt=ok` plus `current-phase.txt=stopped-after-remote-evidence`. I expanded the Node contract tests for both the red refusal and green acceptance paths, removed the bogus red `first-green` directory the old behavior had created, reran the real helper to confirm the reserved label stays absent, reran the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay, and wrote `.tmp/m034-s12/t04/final-closeout-summary.json` to tie the fresh hosted failure to the fresh replay state. Because the hosted lane is still red and any further GitHub mutation would require explicit user approval, this is a plan-invalidating blocker rather than a completed closeout.",
+      "verification_result": "Ran the archive-helper and S05 contract tests after the helper change; they all passed, including the new reserved-label failure-path coverage. Reran `bash scripts/verify-m034-s06-remote-evidence.sh first-green` and confirmed it now refuses to create `.tmp/m034-s06/evidence/first-green/` while `release.yml` is still red. Reran the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay from a fresh verify root and confirmed the first failing phase is still `remote-evidence`. Verified that the requested success markers (`status.txt=ok`, `current-phase.txt=complete`, and passed `remote-evidence` / `public-http` / `s01-live-proof` lines) still fail, while the reserved `first-green` path remains absent as intended.",
       "duration": "",
-      "completed_at": null,
-      "blocker_discovered": false,
-      "deviations": "",
-      "known_issues": "",
-      "key_files": [],
-      "key_decisions": [],
-      "full_summary_md": "",
+      "completed_at": "2026-03-28T00:36:53.518Z",
+      "blocker_discovered": true,
+      "deviations": "The task plan assumed the hosted `release.yml` lane was already green and ready for one-shot archival. In local reality it is still red, so I did not claim closeout. Instead I repaired the reserved-label contract, removed the bogus red archive the old helper behavior created, and wrote a blocker summary tying the fresh hosted failure to the fresh replay failure.",
+      "known_issues": "Hosted `release.yml` run `23669185030` is still `completed/failure` on `refs/tags/v0.1.0` / SHA `1e83ea930fdfd346b9e56659dc50d2f759ec5da2`, so the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay still fails at `remote-evidence`. The milestone cannot truthfully capture `first-green` or complete final closeout until that hosted lane is rerun green with explicit user approval for the required GitHub mutation.",
+      "key_files": [
+        "scripts/verify-m034-s06-remote-evidence.sh",
+        "scripts/tests/verify-m034-s06-contract.test.mjs",
+        ".tmp/m034-s12/t04/final-closeout-summary.json",
+        ".tmp/m034-s12/t04/verification-results.json",
+        ".gsd/KNOWLEDGE.md",
+        ".gsd/milestones/M034/slices/S12/tasks/T04-SUMMARY.md"
+      ],
+      "key_decisions": [
+        "D111: allow red stop-after remote-evidence bundles under diagnostic labels, but require the reserved `first-green` label to archive only after a green stop-after bundle (`exit 0`, `status.txt=ok`, `current-phase.txt=stopped-after-remote-evidence`)."
+      ],
+      "full_summary_md": "---\nid: T04\nparent: S12\nmilestone: M034\nkey_files:\n  - scripts/verify-m034-s06-remote-evidence.sh\n  - scripts/tests/verify-m034-s06-contract.test.mjs\n  - .tmp/m034-s12/t04/final-closeout-summary.json\n  - .tmp/m034-s12/t04/verification-results.json\n  - .gsd/KNOWLEDGE.md\n  - .gsd/milestones/M034/slices/S12/tasks/T04-SUMMARY.md\nkey_decisions:\n  - D111: allow red stop-after remote-evidence bundles under diagnostic labels, but require the reserved `first-green` label to archive only after a green stop-after bundle (`exit 0`, `status.txt=ok`, `current-phase.txt=stopped-after-remote-evidence`).\nduration: \"\"\nverification_result: mixed\ncompleted_at: 2026-03-28T00:36:53.519Z\nblocker_discovered: true\n---\n\n# T04: Hardened the reserved `first-green` archive contract and documented the remaining hosted `release.yml` blocker instead of falsely claiming milestone closeout.\n\n**Hardened the reserved `first-green` archive contract and documented the remaining hosted `release.yml` blocker instead of falsely claiming milestone closeout.**\n\n## What Happened\n\nI refreshed the live `remote-evidence` gate and confirmed the hosted `release.yml` lane is still red on the approved `v0.1.0` SHA, which made the planned green closeout path unavailable. While exercising the reserved-label path, I found a local contract bug: `scripts/verify-m034-s06-remote-evidence.sh first-green` would still archive a red stop-after bundle. I fixed the helper so diagnostic labels may still archive red bundles, but the reserved `first-green` label now refuses to archive unless the stop-after verifier exits 0 and leaves `status.txt=ok` plus `current-phase.txt=stopped-after-remote-evidence`. I expanded the Node contract tests for both the red refusal and green acceptance paths, removed the bogus red `first-green` directory the old behavior had created, reran the real helper to confirm the reserved label stays absent, reran the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay, and wrote `.tmp/m034-s12/t04/final-closeout-summary.json` to tie the fresh hosted failure to the fresh replay state. Because the hosted lane is still red and any further GitHub mutation would require explicit user approval, this is a plan-invalidating blocker rather than a completed closeout.\n\n## Verification\n\nRan the archive-helper and S05 contract tests after the helper change; they all passed, including the new reserved-label failure-path coverage. Reran `bash scripts/verify-m034-s06-remote-evidence.sh first-green` and confirmed it now refuses to create `.tmp/m034-s06/evidence/first-green/` while `release.yml` is still red. Reran the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay from a fresh verify root and confirmed the first failing phase is still `remote-evidence`. Verified that the requested success markers (`status.txt=ok`, `current-phase.txt=complete`, and passed `remote-evidence` / `public-http` / `s01-live-proof` lines) still fail, while the reserved `first-green` path remains absent as intended.\n\n## Verification Evidence\n\n| # | Command | Exit Code | Verdict | Duration |\n|---|---------|-----------|---------|----------|\n| 1 | `node --test scripts/tests/verify-m034-s06-contract.test.mjs scripts/tests/verify-m034-s05-contract.test.mjs` | 0 | ✅ pass | 2421ms |\n| 2 | `bash scripts/verify-m034-s06-remote-evidence.sh first-green` | 1 | ✅ pass (expected blocker; reserved label refused) | 138525ms |\n| 3 | `bash -lc 'set -euo pipefail; test -f .env; set -a; source .env; set +a; bash scripts/verify-m034-s05.sh'` | 1 | ❌ fail | 128447ms |\n| 4 | `bash -lc \"grep -Fxq 'ok' .tmp/m034-s05/verify/status.txt\"` | 1 | ❌ fail | 30ms |\n| 5 | `bash -lc \"grep -Fxq 'complete' .tmp/m034-s05/verify/current-phase.txt\"` | 1 | ❌ fail | 25ms |\n| 6 | `bash -lc \"grep -Fxq $'remote-evidence\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"` | 1 | ❌ fail | 21ms |\n| 7 | `bash -lc \"grep -Fxq $'public-http\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"` | 1 | ❌ fail | 26ms |\n| 8 | `bash -lc \"grep -Fxq $'s01-live-proof\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"` | 1 | ❌ fail | 99ms |\n| 9 | `bash -lc 'test ! -e .tmp/m034-s06/evidence/first-green'` | 0 | ✅ pass | 66ms |\n\n\n## Deviations\n\nThe task plan assumed the hosted `release.yml` lane was already green and ready for one-shot archival. In local reality it is still red, so I did not claim closeout. Instead I repaired the reserved-label contract, removed the bogus red archive the old helper behavior created, and wrote a blocker summary tying the fresh hosted failure to the fresh replay failure.\n\n## Known Issues\n\nHosted `release.yml` run `23669185030` is still `completed/failure` on `refs/tags/v0.1.0` / SHA `1e83ea930fdfd346b9e56659dc50d2f759ec5da2`, so the full `.env`-backed `bash scripts/verify-m034-s05.sh` replay still fails at `remote-evidence`. The milestone cannot truthfully capture `first-green` or complete final closeout until that hosted lane is rerun green with explicit user approval for the required GitHub mutation.\n\n## Files Created/Modified\n\n- `scripts/verify-m034-s06-remote-evidence.sh`\n- `scripts/tests/verify-m034-s06-contract.test.mjs`\n- `.tmp/m034-s12/t04/final-closeout-summary.json`\n- `.tmp/m034-s12/t04/verification-results.json`\n- `.gsd/KNOWLEDGE.md`\n- `.gsd/milestones/M034/slices/S12/tasks/T04-SUMMARY.md`\n",
       "description": "Once the hosted release lane is green, spend the one-shot `first-green` archive exactly once and finish the full `.env`-backed S05 closeout replay.\n- Why: the milestone cannot claim delivery truth until both the hosted rollout evidence and the full assembled replay are fresh.\n- Do: capture `first-green`, run the full replay from a fresh verify root, and write a final closeout summary that links the replay back to the hosted archive.\n- Done when: `first-green` exists exactly once and the final replay passes through `remote-evidence`, `public-http`, and `s01-live-proof`.",
       "estimate": "1h",
       "files": [
@@ -6025,6 +6034,18 @@
       "decision": "How the installed compiler should handle runtime and Windows toolchain prerequisites before linking",
       "choice": "Preflight link planning before object emission and allow an explicit `MESH_RT_LIB_PATH` override, while the Windows staged verifier exports `CARGO_TARGET_DIR` to the repo target tree.",
       "rationale": "The hosted Windows smoke blocker was opaque because prerequisite discovery happened too late and depended on installed-binary auto-discovery. Moving runtime/linker resolution ahead of LLVM object emission turns missing runtime or bad `LLVM_SYS_211_PREFIX` inputs into deterministic Rust errors, and exporting `CARGO_TARGET_DIR` keeps the verifier honest about where `mesh-rt` was built.",
+      "revisable": "Yes",
+      "made_by": "agent",
+      "superseded_by": null
+    },
+    {
+      "seq": 3420,
+      "id": "D111",
+      "when_context": "M034/S12/T04",
+      "scope": "observability",
+      "decision": "Reserved-label semantics for scripts/verify-m034-s06-remote-evidence.sh",
+      "choice": "Allow red stop-after remote-evidence bundles to archive under diagnostic labels, but require the reserved `first-green` label to refuse archiving unless the stop-after verifier exited 0 with `status.txt=ok` and `current-phase.txt=stopped-after-remote-evidence`.",
+      "rationale": "Closeout still needs red hosted bundles for diagnosis, but the once-only `first-green` archive is milestone truth and cannot be spent on a failing hosted release lane. Separating diagnostic labels from the reserved label preserves debuggability without corrupting the final evidence contract.",
       "revisable": "Yes",
       "made_by": "agent",
       "superseded_by": null
@@ -9704,6 +9725,105 @@
       "verdict": "✅ pass",
       "duration_ms": 72,
       "created_at": "2026-03-28T00:13:03.010Z"
+    },
+    {
+      "id": 335,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "node --test scripts/tests/verify-m034-s06-contract.test.mjs scripts/tests/verify-m034-s05-contract.test.mjs",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 2421,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 336,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash scripts/verify-m034-s06-remote-evidence.sh first-green",
+      "exit_code": 1,
+      "verdict": "✅ pass (expected blocker; reserved label refused)",
+      "duration_ms": 138525,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 337,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc 'set -euo pipefail; test -f .env; set -a; source .env; set +a; bash scripts/verify-m034-s05.sh'",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 128447,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 338,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc \"grep -Fxq 'ok' .tmp/m034-s05/verify/status.txt\"",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 30,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 339,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc \"grep -Fxq 'complete' .tmp/m034-s05/verify/current-phase.txt\"",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 25,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 340,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc \"grep -Fxq $'remote-evidence\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 21,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 341,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc \"grep -Fxq $'public-http\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 26,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 342,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc \"grep -Fxq $'s01-live-proof\\tpassed' .tmp/m034-s05/verify/phase-report.txt\"",
+      "exit_code": 1,
+      "verdict": "❌ fail",
+      "duration_ms": 99,
+      "created_at": "2026-03-28T00:36:53.518Z"
+    },
+    {
+      "id": 343,
+      "task_id": "T04",
+      "slice_id": "S12",
+      "milestone_id": "M034",
+      "command": "bash -lc 'test ! -e .tmp/m034-s06/evidence/first-green'",
+      "exit_code": 0,
+      "verdict": "✅ pass",
+      "duration_ms": 66,
+      "created_at": "2026-03-28T00:36:53.518Z"
     }
   ]
 }
