@@ -10,10 +10,15 @@ const corpusPath = path.join(root, 'scripts/fixtures/m036-s01-syntax-corpus.json
 const sharedGrammarPath = path.join(root, 'tools/editors/vscode-mesh/syntaxes/mesh.tmLanguage.json')
 const shikiLightThemePath = path.join(root, 'website/docs/.vitepress/theme/shiki/mesh-light.json')
 const shikiDarkThemePath = path.join(root, 'website/docs/.vitepress/theme/shiki/mesh-dark.json')
+const clusterDecoratorFixturePath = path.join(root, 'scripts/fixtures/m048-s04-cluster-decorators.mpl')
 
 const BEGIN_SCOPE = 'punctuation.section.interpolation.begin.mesh'
 const END_SCOPE = 'punctuation.section.interpolation.end.mesh'
 const META_SCOPE = 'meta.interpolation.mesh'
+const ANNOTATION_PUNCTUATION_SCOPE = 'punctuation.definition.annotation.mesh'
+const CLUSTER_DECORATOR_SCOPE = 'storage.modifier.annotation.cluster.mesh'
+const INTEGER_SCOPE = 'constant.numeric.integer.mesh'
+const VARIABLE_SCOPE = 'variable.other.mesh'
 const STRING_SCOPE_BY_KIND = {
   double: 'string.quoted.double.mesh',
   triple: 'string.quoted.triple.mesh',
@@ -53,6 +58,29 @@ async function withTimeout(label, timeoutMs, promiseFactory) {
 
 function relativePath(absolutePath) {
   return path.relative(root, absolutePath).replace(/\\/g, '/')
+}
+
+function offsetToLineColumn(text, offset) {
+  const normalized = text.slice(0, offset).replace(/\r\n/g, '\n')
+  const lines = normalized.split('\n')
+  return {
+    line: lines.length,
+    column: lines.at(-1).length + 1,
+  }
+}
+
+function formatRange(text, start, end) {
+  const startPos = offsetToLineColumn(text, start)
+  const endPos = offsetToLineColumn(text, end)
+  return `${startPos.line}:${startPos.column}-${endPos.line}:${endPos.column}`
+}
+
+function findRequiredOffset(text, search, label, filePath) {
+  const offset = text.indexOf(search)
+  if (offset === -1) {
+    throw new Error(`[m036-s01] cluster decorator fixture drift: missing ${label} ${JSON.stringify(search)} in ${filePath}`)
+  }
+  return offset
 }
 
 function lineSlice(text, startLine, endLine) {
@@ -145,6 +173,67 @@ function loadCorpusCases() {
   })
 }
 
+function loadClusterDecoratorFixture() {
+  const absolutePath = clusterDecoratorFixturePath
+  const filePath = relativePath(absolutePath)
+  const snippet = readText(absolutePath, 'cluster decorator fixture')
+
+  if (!snippet.trim()) {
+    throw new Error(`[m036-s01] cluster decorator fixture drift: ${filePath} is empty`)
+  }
+
+  const plainDecoratorStart = findRequiredOffset(snippet, '@cluster pub fn add()', 'plain decorator declaration', filePath)
+  const countedDecoratorStart = findRequiredOffset(snippet, '@cluster(3) pub fn sync_todos()', 'counted decorator declaration', filePath)
+  const bareIdentifierStart = findRequiredOffset(snippet, 'let cluster = 1', 'bare cluster identifier declaration', filePath)
+
+  return {
+    absolutePath,
+    path: filePath,
+    snippet,
+    cases: [
+      {
+        id: 'plain-decorator-at',
+        start: plainDecoratorStart,
+        end: plainDecoratorStart + 1,
+        expectedScopes: [ANNOTATION_PUNCTUATION_SCOPE],
+      },
+      {
+        id: 'plain-decorator-cluster',
+        start: plainDecoratorStart + 1,
+        end: plainDecoratorStart + '@cluster'.length,
+        expectedScopes: [CLUSTER_DECORATOR_SCOPE],
+        unexpectedScopes: [VARIABLE_SCOPE],
+      },
+      {
+        id: 'counted-decorator-at',
+        start: countedDecoratorStart,
+        end: countedDecoratorStart + 1,
+        expectedScopes: [ANNOTATION_PUNCTUATION_SCOPE],
+      },
+      {
+        id: 'counted-decorator-cluster',
+        start: countedDecoratorStart + 1,
+        end: countedDecoratorStart + '@cluster'.length,
+        expectedScopes: [CLUSTER_DECORATOR_SCOPE],
+        unexpectedScopes: [VARIABLE_SCOPE],
+      },
+      {
+        id: 'counted-decorator-count',
+        start: countedDecoratorStart + '@cluster('.length,
+        end: countedDecoratorStart + '@cluster(3'.length,
+        expectedScopes: [INTEGER_SCOPE],
+      },
+      {
+        id: 'bare-cluster-identifier',
+        start: bareIdentifierStart + 'let '.length,
+        end: bareIdentifierStart + 'let cluster'.length,
+        expectedScopes: [VARIABLE_SCOPE],
+        unexpectedScopes: [ANNOTATION_PUNCTUATION_SCOPE, CLUSTER_DECORATOR_SCOPE],
+      },
+    ],
+  }
+}
+
 function tokenizeSnippet(grammar, code) {
   const normalized = code.replace(/\r\n/g, '\n')
   const lines = normalized.split('\n')
@@ -194,6 +283,25 @@ function scopesToSignature(segments) {
 
 function describeScopes(scopes) {
   return [...scopes].sort().join(', ') || '(none)'
+}
+
+function assertScopeContract(engineName, fixture, segments, caseDef) {
+  const actualScopes = scopesForRange(segments, caseDef.start, caseDef.end)
+  const range = formatRange(fixture.snippet, caseDef.start, caseDef.end)
+
+  for (const scope of caseDef.expectedScopes ?? []) {
+    assert.ok(
+      actualScopes.has(scope),
+      `[m036-s01] shared-surface syntax drift detected: engine=${engineName} file=${fixture.path} case=${caseDef.id} range=${range} issue=missing ${scope} actual=${describeScopes(actualScopes)}`,
+    )
+  }
+
+  for (const scope of caseDef.unexpectedScopes ?? []) {
+    assert.ok(
+      !actualScopes.has(scope),
+      `[m036-s01] shared-surface syntax drift detected: engine=${engineName} file=${fixture.path} case=${caseDef.id} range=${range} issue=unexpected ${scope} actual=${describeScopes(actualScopes)}`,
+    )
+  }
 }
 
 function verifyContract(engineName, corpusCase, segments) {
@@ -461,4 +569,32 @@ test('shared grammar matches the audited interpolation contract in both TextMate
   }
 
   assert.equal(drifts.length, 0, formatDrifts(drifts))
+})
+
+test('shared grammar scopes @cluster decorators consistently in both TextMate and Shiki', async () => {
+  const fixture = loadClusterDecoratorFixture()
+  const [textmate, shiki] = await Promise.all([createTextMateHarness(), createShikiHarness()])
+
+  try {
+    const textmateTokens = textmate.tokenize(fixture.snippet)
+    const shikiTokens = shiki.tokenize(fixture.snippet)
+    const rendered = shiki.render(fixture.snippet)
+
+    assert.match(rendered, /<pre class="shiki /, `[m036-s01] shiki render output drifted for ${fixture.path}`)
+
+    const textmateSignature = scopesToSignature(textmateTokens)
+    const shikiSignature = scopesToSignature(shikiTokens)
+    assert.equal(
+      JSON.stringify(textmateSignature),
+      JSON.stringify(shikiSignature),
+      `[m036-s01] shared-surface syntax drift detected: engine=both file=${fixture.path} case=cluster-decorator-signature issue=token signature diverged actual=textmate=${JSON.stringify(textmateSignature)} shiki=${JSON.stringify(shikiSignature)}`,
+    )
+
+    for (const caseDef of fixture.cases) {
+      assertScopeContract('textmate', fixture, textmateTokens, caseDef)
+      assertScopeContract('shiki', fixture, shikiTokens, caseDef)
+    }
+  } finally {
+    shiki.dispose()
+  }
 })

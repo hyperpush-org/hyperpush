@@ -45,7 +45,7 @@ The helper should preserve D311 and D320 by downloading the existing public inst
   - Files: compiler/mesh-pkg/src/lib.rs, compiler/mesh-pkg/src/toolchain_update.rs, compiler/mesh-pkg/tests/toolchain_update.rs
   - Verify: - `cargo test -p mesh-pkg --test toolchain_update -- --nocapture`
 - The helper tests cover default URL selection, installer URL override handling, env passthrough, and host/Windows launcher construction without re-implementing installer semantics.
-- [ ] **T02: Wire `meshc update` and `meshpkg update` into the shared helper with honest help and JSON behavior** — Once the shared helper exists, the public CLI surface still needs to expose it explicitly and truthfully. This task makes the new command discoverable, keeps both binaries on the same updater seam, and closes the `meshpkg --json` ambiguity instead of letting installer prose masquerade as structured output.
+- [x] **T02: Added explicit `meshc update` and `meshpkg update` commands, wired both through the shared updater seam, and closed the `meshpkg --json update` ambiguity with a fail-closed guard.** — Once the shared helper exists, the public CLI surface still needs to expose it explicitly and truthfully. This task makes the new command discoverable, keeps both binaries on the same updater seam, and closes the `meshpkg --json` ambiguity instead of letting installer prose masquerade as structured output.
 
 ## Failure Modes
 
@@ -84,7 +84,7 @@ The helper should preserve D311 and D320 by downloading the existing public inst
   - Files: compiler/meshc/src/main.rs, compiler/meshpkg/src/main.rs, compiler/meshc/tests/tooling_e2e.rs, compiler/meshpkg/tests/update_cli.rs
   - Verify: - `cargo test -p meshc --test tooling_e2e test_update -- --nocapture`
 - `cargo test -p meshpkg --test update_cli -- --nocapture`
-- [ ] **T03: Add the retained S03 acceptance rail for staged `meshc update` and installed `meshpkg update`** — The slice is not done when help text exists; it is done when the real update commands can refresh a staged or installed Mesh toolchain through the same installer path users already trust. This task adds the proof rail that exercises both commands against a staged local release server and fake Mesh home.
+- [x] **T03: Added the retained staged-release acceptance rail that proves `meshc update` and `meshpkg update` refresh the whole toolchain pair and preserve credentials through the canonical installer path.** — The slice is not done when help text exists; it is done when the real update commands can refresh a staged or installed Mesh toolchain through the same installer path users already trust. This task adds the proof rail that exercises both commands against a staged local release server and fake Mesh home.
 
 The rail should stay diagnosable like S01: retain the staged server tree, fake-home snapshots, command lines, stdout/stderr, exit statuses, version-file state, and credential-presence checks under `.tmp/m048-s03/...` so the first broken seam is inspectable without rerunning under manual instrumentation.
 

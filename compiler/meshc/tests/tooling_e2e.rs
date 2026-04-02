@@ -757,6 +757,60 @@ fn test_init_clustered_todo_template_rejects_existing_directory() {
     );
 }
 
+// ── Update ───────────────────────────────────────────────────────────
+
+#[test]
+fn test_update_command_is_listed_in_meshc_help() {
+    let output = Command::new(meshc_bin())
+        .arg("--help")
+        .output()
+        .expect("failed to run meshc --help");
+
+    assert!(
+        output.status.success(),
+        "meshc --help failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("update"),
+        "meshc --help should list the update subcommand, got:\n{}",
+        stdout
+    );
+    assert!(
+        stdout.contains("Refresh installed meshc and meshpkg"),
+        "meshc --help should describe the update subcommand honestly, got:\n{}",
+        stdout
+    );
+}
+
+#[test]
+fn test_update_subcommand_help_mentions_canonical_installer_path() {
+    let output = Command::new(meshc_bin())
+        .args(["update", "--help"])
+        .output()
+        .expect("failed to run meshc update --help");
+
+    assert!(
+        output.status.success(),
+        "meshc update --help failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Refresh installed meshc and meshpkg"),
+        "meshc update --help should explain the toolchain surface, got:\n{}",
+        stdout
+    );
+    assert!(
+        stdout.contains("canonical installer path"),
+        "meshc update --help should mention the canonical installer path, got:\n{}",
+        stdout
+    );
+}
+
 // ── REPL ─────────────────────────────────────────────────────────────
 
 #[test]

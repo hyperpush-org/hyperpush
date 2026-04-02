@@ -4,7 +4,7 @@
 
 Mesh is a programming language and backend application platform repository aimed at being trustworthy for real backend and distributed-systems work, not just toy examples. The repo contains the compiler, runtime, formatter, LSP, REPL, package tooling, docs site, package registry, packages website, landing site, and dogfood applications used to pressure-test the language.
 
-M047 is complete. The repo now has a truthful clustered-route wrapper implementation plus native and Docker proof that the Todo starter's selected read routes execute through explicit-count clustered route wrappers end to end. M048 is active: S01 closed the compiler/build/test entrypoint seam, and S02 now extends the same default-plus-override contract through `mesh-lsp`, `meshc lsp`, the repo-owned Neovim and VS Code hosts, and `meshpkg publish` package archives while keeping root `main.mpl` as the simple default.
+M047 is complete. The repo now has a truthful clustered-route wrapper implementation plus native and Docker proof that the Todo starter's selected read routes execute through explicit-count clustered route wrappers end to end. M048 is active: S01 closed the compiler/build/test entrypoint seam, S02 extended the same default-plus-override contract through `mesh-lsp`, `meshc lsp`, the repo-owned Neovim and VS Code hosts, and `meshpkg publish`, and S03 added installer-backed `meshc update` / `meshpkg update` commands plus a retained staged-release acceptance rail.
 
 The current wave is a public-surface reset aimed at new evaluators: configurable entrypoints, toolchain self-update, editor and init-skill parity, a cleaner scaffold/example story, evaluator-facing docs instead of a proof-maze, Mesher as the deeper real reference app, and deploy truth that matches what the site claims.
 
@@ -35,9 +35,8 @@ Recent distributed-runtime state:
 - M047 completed the public cutover to source-first `@cluster`, carried replication counts through runtime truth, shipped `HTTP.clustered(...)`, and updated the Todo scaffold, docs, and closeout rails around that shipped route wrapper
 
 Public docs and repo teaching surfaces are still uneven in ways the next wave needs to fix:
-- the default-plus-override `[package].entrypoint` contract now spans compiler build, test discovery, LSP, editor hosts, and `meshpkg publish`, but the remaining M048 work still needs toolchain self-update, syntax/init-skill parity, and evaluator-facing public touchpoint cleanup
-- `meshc` / `meshpkg` do not yet expose explicit binary self-update commands
-- editor syntax and init-time Mesh skills lag the current clustered/runtime model
+- the default-plus-override `[package].entrypoint` contract now spans compiler build, test discovery, LSP, editor hosts, and `meshpkg publish`, and the reset wave now also includes explicit installer-backed `meshc update` / `meshpkg update` commands proven against a retained staged release server rail in `compiler/meshc/tests/e2e_m048_s03.rs`
+- editor syntax and init-time Mesh skills still lag the current clustered/runtime model
 - public docs still expose proof-heavy surfaces centered on `reference-backend/`, `tiny-cluster/`, and `cluster-proof/`
 - the landing site still reflects stale product positioning rather than Mesh's actual language story
 - `reference-backend/` still exists even though the next wave is expected to retire it in favor of `mesher/`

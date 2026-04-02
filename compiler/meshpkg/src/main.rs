@@ -52,6 +52,8 @@ enum Commands {
         #[arg(long, default_value = DEFAULT_REGISTRY)]
         registry: String,
     },
+    /// Refresh installed meshc and meshpkg through the canonical installer path
+    Update,
 }
 
 fn main() {
@@ -65,6 +67,7 @@ fn main() {
             install::run(&PathBuf::from("."), name.as_deref(), &registry, json_mode)
         }
         Commands::Search { query, registry } => search::run(&query, &registry, json_mode),
+        Commands::Update => run_update(json_mode),
     };
 
     match result {
@@ -78,6 +81,28 @@ fn main() {
             process::exit(1);
         }
     }
+}
+
+fn run_update(json_mode: bool) -> Result<(), String> {
+    if json_mode {
+        return Err(
+            "installer-backed self-update does not support --json; rerun `meshpkg update` without --json"
+                .to_string(),
+        );
+    }
+
+    let outcome = mesh_pkg::run_toolchain_update().map_err(|error| error.to_string())?;
+    match outcome.mode {
+        mesh_pkg::ToolchainUpdateMode::Completed => {
+            println!("Mesh toolchain update completed via the canonical installer.");
+        }
+        mesh_pkg::ToolchainUpdateMode::DetachedBootstrap => {
+            println!(
+                "Mesh toolchain update bootstrap launched; the installer will finish replacing the toolchain after this process exits."
+            );
+        }
+    }
+    Ok(())
 }
 
 fn run_login(token: Option<String>, json_mode: bool) -> Result<(), String> {

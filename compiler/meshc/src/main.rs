@@ -6,6 +6,7 @@
 //! - `meshc init [--clustered] [--template <name>] <name>` - Initialize a new Mesh project
 //! - `meshc cluster <status|continuity|diagnostics> ...` - Inspect runtime-owned clustered operator surfaces
 //! - `meshc deps [dir]` - Resolve and fetch dependencies
+//! - `meshc update` - Refresh installed `meshc` and `meshpkg` through the canonical installer path
 //! - `meshc fmt <path>` - Format Mesh source files in-place
 //! - `meshc test [path]` - Run *.test.mpl files from a project root, tests directory, or specific test file
 //! - `meshc migrate [up|down|status|generate]` - Database migration management
@@ -108,6 +109,8 @@ enum Commands {
         #[arg(default_value = ".")]
         dir: PathBuf,
     },
+    /// Refresh installed meshc and meshpkg through the canonical installer path
+    Update,
     /// Format Mesh source files
     Fmt {
         /// Path to a Mesh source file (or directory to format all .mpl files)
@@ -242,6 +245,12 @@ fn main() {
                 process::exit(1);
             }
         }
+        Commands::Update => {
+            if let Err(e) = run_update_command() {
+                eprintln!("error: {}", e);
+                process::exit(1);
+            }
+        }
         Commands::Fmt {
             path,
             check,
@@ -308,6 +317,21 @@ fn main() {
             }
         }
     }
+}
+
+fn run_update_command() -> Result<(), String> {
+    let outcome = mesh_pkg::run_toolchain_update().map_err(|error| error.to_string())?;
+    match outcome.mode {
+        mesh_pkg::ToolchainUpdateMode::Completed => {
+            println!("Mesh toolchain update completed via the canonical installer.");
+        }
+        mesh_pkg::ToolchainUpdateMode::DetachedBootstrap => {
+            println!(
+                "Mesh toolchain update bootstrap launched; the installer will finish replacing the toolchain after this process exits."
+            );
+        }
+    }
+    Ok(())
 }
 
 pub(crate) struct PreparedBuild {
