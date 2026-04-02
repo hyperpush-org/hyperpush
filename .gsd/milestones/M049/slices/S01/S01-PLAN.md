@@ -12,7 +12,7 @@
   - Verify: - `cargo test -p meshc --test tooling_e2e test_init_todo_template_db_ -- --nocapture`
 - `cargo test -p meshc --test tooling_e2e test_init_clustered_todo_ -- --nocapture`
 - `cargo test -p mesh-pkg m047_s05_scaffold_todo_api_project_ -- --nocapture`
-- [ ] **T02: Generate the migration-first Postgres starter package** — - Why: R115 and R122 depend on a real migration-first Postgres starter, not a renamed SQLite scaffold.
+- [x] **T02: Shipped a real Postgres todo-api scaffold with migrations, pool-backed startup, helper-based CRUD, and static contract checks.** — - Why: R115 and R122 depend on a real migration-first Postgres starter, not a renamed SQLite scaffold.
 - Do: Emit the Postgres-specific starter files from the scaffold (`config.mpl`, `migrations/`, `tests/`, `storage/`, README/Dockerfile/.env example) using `DATABASE_URL`, `Pool.open`, and `Migration`/`Repo`/`Query`/`Pg` helpers, and add generator/CLI assertions that the Postgres template stays honest without regressing SQLite.
 - Done when: The generated Postgres project contains the new files and contract text, omits SQLite-only env and startup DDL, and its static scaffold tests pass alongside the legacy SQLite scaffold tests.
   - Estimate: 2h

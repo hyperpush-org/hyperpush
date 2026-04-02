@@ -889,7 +889,7 @@ fn test_init_todo_template_db_rejects_unknown_values_before_generation() {
 }
 
 #[test]
-fn test_init_todo_template_postgres_fails_closed_before_project_generation() {
+fn test_init_todo_template_postgres_creates_migration_first_project() {
     let dir = tempfile::tempdir().unwrap();
     let project_dir = dir.path().join("todo-starter");
 
@@ -907,18 +907,144 @@ fn test_init_todo_template_postgres_fails_closed_before_project_generation() {
         .expect("failed to run meshc init --template todo-api --db postgres");
 
     assert!(
-        !output.status.success(),
-        "postgres todo-api path should fail closed until the dedicated scaffold lands"
+        output.status.success(),
+        "meshc init --template todo-api --db postgres failed: {}",
+        String::from_utf8_lossy(&output.stderr)
     );
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("--db postgres"), "{}", stderr);
-    assert!(stderr.contains("not implemented yet"), "{}", stderr);
-    assert!(
-        !project_dir.exists(),
-        "postgres failure path should not create {}",
-        project_dir.display()
+    let migration_dir = project_dir.join("migrations");
+    let migration_entries: Vec<_> = std::fs::read_dir(&migration_dir)
+        .expect("failed to read generated migrations dir")
+        .filter_map(|entry| entry.ok())
+        .collect();
+    assert_eq!(
+        migration_entries.len(),
+        1,
+        "expected exactly one generated migration, got {}",
+        migration_entries.len()
     );
+
+    let migration_name = migration_entries[0].file_name().to_string_lossy().to_string();
+    assert!(
+        migration_name.ends_with("_create_todos.mpl"),
+        "unexpected migration filename: {}",
+        migration_name
+    );
+
+    for path in [
+        project_dir.join("mesh.toml"),
+        project_dir.join("main.mpl"),
+        project_dir.join("work.mpl"),
+        project_dir.join("config.mpl"),
+        project_dir.join("README.md"),
+        project_dir.join("Dockerfile"),
+        project_dir.join(".dockerignore"),
+        project_dir.join(".env.example"),
+        project_dir.join("api/router.mpl"),
+        project_dir.join("api/todos.mpl"),
+        project_dir.join("api/health.mpl"),
+        project_dir.join("runtime/registry.mpl"),
+        project_dir.join("services/rate_limiter.mpl"),
+        project_dir.join("storage/todos.mpl"),
+        project_dir.join("tests/config.test.mpl"),
+        project_dir.join("types/todo.mpl"),
+        migration_entries[0].path(),
+    ] {
+        assert!(path.exists(), "missing generated file {}", path.display());
+    }
+
+    let main = std::fs::read_to_string(project_dir.join("main.mpl")).unwrap();
+    assert!(main.contains("Node.start_from_env()"));
+    assert!(main.contains("Pool.open(database_url, 1, 4, 5000)"));
+    assert!(main.contains("database_url_key()"));
+    assert!(main.contains("[todo-api] PostgreSQL pool ready"));
+    assert!(main.contains("HTTP.serve(router, port)"));
+    assert!(!main.contains("TODO_DB_PATH"));
+    assert!(!main.contains("ensure_schema"));
+
+    let config = std::fs::read_to_string(project_dir.join("config.mpl")).unwrap();
+    assert!(config.contains("database_url_key"));
+    assert!(config.contains("\"DATABASE_URL\""));
+    assert!(config.contains("todo_rate_limit_window_seconds_key"));
+    assert!(config.contains("todo_rate_limit_max_requests_key"));
+    assert!(config.contains("Missing required environment variable"));
+
+    let storage = std::fs::read_to_string(project_dir.join("storage/todos.mpl")).unwrap();
+    assert!(storage.contains("Query.from(todos_table())"));
+    assert!(storage.contains("Repo.insert_expr"));
+    assert!(storage.contains("Repo.update_where_expr"));
+    assert!(storage.contains("Repo.delete_where"));
+    assert!(storage.contains("Pg.uuid(Expr.value(id))"));
+    assert!(!storage.contains("Sqlite.open"));
+    assert!(!storage.contains("CREATE TABLE IF NOT EXISTS todos"));
+
+    let migration = std::fs::read_to_string(migration_entries[0].path()).unwrap();
+    assert!(migration.contains("# Migration: create_todos"));
+    assert!(migration.contains("Pg.create_extension(pool, \"pgcrypto\")"));
+    assert!(migration.contains("Migration.create_table(pool,"));
+    assert!(migration.contains("Migration.create_index(pool, \"todos\", [\"created_at:DESC\"], \"name:idx_todos_created_at\")"));
+    assert!(!migration.contains("CREATE TABLE IF NOT EXISTS todos"));
+
+    let readme = std::fs::read_to_string(project_dir.join("README.md")).unwrap();
+    assert!(readme.contains("meshc init --template todo-api --db postgres"));
+    assert!(readme.contains("meshc migrate . up"));
+    assert!(readme.contains("DATABASE_URL"));
+    assert!(readme.contains(".env.example"));
+    assert!(readme.contains("packages the binary produced by `meshc build .`"));
+    assert!(readme.contains("does not run migrations or create schema at startup"));
+}
+
+#[test]
+fn test_init_todo_template_postgres_omits_sqlite_contract_markers() {
+    let dir = tempfile::tempdir().unwrap();
+    let project_dir = dir.path().join("todo-starter");
+
+    let output = Command::new(meshc_bin())
+        .args([
+            "init",
+            "--template",
+            "todo-api",
+            "--db",
+            "postgres",
+            "todo-starter",
+        ])
+        .current_dir(dir.path())
+        .output()
+        .expect("failed to run meshc init --template todo-api --db postgres");
+
+    assert!(
+        output.status.success(),
+        "meshc init --template todo-api --db postgres failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let readme = std::fs::read_to_string(project_dir.join("README.md")).unwrap();
+    let dockerfile = std::fs::read_to_string(project_dir.join("Dockerfile")).unwrap();
+    let dockerignore = std::fs::read_to_string(project_dir.join(".dockerignore")).unwrap();
+    let env_example = std::fs::read_to_string(project_dir.join(".env.example")).unwrap();
+    let health = std::fs::read_to_string(project_dir.join("api/health.mpl")).unwrap();
+
+    assert!(!readme.contains("TODO_DB_PATH"));
+    assert!(!readme.contains("todo.sqlite3"));
+    assert!(!readme.contains("ensure_schema"));
+    assert!(!readme.contains("failover"));
+
+    assert!(!dockerfile.contains("TODO_DB_PATH"));
+    assert!(!dockerfile.contains("sqlite3"));
+    assert!(!dockerfile.contains("VOLUME"));
+    assert!(dockerfile.contains("COPY output /usr/local/bin/todo-starter"));
+
+    assert!(!dockerignore.contains("*.sqlite3"));
+    assert!(dockerignore.contains(".env"));
+
+    assert!(env_example.contains("DATABASE_URL="));
+    assert!(env_example.contains("TODO_RATE_LIMIT_WINDOW_SECONDS=60"));
+    assert!(env_example.contains("TODO_RATE_LIMIT_MAX_REQUESTS=5"));
+    assert!(!env_example.contains("TODO_DB_PATH"));
+
+    assert!(health.contains("db_backend : \"postgres\""));
+    assert!(health.contains("migration_strategy : \"meshc migrate\""));
+    assert!(!health.contains("DATABASE_URL"));
 }
 
 // ── Update ───────────────────────────────────────────────────────────
