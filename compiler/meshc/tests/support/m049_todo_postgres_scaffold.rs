@@ -190,14 +190,10 @@ pub fn create_isolated_database(
         .unwrap_or_else(|error| panic!("failed to derive isolated database url: {error}"));
 
     drop_database_if_exists(base_database_url, &database_name).unwrap_or_else(|error| {
-        panic!(
-            "failed to clear stale isolated database {database_name}: {error}"
-        )
+        panic!("failed to clear stale isolated database {database_name}: {error}")
     });
     create_database(base_database_url, &database_name).unwrap_or_else(|error| {
-        panic!(
-            "failed to create isolated database {database_name}: {error}"
-        )
+        panic!("failed to create isolated database {database_name}: {error}")
     });
 
     write_json_artifact(
@@ -398,7 +394,8 @@ pub fn wait_for_health_with_timeout(
                 if json["status"].as_str() == Some("ok") {
                     return json;
                 }
-                last_observation = redact_text(&serde_json::to_string_pretty(&json).unwrap(), secret_values);
+                last_observation =
+                    redact_text(&serde_json::to_string_pretty(&json).unwrap(), secret_values);
             }
             Ok(response) => last_observation = redact_text(&response.raw, secret_values),
             Err(error) => last_observation = format!("connect error: {error}"),
@@ -540,7 +537,8 @@ pub fn assert_runtime_logs(logs: &StoppedTodoApp, config: &TodoRuntimeConfig) {
         logs.combined
     );
     assert!(
-        logs.combined.contains("[todo-api] Connecting to PostgreSQL pool..."),
+        logs.combined
+            .contains("[todo-api] Connecting to PostgreSQL pool..."),
         "expected connect log line, got:\n{}",
         logs.combined
     );
@@ -563,7 +561,10 @@ pub fn assert_runtime_logs(logs: &StoppedTodoApp, config: &TodoRuntimeConfig) {
         logs.combined
     );
     assert!(
-        logs.combined.contains(&format!("[todo-api] HTTP server starting on :{}", config.http_port)),
+        logs.combined.contains(&format!(
+            "[todo-api] HTTP server starting on :{}",
+            config.http_port
+        )),
         "expected HTTP-start log line, got:\n{}",
         logs.combined
     );
@@ -635,7 +636,9 @@ pub fn run_command_capture(
         ),
     );
 
-    command.stdout(Stdio::from(stdout)).stderr(Stdio::from(stderr));
+    command
+        .stdout(Stdio::from(stdout))
+        .stderr(Stdio::from(stderr));
     let mut child = command
         .spawn()
         .unwrap_or_else(|error| panic!("failed to spawn {description}: {error}"));
@@ -732,7 +735,10 @@ fn unique_stamp() -> u128 {
         .as_nanos()
 }
 
-fn database_url_with_database_name(base_database_url: &str, database_name: &str) -> Result<String, String> {
+fn database_url_with_database_name(
+    base_database_url: &str,
+    database_name: &str,
+) -> Result<String, String> {
     let scheme_pos = base_database_url
         .find("://")
         .ok_or_else(|| "DATABASE_URL must include a scheme".to_string())?;
@@ -847,8 +853,8 @@ fn assert_artifacts_redacted_recursive(path: &Path, secret_values: &[&str]) {
         return;
     }
 
-    let bytes = fs::read(path)
-        .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+    let bytes =
+        fs::read(path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
     let content = String::from_utf8_lossy(&bytes);
     for secret in secret_values {
         if !secret.is_empty() {

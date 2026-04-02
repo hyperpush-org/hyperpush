@@ -78,7 +78,7 @@
   - Files: compiler/mesh-pkg/src/scaffold.rs, compiler/meshc/src/main.rs, compiler/meshc/tests/tooling_e2e.rs
   - Verify: - `cargo test -p mesh-pkg m049_s02_sqlite_scaffold_ -- --nocapture`
 - `cargo test -p meshc --test tooling_e2e test_init_todo_template_db_sqlite_ -- --nocapture`
-- [ ] **T03: Add a live SQLite starter acceptance harness for local CRUD, restart, and failure truth** — Prove the rewritten starter operationally. Generate the SQLite starter into a temp workspace, run its generated package tests, build and boot it without any cluster env, and exercise local CRUD, restart persistence, and at least one explicit negative rail.
+- [x] **T03: Added the live SQLite todo-api acceptance harness and retained artifact bundles for local CRUD, restart persistence, rate-limit, and bad-db-path truth.** — Prove the rewritten starter operationally. Generate the SQLite starter into a temp workspace, run its generated package tests, build and boot it without any cluster env, and exercise local CRUD, restart persistence, and at least one explicit negative rail.
 
 ## Failure Modes
 

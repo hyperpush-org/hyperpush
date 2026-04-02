@@ -230,12 +230,20 @@ fn collect_relative_file_set(
     current_dir: &Path,
     files: &mut BTreeSet<String>,
 ) -> Result<(), String> {
-    let entries = fs::read_dir(current_dir)
-        .map_err(|error| format!("failed to read fixture directory {}: {error}", current_dir.display()))?;
+    let entries = fs::read_dir(current_dir).map_err(|error| {
+        format!(
+            "failed to read fixture directory {}: {error}",
+            current_dir.display()
+        )
+    })?;
 
     for entry in entries {
-        let entry = entry
-            .map_err(|error| format!("failed to iterate fixture directory {}: {error}", current_dir.display()))?;
+        let entry = entry.map_err(|error| {
+            format!(
+                "failed to iterate fixture directory {}: {error}",
+                current_dir.display()
+            )
+        })?;
         let path = entry.path();
         if path.is_dir() {
             collect_relative_file_set(root, &path, files)?;
@@ -293,14 +301,26 @@ fn validate_todo_fixture_tree(root: &Path) -> Result<BTreeSet<String>, String> {
 }
 
 fn copy_directory_tree(source_dir: &Path, dest_dir: &Path) -> Result<(), String> {
-    fs::create_dir_all(dest_dir)
-        .map_err(|error| format!("failed to create fixture destination {}: {error}", dest_dir.display()))?;
+    fs::create_dir_all(dest_dir).map_err(|error| {
+        format!(
+            "failed to create fixture destination {}: {error}",
+            dest_dir.display()
+        )
+    })?;
 
-    let entries = fs::read_dir(source_dir)
-        .map_err(|error| format!("failed to read fixture source {}: {error}", source_dir.display()))?;
+    let entries = fs::read_dir(source_dir).map_err(|error| {
+        format!(
+            "failed to read fixture source {}: {error}",
+            source_dir.display()
+        )
+    })?;
     for entry in entries {
-        let entry = entry
-            .map_err(|error| format!("failed to iterate fixture source {}: {error}", source_dir.display()))?;
+        let entry = entry.map_err(|error| {
+            format!(
+                "failed to iterate fixture source {}: {error}",
+                source_dir.display()
+            )
+        })?;
         let source_path = entry.path();
         let dest_path = dest_dir.join(entry.file_name());
         if source_path.is_dir() {
@@ -400,7 +420,12 @@ pub fn init_todo_project_from_fixture_root(
 }
 
 pub fn init_todo_project(workspace_dir: &Path, project_name: &str, artifacts: &Path) -> PathBuf {
-    init_todo_project_from_fixture_root(&todo_fixture_root(), workspace_dir, project_name, artifacts)
+    init_todo_project_from_fixture_root(
+        &todo_fixture_root(),
+        workspace_dir,
+        project_name,
+        artifacts,
+    )
 }
 
 pub fn build_todo_binary(project_dir: &Path, artifacts: &Path) -> PathBuf {

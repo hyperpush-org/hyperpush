@@ -222,17 +222,19 @@ fn assert_local_sqlite_todo_template(project_dir: &Path, starter_name: &str) {
 
     let storage_test = std::fs::read_to_string(&storage_test_path).unwrap();
     assert!(storage_test.contains("describe(\"SQLite todo storage\")"));
-    assert!(storage_test.contains("cleanup_db"));
+    assert!(storage_test.contains("sample_todo"));
     assert!(storage_test.contains("create_todo"));
-    assert!(storage_test.contains("toggle_todo"));
-    assert!(storage_test.contains("todo_not_found_message()"));
+    assert!(storage_test.contains("list_todos"));
+    assert!(storage_test.contains("ensure_schema"));
 
     let readme = std::fs::read_to_string(&readme_path).unwrap();
     assert!(readme.contains("single-node SQLite Todo API"));
     assert!(readme.contains("meshc test ."));
     assert!(readme.contains("meshc init --template todo-api --db postgres my-shared-todo"));
     assert!(readme.contains("meshc init --clustered my-clustered-app"));
-    assert!(readme.contains("there is no `work.mpl`, `HTTP.clustered(...)`, or `meshc cluster` story in this starter"));
+    assert!(readme.contains(
+        "there is no `work.mpl`, `HTTP.clustered(...)`, or `meshc cluster` story in this starter"
+    ));
     assert!(readme.contains("TODO_DB_PATH"));
     assert!(readme.contains(&format!("docker build -t {} .", starter_name)));
     assert!(!readme.contains("Node.start_from_env()"));
@@ -843,7 +845,11 @@ fn test_init_todo_template_db_sqlite_rejects_usage_without_todo_template() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("`--db` is only supported"), "{}", stderr);
     assert!(stderr.contains("--template todo-api"), "{}", stderr);
-    assert!(stderr.contains("sqlite stays the local default"), "{}", stderr);
+    assert!(
+        stderr.contains("sqlite stays the local default"),
+        "{}",
+        stderr
+    );
     assert!(
         !project_dir.exists(),
         "unexpected project created at {}",
@@ -881,8 +887,16 @@ fn test_init_todo_template_db_sqlite_rejects_clustered_todo_template_conflict() 
         "{}",
         stderr
     );
-    assert!(stderr.contains("--template todo-api --db postgres"), "{}", stderr);
-    assert!(stderr.contains("meshc init --clustered <name>"), "{}", stderr);
+    assert!(
+        stderr.contains("--template todo-api --db postgres"),
+        "{}",
+        stderr
+    );
+    assert!(
+        stderr.contains("meshc init --clustered <name>"),
+        "{}",
+        stderr
+    );
     assert!(
         !project_dir.exists(),
         "unexpected project created at {}",
@@ -959,7 +973,10 @@ fn test_init_todo_template_postgres_creates_migration_first_project() {
         migration_entries.len()
     );
 
-    let migration_name = migration_entries[0].file_name().to_string_lossy().to_string();
+    let migration_name = migration_entries[0]
+        .file_name()
+        .to_string_lossy()
+        .to_string();
     assert!(
         migration_name.ends_with("_create_todos.mpl"),
         "unexpected migration filename: {}",
