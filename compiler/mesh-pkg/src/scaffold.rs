@@ -673,44 +673,83 @@ fn rate_limited_response() do
   HTTP.response(429, json { error : "rate limited" })
 end
 
+fn internal_error_response(reason :: String) do
+  HTTP.response(500, json { error : reason })
+end
+
+fn todo_error_response(reason :: String) do
+  if reason == "todo not found" do
+    not_found_response()
+  else
+    internal_error_response(reason)
+  end
+end
+
 fn allow_mutation() -> Bool do
   let limiter_pid = get_rate_limiter()
   allow_write(limiter_pid, "todo-write")
 end
 
+fn create_todo_with_title(pool :: PoolHandle, title :: String) do
+  let result = create_todo(pool, title)
+  case result do
+    Ok( todo) -> HTTP.response(201, todo_to_json(todo))
+    Err( reason) -> internal_error_response(reason)
+  end
+end
+
+fn create_todo_with_body(pool :: PoolHandle, body :: String) do
+  let title = title_from_body(body)
+  if String.length(title) == 0 do
+    HTTP.response(400, json { error : "title is required" })
+  else
+    create_todo_with_title(pool, title)
+  end
+end
+
+fn get_todo_response(pool :: PoolHandle, id :: String) do
+  let result = get_todo(pool, id)
+  case result do
+    Ok( todo) -> HTTP.response(200, todo_to_json(todo))
+    Err( reason) -> todo_error_response(reason)
+  end
+end
+
+fn toggle_todo_response(pool :: PoolHandle, id :: String) do
+  let result = toggle_todo(pool, id)
+  case result do
+    Ok( todo) -> HTTP.response(200, todo_to_json(todo))
+    Err( reason) -> todo_error_response(reason)
+  end
+end
+
+fn delete_todo_response(pool :: PoolHandle, id :: String) do
+  let result = delete_todo(pool, id)
+  case result do
+    Ok( deleted_id) -> HTTP.response(200, json { status : "deleted", id : deleted_id })
+    Err( reason) -> todo_error_response(reason)
+  end
+end
+
 pub fn handle_list_todos(_request :: Request) -> Response do
   let pool = get_pool()
-  case list_todos(pool) do
+  let result = list_todos(pool)
+  case result do
     Ok( todos_json) -> HTTP.response(200, todos_json)
-    Err( reason) -> HTTP.response(500, json { error : reason })
+    Err( reason) -> internal_error_response(reason)
   end
 end
 
 pub fn handle_get_todo(request :: Request) -> Response do
   let pool = get_pool()
   let id = require_param(request, "id")
-  case get_todo(pool, id) do
-    Ok( todo) -> HTTP.response(200, todo_to_json(todo))
-    Err( reason) -> if reason == "todo not found" do
-      not_found_response()
-    else
-      HTTP.response(500, json { error : reason })
-    end
-  end
+  get_todo_response(pool, id)
 end
 
 pub fn handle_create_todo(request) do
   if allow_mutation() do
     let pool = get_pool()
-    let title = title_from_body(Request.body(request))
-    if String.length(title) == 0 do
-      HTTP.response(400, json { error : "title is required" })
-    else
-      case create_todo(pool, title) do
-        Ok( todo) -> HTTP.response(201, todo_to_json(todo))
-        Err( reason) -> HTTP.response(500, json { error : reason })
-      end
-    end
+    create_todo_with_body(pool, Request.body(request))
   else
     rate_limited_response()
   end
@@ -720,14 +759,7 @@ pub fn handle_toggle_todo(request) do
   if allow_mutation() do
     let pool = get_pool()
     let id = require_param(request, "id")
-    case toggle_todo(pool, id) do
-      Ok( todo) -> HTTP.response(200, todo_to_json(todo))
-      Err( reason) -> if reason == "todo not found" do
-        not_found_response()
-      else
-        HTTP.response(500, json { error : reason })
-      end
-    end
+    toggle_todo_response(pool, id)
   else
     rate_limited_response()
   end
@@ -737,14 +769,7 @@ pub fn handle_delete_todo(request) do
   if allow_mutation() do
     let pool = get_pool()
     let id = require_param(request, "id")
-    case delete_todo(pool, id) do
-      Ok( deleted_id) -> HTTP.response(200, json { status : "deleted", id : deleted_id })
-      Err( reason) -> if reason == "todo not found" do
-        not_found_response()
-      else
-        HTTP.response(500, json { error : reason })
-      end
-    end
+    delete_todo_response(pool, id)
   else
     rate_limited_response()
   end
@@ -866,6 +891,37 @@ fn bool_expr(value :: Bool) do
   end
 end
 
+fn update_completed_value(pool :: PoolHandle, id :: String, next_completed) -> Todo ! String do
+  let q = Query.from(todos_table())
+    |> Query.where_expr(Expr.eq(Expr.column("id"), Pg.uuid(Expr.value(id))))
+  let updated = Repo.update_where_expr(pool, todos_table(), %{"completed" => next_completed}, q) ?
+  if updated == 0 do
+    Err("todo not found")
+  else
+    get_todo(pool, id)
+  end
+end
+
+fn continue_toggle_todo(pool :: PoolHandle, id :: String, current :: Todo) -> Todo ! String do
+  let next_completed = if current.completed do
+    bool_expr(false)
+  else
+    bool_expr(true)
+  end
+  update_completed_value(pool, id, next_completed)
+end
+
+fn delete_todo_with_current(pool :: PoolHandle, id :: String, current :: Todo) -> String ! String do
+  let q = Query.from(todos_table())
+    |> Query.where_expr(Expr.eq(Expr.column("id"), Pg.uuid(Expr.value(id))))
+  let deleted = Repo.delete_where(pool, todos_table(), q) ?
+  if deleted == 0 do
+    Err("todo not found")
+  else
+    Ok(current.id)
+  end
+end
+
 pub fn list_todos(pool :: PoolHandle) -> String ! String do
   let q = todo_select_query()
     |> Query.order_by(:created_at, :desc)
@@ -888,31 +944,18 @@ pub fn create_todo(pool :: PoolHandle, title :: String) -> Todo ! String do
 end
 
 pub fn toggle_todo(pool :: PoolHandle, id :: String) -> Todo ! String do
-  let current = get_todo(pool, id)?
-  let q = Query.from(todos_table())
-    |> Query.where_expr(Expr.eq(Expr.column("id"), Pg.uuid(Expr.value(id))))
-  let next_completed = if current.completed do
-    bool_expr(false)
-  else
-    bool_expr(true)
-  end
-  let updated = Repo.update_where_expr(pool, todos_table(), %{"completed" => next_completed}, q) ?
-  if updated == 0 do
-    Err("todo not found")
-  else
-    get_todo(pool, id)
+  let current_result = get_todo(pool, id)
+  case current_result do
+    Ok( current) -> continue_toggle_todo(pool, id, current)
+    Err( reason) -> Err(reason)
   end
 end
 
 pub fn delete_todo(pool :: PoolHandle, id :: String) -> String ! String do
-  let current = get_todo(pool, id)?
-  let q = Query.from(todos_table())
-    |> Query.where_expr(Expr.eq(Expr.column("id"), Pg.uuid(Expr.value(id))))
-  let deleted = Repo.delete_where(pool, todos_table(), q) ?
-  if deleted == 0 do
-    Err("todo not found")
-  else
-    Ok(current.id)
+  let current_result = get_todo(pool, id)
+  case current_result do
+    Ok( current) -> delete_todo_with_current(pool, id, current)
+    Err( reason) -> Err(reason)
   end
 end
 "#

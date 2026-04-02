@@ -1,162 +1,490 @@
 mod support;
 
 use std::fs;
+use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::process::Command;
+
 use support::m049_todo_postgres_scaffold as todo;
 
-#[test]
-fn m049_s01_db_requires_todo_api_template() {
-    let dir = tempfile::tempdir().unwrap();
-    let project_dir = dir.path().join("plain-project");
+fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) -> String {
+    if let Some(message) = payload.downcast_ref::<&str>() {
+        (*message).to_string()
+    } else if let Some(message) = payload.downcast_ref::<String>() {
+        message.clone()
+    } else {
+        "non-string panic payload".to_string()
+    }
+}
 
-    let output = todo::run_meshc_init(dir.path(), &["init", "--db", "sqlite", "plain-project"]);
-
-    assert!(
-        !output.status.success(),
-        "meshc init --db sqlite without --template todo-api should fail:\n{}",
-        todo::command_output_text(&output)
-    );
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("`--db` is only supported"), "{}", stderr);
-    assert!(stderr.contains("--template todo-api"), "{}", stderr);
-    assert!(
-        !project_dir.exists(),
-        "unexpected project created at {}",
-        project_dir.display()
-    );
+fn required_database_url(test_name: &str) -> String {
+    std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| panic!("DATABASE_URL must be set for {test_name}"))
 }
 
 #[test]
-fn m049_s01_clustered_todo_db_conflict_fails_before_generation() {
-    let dir = tempfile::tempdir().unwrap();
-    let project_dir = dir.path().join("todo-starter");
+fn m049_s01_postgres_todo_api_runtime_truth_proves_migrate_test_build_boot_and_crud() {
+    let test_name = "m049_s01_postgres_todo_api_runtime_truth_proves_migrate_test_build_boot_and_crud";
+    let base_database_url = required_database_url(test_name);
+    let artifacts = todo::artifact_dir("todo-api-postgres-runtime-truth");
+    let workspace_dir = artifacts.join("workspace");
+    fs::create_dir_all(&workspace_dir)
+        .unwrap_or_else(|error| panic!("failed to create {}: {error}", workspace_dir.display()));
 
-    let output = todo::run_meshc_init(
-        dir.path(),
-        &[
-            "init",
-            "--clustered",
-            "--template",
-            "todo-api",
-            "--db",
-            "sqlite",
-            "todo-starter",
-        ],
-    );
+    let project_dir = todo::init_postgres_todo_project(&workspace_dir, "todo-starter", &artifacts);
+    let database = todo::create_isolated_database(&base_database_url, &artifacts, "runtime");
+    let secret_values = [base_database_url.as_str(), database.database_url.as_str()];
 
+    let migrate = todo::run_meshc_migrate_up(&project_dir, &database.database_url, &artifacts);
+    todo::assert_phase_success(&migrate, "meshc migrate <project> up should succeed");
     assert!(
-        !output.status.success(),
-        "clustered todo-api db conflict should fail closed:\n{}",
-        todo::command_output_text(&output)
+        migrate.combined.contains("Applying:") && migrate.combined.contains("Applied 1 migration(s)"),
+        "expected apply markers in migrate output, got:\n{}",
+        migrate.combined
     );
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let meshc_test = todo::run_meshc_tests(&project_dir, &artifacts);
+    todo::assert_phase_success(&meshc_test, "meshc test <project> should succeed");
     assert!(
-        stderr.contains("`meshc init --clustered` cannot be combined"),
-        "{}",
-        stderr
+        meshc_test.stdout.contains("2 passed"),
+        "expected generated package tests to report 2 passed, got:\n{}",
+        meshc_test.combined
     );
-    assert!(stderr.contains("--template todo-api"), "{}", stderr);
-    assert!(
-        !project_dir.exists(),
-        "unexpected project created at {}",
-        project_dir.display()
+
+    let (build, binary_path) = todo::run_meshc_build(&project_dir, &artifacts);
+    todo::assert_phase_success(&build, "meshc build <project> should succeed");
+
+    let runtime_config = todo::default_runtime_config("todo-starter", &database.database_url);
+    let spawned = todo::spawn_todo_app(
+        &binary_path,
+        &project_dir,
+        &artifacts,
+        "runtime",
+        &runtime_config,
     );
+
+    let run_result = catch_unwind(AssertUnwindSafe(|| {
+        let health = todo::wait_for_health(
+            &runtime_config,
+            &artifacts,
+            "health",
+            &secret_values,
+        );
+        assert_eq!(health["status"].as_str(), Some("ok"));
+        assert_eq!(health["db_backend"].as_str(), Some("postgres"));
+        assert_eq!(health["migration_strategy"].as_str(), Some("meshc migrate"));
+        assert_eq!(health["clustered_handler"].as_str(), Some("Work.sync_todos"));
+        assert_eq!(
+            health["rate_limit_window_seconds"].as_i64(),
+            Some(runtime_config.rate_limit_window_seconds as i64)
+        );
+        assert_eq!(
+            health["rate_limit_max_requests"].as_i64(),
+            Some(runtime_config.rate_limit_max_requests as i64)
+        );
+        assert!(health.get("database_url").is_none());
+        assert!(health.get("db_path").is_none());
+
+        let empty_list = todo::json_response_snapshot(
+            &artifacts,
+            "todos-empty",
+            &todo::send_http_request(runtime_config.http_port, "GET", "/todos", None)
+                .unwrap_or_else(|error| panic!("GET /todos failed on {}: {error}", runtime_config.http_port)),
+            200,
+            "GET /todos",
+            &secret_values,
+        );
+        assert!(
+            empty_list.as_array().is_some_and(|items| items.is_empty()),
+            "expected an empty todo list before the first create, got: {empty_list}"
+        );
+
+        let missing_get = todo::json_response_snapshot(
+            &artifacts,
+            "todos-missing-get",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "GET",
+                &format!("/todos/{}", todo::MISSING_TODO_ID),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("GET missing todo failed on {}: {error}", runtime_config.http_port)),
+            404,
+            "GET /todos/:id missing",
+            &secret_values,
+        );
+        assert_eq!(missing_get["error"].as_str(), Some("todo not found"));
+
+        let empty_title = todo::json_response_snapshot(
+            &artifacts,
+            "todos-empty-title",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "POST",
+                "/todos",
+                Some(r#"{"title":"   "}"#),
+            )
+            .unwrap_or_else(|error| panic!("POST empty-title todo failed on {}: {error}", runtime_config.http_port)),
+            400,
+            "POST /todos empty title",
+            &secret_values,
+        );
+        assert_eq!(empty_title["error"].as_str(), Some("title is required"));
+
+        let invalid_json = todo::json_response_snapshot(
+            &artifacts,
+            "todos-invalid-json",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "POST",
+                "/todos",
+                Some("not-json"),
+            )
+            .unwrap_or_else(|error| panic!("POST invalid-json todo failed on {}: {error}", runtime_config.http_port)),
+            400,
+            "POST /todos invalid JSON",
+            &secret_values,
+        );
+        assert_eq!(invalid_json["error"].as_str(), Some("title is required"));
+
+        let malformed_get = todo::json_response_snapshot(
+            &artifacts,
+            "todos-malformed-get",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "GET",
+                &format!("/todos/{}", todo::MALFORMED_TODO_ID),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("GET malformed todo id failed on {}: {error}", runtime_config.http_port)),
+            500,
+            "GET /todos/:id malformed id",
+            &secret_values,
+        );
+        let malformed_get_error = malformed_get["error"]
+            .as_str()
+            .expect("malformed GET response should expose an error string");
+        assert!(
+            malformed_get_error.contains("invalid input syntax for type uuid"),
+            "expected invalid uuid error, got: {malformed_get_error}"
+        );
+
+        let created = todo::json_response_snapshot(
+            &artifacts,
+            "todos-created",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "POST",
+                "/todos",
+                Some(r#"{"title":"buy milk"}"#),
+            )
+            .unwrap_or_else(|error| panic!("POST create todo failed on {}: {error}", runtime_config.http_port)),
+            201,
+            "POST /todos create",
+            &secret_values,
+        );
+        let todo_id = created["id"]
+            .as_str()
+            .expect("created todo id should be a string")
+            .to_string();
+        assert_eq!(created["title"].as_str(), Some("buy milk"));
+        assert_eq!(created["completed"].as_bool(), Some(false));
+        assert!(
+            created["created_at"].as_str().is_some_and(|value| !value.is_empty()),
+            "created todo should expose created_at, got: {created}"
+        );
+
+        let fetched = todo::json_response_snapshot(
+            &artifacts,
+            "todos-fetched",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "GET",
+                &format!("/todos/{todo_id}"),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("GET created todo failed on {}: {error}", runtime_config.http_port)),
+            200,
+            "GET /todos/:id created",
+            &secret_values,
+        );
+        assert_eq!(fetched, created, "fetched todo should match the created todo");
+
+        let missing_toggle = todo::json_response_snapshot(
+            &artifacts,
+            "todos-missing-toggle",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "PUT",
+                &format!("/todos/{}", todo::MISSING_TODO_ID),
+                Some("{}"),
+            )
+            .unwrap_or_else(|error| panic!("PUT missing todo failed on {}: {error}", runtime_config.http_port)),
+            404,
+            "PUT /todos/:id missing",
+            &secret_values,
+        );
+        assert_eq!(missing_toggle["error"].as_str(), Some("todo not found"));
+
+        let malformed_toggle = todo::json_response_snapshot(
+            &artifacts,
+            "todos-malformed-toggle",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "PUT",
+                &format!("/todos/{}", todo::MALFORMED_TODO_ID),
+                Some("{}"),
+            )
+            .unwrap_or_else(|error| panic!("PUT malformed todo id failed on {}: {error}", runtime_config.http_port)),
+            500,
+            "PUT /todos/:id malformed id",
+            &secret_values,
+        );
+        let malformed_toggle_error = malformed_toggle["error"]
+            .as_str()
+            .expect("malformed PUT response should expose an error string");
+        assert!(
+            malformed_toggle_error.contains("invalid input syntax for type uuid"),
+            "expected invalid uuid error, got: {malformed_toggle_error}"
+        );
+
+        let toggled = todo::json_response_snapshot(
+            &artifacts,
+            "todos-toggled",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "PUT",
+                &format!("/todos/{todo_id}"),
+                Some("{}"),
+            )
+            .unwrap_or_else(|error| panic!("PUT toggle todo failed on {}: {error}", runtime_config.http_port)),
+            200,
+            "PUT /todos/:id toggle",
+            &secret_values,
+        );
+        assert_eq!(toggled["id"].as_str(), Some(todo_id.as_str()));
+        assert_eq!(toggled["title"].as_str(), Some("buy milk"));
+        assert_eq!(toggled["completed"].as_bool(), Some(true));
+
+        let missing_delete = todo::json_response_snapshot(
+            &artifacts,
+            "todos-missing-delete",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "DELETE",
+                &format!("/todos/{}", todo::MISSING_TODO_ID),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("DELETE missing todo failed on {}: {error}", runtime_config.http_port)),
+            404,
+            "DELETE /todos/:id missing",
+            &secret_values,
+        );
+        assert_eq!(missing_delete["error"].as_str(), Some("todo not found"));
+
+        let malformed_delete = todo::json_response_snapshot(
+            &artifacts,
+            "todos-malformed-delete",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "DELETE",
+                &format!("/todos/{}", todo::MALFORMED_TODO_ID),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("DELETE malformed todo id failed on {}: {error}", runtime_config.http_port)),
+            500,
+            "DELETE /todos/:id malformed id",
+            &secret_values,
+        );
+        let malformed_delete_error = malformed_delete["error"]
+            .as_str()
+            .expect("malformed DELETE response should expose an error string");
+        assert!(
+            malformed_delete_error.contains("invalid input syntax for type uuid"),
+            "expected invalid uuid error, got: {malformed_delete_error}"
+        );
+
+        let deleted = todo::json_response_snapshot(
+            &artifacts,
+            "todos-deleted",
+            &todo::send_http_request(
+                runtime_config.http_port,
+                "DELETE",
+                &format!("/todos/{todo_id}"),
+                None,
+            )
+            .unwrap_or_else(|error| panic!("DELETE todo failed on {}: {error}", runtime_config.http_port)),
+            200,
+            "DELETE /todos/:id",
+            &secret_values,
+        );
+        assert_eq!(deleted["status"].as_str(), Some("deleted"));
+        assert_eq!(deleted["id"].as_str(), Some(todo_id.as_str()));
+
+        let empty_after_delete = todo::json_response_snapshot(
+            &artifacts,
+            "todos-empty-after-delete",
+            &todo::send_http_request(runtime_config.http_port, "GET", "/todos", None)
+                .unwrap_or_else(|error| panic!("GET /todos after delete failed on {}: {error}", runtime_config.http_port)),
+            200,
+            "GET /todos after delete",
+            &secret_values,
+        );
+        assert!(
+            empty_after_delete
+                .as_array()
+                .is_some_and(|items| items.is_empty()),
+            "expected an empty todo list after delete, got: {empty_after_delete}"
+        );
+    }));
+
+    let logs = todo::stop_todo_app(spawned, &secret_values);
+
+    match run_result {
+        Ok(()) => {
+            todo::assert_runtime_logs(&logs, &runtime_config);
+            todo::assert_artifacts_redacted(&artifacts, &secret_values);
+        }
+        Err(payload) => panic!(
+            "generated Postgres todo runtime assertions failed: {}\nartifacts: {}\nstdout: {}\nstderr: {}\nstdout_log: {}\nstderr_log: {}",
+            panic_payload_to_string(payload),
+            artifacts.display(),
+            logs.stdout,
+            logs.stderr,
+            logs.stdout_path.display(),
+            logs.stderr_path.display()
+        ),
+    }
 }
 
 #[test]
-fn m049_s01_sqlite_db_flag_keeps_current_todo_starter_contract() {
-    let dir = tempfile::tempdir().unwrap();
-    let project_dir = dir.path().join("todo-starter");
+fn m049_s01_postgres_todo_api_missing_database_url_fails_closed() {
+    let artifacts = todo::artifact_dir("todo-api-postgres-missing-database-url");
+    let workspace_dir = artifacts.join("workspace");
+    fs::create_dir_all(&workspace_dir)
+        .unwrap_or_else(|error| panic!("failed to create {}: {error}", workspace_dir.display()));
 
-    let output = todo::run_meshc_init(
-        dir.path(),
-        &[
-            "init",
-            "--template",
-            "todo-api",
-            "--db",
-            "sqlite",
-            "todo-starter",
-        ],
+    let project_dir = todo::init_postgres_todo_project(&workspace_dir, "todo-starter", &artifacts);
+    let (build, binary_path) = todo::run_meshc_build(&project_dir, &artifacts);
+    todo::assert_phase_success(&build, "meshc build <project> should succeed for missing-DATABASE_URL proof");
+
+    let runtime_config = todo::default_runtime_config("todo-starter", "postgres://redacted-invalid-placeholder/db");
+    let mut command = Command::new(&binary_path);
+    command.current_dir(&project_dir);
+    command
+        .env("PORT", runtime_config.http_port.to_string())
+        .env(
+            "TODO_RATE_LIMIT_WINDOW_SECONDS",
+            runtime_config.rate_limit_window_seconds.to_string(),
+        )
+        .env(
+            "TODO_RATE_LIMIT_MAX_REQUESTS",
+            runtime_config.rate_limit_max_requests.to_string(),
+        )
+        .env("MESH_CLUSTER_COOKIE", &runtime_config.cluster_cookie)
+        .env("MESH_NODE_NAME", &runtime_config.node_name)
+        .env("MESH_DISCOVERY_SEED", &runtime_config.discovery_seed)
+        .env("MESH_CLUSTER_PORT", runtime_config.cluster_port.to_string())
+        .env("MESH_CONTINUITY_ROLE", &runtime_config.cluster_role)
+        .env(
+            "MESH_CONTINUITY_PROMOTION_EPOCH",
+            runtime_config.promotion_epoch.to_string(),
+        )
+        .env_remove("DATABASE_URL");
+
+    let run = todo::run_command_capture(
+        &mut command,
+        &artifacts,
+        "missing-database-url",
+        "generated todo runtime without DATABASE_URL",
+        todo::BINARY_EXIT_TIMEOUT,
+        &[],
     );
 
     assert!(
-        output.status.success(),
-        "meshc init --template todo-api --db sqlite should keep the current starter green:\n{}",
-        todo::command_output_text(&output)
+        run.combined.contains("[todo-api] Config error: Missing required environment variable DATABASE_URL"),
+        "expected explicit missing-DATABASE_URL error, got:\n{}",
+        run.combined
     );
-
-    let main = fs::read_to_string(project_dir.join("main.mpl")).unwrap();
-    let storage = fs::read_to_string(project_dir.join("storage/todos.mpl")).unwrap();
-    let readme = fs::read_to_string(project_dir.join("README.md")).unwrap();
-
-    assert!(main.contains("TODO_DB_PATH"));
-    assert!(main.contains("ensure_schema"));
-    assert!(storage.contains("Sqlite.open"));
-    assert!(storage.contains("CREATE TABLE IF NOT EXISTS todos"));
-    assert!(readme.contains("TODO_DB_PATH"));
+    assert!(
+        !run.combined.contains("[todo-api] HTTP server starting on :"),
+        "runtime should fail closed before starting HTTP when DATABASE_URL is missing:\n{}",
+        run.combined
+    );
+    assert!(
+        !run.combined.contains("[todo-api] Runtime ready"),
+        "runtime should not claim readiness when DATABASE_URL is missing:\n{}",
+        run.combined
+    );
+    todo::assert_artifacts_redacted(&artifacts, &[]);
 }
 
 #[test]
-fn m049_s01_postgres_db_path_generates_migration_first_scaffold() {
-    let dir = tempfile::tempdir().unwrap();
-    let project_dir = dir.path().join("todo-starter");
+fn m049_s01_postgres_todo_api_unmigrated_database_returns_explicit_json_error() {
+    let test_name = "m049_s01_postgres_todo_api_unmigrated_database_returns_explicit_json_error";
+    let base_database_url = required_database_url(test_name);
+    let artifacts = todo::artifact_dir("todo-api-postgres-unmigrated-database");
+    let workspace_dir = artifacts.join("workspace");
+    fs::create_dir_all(&workspace_dir)
+        .unwrap_or_else(|error| panic!("failed to create {}: {error}", workspace_dir.display()));
 
-    let output = todo::run_meshc_init(
-        dir.path(),
-        &[
-            "init",
-            "--template",
-            "todo-api",
-            "--db",
-            "postgres",
-            "todo-starter",
-        ],
+    let project_dir = todo::init_postgres_todo_project(&workspace_dir, "todo-starter", &artifacts);
+    let database = todo::create_isolated_database(&base_database_url, &artifacts, "unmigrated");
+    let secret_values = [base_database_url.as_str(), database.database_url.as_str()];
+
+    let (build, binary_path) = todo::run_meshc_build(&project_dir, &artifacts);
+    todo::assert_phase_success(&build, "meshc build <project> should succeed for unmigrated-db proof");
+
+    let runtime_config = todo::default_runtime_config("todo-starter", &database.database_url);
+    let spawned = todo::spawn_todo_app(
+        &binary_path,
+        &project_dir,
+        &artifacts,
+        "runtime",
+        &runtime_config,
     );
 
-    assert!(
-        output.status.success(),
-        "postgres todo-api path should scaffold the dedicated starter:\n{}",
-        todo::command_output_text(&output)
-    );
+    let run_result = catch_unwind(AssertUnwindSafe(|| {
+        let health = todo::wait_for_health(
+            &runtime_config,
+            &artifacts,
+            "health",
+            &secret_values,
+        );
+        assert_eq!(health["status"].as_str(), Some("ok"));
 
-    let main = fs::read_to_string(project_dir.join("main.mpl")).unwrap();
-    let config = fs::read_to_string(project_dir.join("config.mpl")).unwrap();
-    let storage = fs::read_to_string(project_dir.join("storage/todos.mpl")).unwrap();
-    let readme = fs::read_to_string(project_dir.join("README.md")).unwrap();
-    let health = fs::read_to_string(project_dir.join("api/health.mpl")).unwrap();
+        let unmigrated_list = todo::json_response_snapshot(
+            &artifacts,
+            "todos-unmigrated",
+            &todo::send_http_request(runtime_config.http_port, "GET", "/todos", None)
+                .unwrap_or_else(|error| panic!("GET /todos on unmigrated database failed on {}: {error}", runtime_config.http_port)),
+            500,
+            "GET /todos on unmigrated database",
+            &secret_values,
+        );
+        let error = unmigrated_list["error"]
+            .as_str()
+            .expect("unmigrated response should expose an error string");
+        assert!(
+            error.contains("relation \"todos\" does not exist"),
+            "expected missing-table error, got: {error}"
+        );
+    }));
 
-    let migrations: Vec<_> = std::fs::read_dir(project_dir.join("migrations"))
-        .expect("generated migrations dir should exist")
-        .filter_map(|entry| entry.ok())
-        .collect();
-    assert_eq!(migrations.len(), 1, "expected exactly one generated migration");
+    let logs = todo::stop_todo_app(spawned, &secret_values);
 
-    let migration_name = migrations[0].file_name().to_string_lossy().to_string();
-    assert!(migration_name.ends_with("_create_todos.mpl"), "{}", migration_name);
-
-    assert!(main.contains("Pool.open(database_url, 1, 4, 5000)"));
-    assert!(main.contains("database_url_key()"));
-    assert!(!main.contains("TODO_DB_PATH"));
-    assert!(!main.contains("ensure_schema"));
-
-    assert!(config.contains("database_url_key"));
-    assert!(config.contains("\"DATABASE_URL\""));
-    assert!(config.contains("todo_rate_limit_window_seconds_key"));
-    assert!(config.contains("todo_rate_limit_max_requests_key"));
-
-    assert!(storage.contains("Repo.insert_expr"));
-    assert!(storage.contains("Repo.update_where_expr"));
-    assert!(storage.contains("Repo.delete_where"));
-    assert!(!storage.contains("Sqlite.open"));
-
-    assert!(readme.contains("meshc migrate . up"));
-    assert!(readme.contains("DATABASE_URL"));
-    assert!(readme.contains(".env.example"));
-    assert!(!readme.contains("TODO_DB_PATH"));
-    assert!(!readme.contains("todo.sqlite3"));
-
-    assert!(health.contains("db_backend : \"postgres\""));
-    assert!(!health.contains("DATABASE_URL"));
+    match run_result {
+        Ok(()) => {
+            todo::assert_runtime_logs(&logs, &runtime_config);
+            todo::assert_artifacts_redacted(&artifacts, &secret_values);
+        }
+        Err(payload) => panic!(
+            "generated Postgres todo unmigrated-database assertions failed: {}\nartifacts: {}\nstdout: {}\nstderr: {}\nstdout_log: {}\nstderr_log: {}",
+            panic_payload_to_string(payload),
+            artifacts.display(),
+            logs.stdout,
+            logs.stderr,
+            logs.stdout_path.display(),
+            logs.stderr_path.display()
+        ),
+    }
 }
