@@ -8,6 +8,7 @@ use std::path::{Component, Path, PathBuf};
 
 use mesh_common::module_graph::{self, CycleError, ModuleGraph, ModuleId};
 use mesh_parser::ast::item::{Item, SourceFile};
+use mesh_pkg::manifest::DEFAULT_ENTRYPOINT;
 
 /// Convert a snake_case string to PascalCase.
 ///
@@ -239,9 +240,22 @@ pub struct ProjectData {
 /// Unknown imports (stdlib, typos) are silently skipped.
 /// Self-imports produce a specific error.
 /// Circular dependencies produce an error with the cycle path.
-pub fn build_project(project_root: &Path) -> Result<ProjectData, String> {
+pub fn build_project_with_entrypoint(
+    project_root: &Path,
+    entry_relative_path: &Path,
+) -> Result<ProjectData, String> {
     // Phase 1: Discover files, register modules, read and parse source.
     let files = discover_mesh_files(project_root)?;
+    if !files
+        .iter()
+        .any(|relative_path| relative_path == entry_relative_path)
+    {
+        return Err(format!(
+            "Resolved entrypoint '{}' was not found under project '{}'",
+            entry_relative_path.display(),
+            project_root.display()
+        ));
+    }
     let mut graph = ModuleGraph::new();
     let mut module_sources = Vec::new();
     let mut module_parses = Vec::new();
@@ -251,8 +265,8 @@ pub fn build_project(project_root: &Path) -> Result<ProjectData, String> {
         let source = std::fs::read_to_string(&full_path)
             .map_err(|e| format!("Failed to read '{}': {}", full_path.display(), e))?;
 
-        let is_entry = relative_path == Path::new("main.mpl");
-        let name = if is_entry {
+        let is_entry = relative_path == entry_relative_path;
+        let name = if relative_path == Path::new(DEFAULT_ENTRYPOINT) {
             "Main".to_string()
         } else {
             path_to_module_name(relative_path).ok_or_else(|| {
@@ -324,6 +338,10 @@ pub fn build_project(project_root: &Path) -> Result<ProjectData, String> {
         module_sources,
         module_parses,
     })
+}
+
+pub fn build_project(project_root: &Path) -> Result<ProjectData, String> {
+    build_project_with_entrypoint(project_root, Path::new(DEFAULT_ENTRYPOINT))
 }
 
 /// Build a complete module dependency graph from a Mesh project directory.
@@ -628,6 +646,90 @@ from Baz.Qux import { name1, name2 }
         let utils_id = project.graph.resolve("Utils").unwrap();
         assert!(project.module_sources[main_id.0 as usize].contains("import Utils"));
         assert!(project.module_sources[utils_id.0 as usize].contains("fn helper()"));
+    }
+
+    #[test]
+    fn test_build_project_with_entrypoint_override_marks_non_root_entry_without_renaming() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+
+        fs::create_dir_all(root.join("lib")).unwrap();
+        fs::write(root.join("main.mpl"), "fn main() do\n  0\nend\n").unwrap();
+        fs::write(
+            root.join("lib/start.mpl"),
+            "from Lib.Support import answer\n\nfn main() do\n  answer()\nend\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("lib/support.mpl"),
+            "pub fn answer() -> Int do\n  42\nend\n",
+        )
+        .unwrap();
+
+        let project = build_project_with_entrypoint(root, Path::new("lib/start.mpl")).unwrap();
+
+        let root_main = project
+            .graph
+            .resolve("Main")
+            .expect("root main should still exist");
+        let override_entry = project
+            .graph
+            .resolve("Lib.Start")
+            .expect("override entry should keep its path-derived module name");
+        let support = project
+            .graph
+            .resolve("Lib.Support")
+            .expect("support module should be discovered");
+
+        assert!(!project.graph.get(root_main).is_entry);
+        assert!(project.graph.get(override_entry).is_entry);
+        assert_eq!(
+            project.graph.get(override_entry).path,
+            PathBuf::from("lib/start.mpl")
+        );
+        assert_eq!(
+            project.graph.get(support).path,
+            PathBuf::from("lib/support.mpl")
+        );
+    }
+
+    #[test]
+    fn test_build_project_with_entrypoint_override_wins_when_both_entry_files_exist() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+
+        fs::create_dir_all(root.join("lib")).unwrap();
+        fs::write(root.join("main.mpl"), "fn main() do\n  0\nend\n").unwrap();
+        fs::write(root.join("lib/start.mpl"), "fn main() do\n  1\nend\n").unwrap();
+
+        let project = build_project_with_entrypoint(root, Path::new("lib/start.mpl")).unwrap();
+
+        let entry_modules: Vec<&str> = project
+            .graph
+            .modules
+            .iter()
+            .filter(|module| module.is_entry)
+            .map(|module| module.name.as_str())
+            .collect();
+        assert_eq!(entry_modules, vec!["Lib.Start"]);
+    }
+
+    #[test]
+    fn test_build_project_with_entrypoint_missing_override_reports_resolved_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+
+        fs::write(root.join("main.mpl"), "fn main() do\n  0\nend\n").unwrap();
+
+        let err = match build_project_with_entrypoint(root, Path::new("lib/start.mpl")) {
+            Ok(project) => panic!(
+                "expected missing override entrypoint to fail, discovered {} modules",
+                project.graph.module_count()
+            ),
+            Err(err) => err,
+        };
+
+        assert!(err.contains("lib/start.mpl"), "unexpected error: {err}");
     }
 
     #[test]

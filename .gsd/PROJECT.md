@@ -2,13 +2,17 @@
 
 ## What This Is
 
-Mesh is a programming language and backend application platform repository aimed at being trustworthy for real backend and distributed-systems work, not just toy examples. The repo contains the compiler, runtime, formatter, LSP, REPL, package tooling, docs site, package registry, package website, and dogfood applications used to pressure-test the language.
+Mesh is a programming language and backend application platform repository aimed at being trustworthy for real backend and distributed-systems work, not just toy examples. The repo contains the compiler, runtime, formatter, LSP, REPL, package tooling, docs site, package registry, packages website, landing site, and dogfood applications used to pressure-test the language.
 
-M047 is complete. M046 already proved route-free clustered work strongly enough that `tiny-cluster/`, rebuilt `cluster-proof/`, and `meshc init --clustered` could stay tiny and runtime-owned; M047/S04 completed the hard public cutover to source-first `@cluster` declarations, S05 rebaselined the public clustered surfaces onto ordinary function names and shipped the SQLite Todo starter, S06 closed the docs/migration/assembled-proof layer with `bash scripts/verify-m047-s06.sh` as the retained closeout rail, S07 shipped the real `HTTP.clustered(...)` compiler/runtime seam with live two-node HTTP proof, and S08 adopted that shipped wrapper into the Todo starter, public docs, and assembled closeout rails without displacing the canonical route-free `@cluster` story. The repo now has a truthful clustered-route wrapper implementation plus native and Docker proof that the Todo starter's selected read routes execute through explicit-count clustered route wrappers end to end. No new milestone has been started in this worktree yet.
+M047 is complete. The repo now has a truthful clustered-route wrapper implementation plus native and Docker proof that the Todo starter's selected read routes execute through explicit-count clustered route wrappers end to end. No new milestone has been started in this worktree yet.
+
+The next planned wave is a public-surface reset aimed at new evaluators: configurable entrypoints, toolchain self-update, editor and init-skill parity, a cleaner scaffold/example story, evaluator-facing docs instead of a proof-maze, Mesher as the deeper real reference app, and deploy truth that matches what the site claims.
 
 ## Core Value
 
 If Mesh claims it can cluster, route work, survive node loss, and report truthful runtime status, those claims must be proven through small docs-grade examples where the language/runtime owns the magic instead of the example app reimplementing distributed behavior — including the syntax users actually write.
+
+The public Mesh story should stay honest: Mesh is a general-purpose language, but its strongest proof surface and clearest value are fault-tolerant distributed systems and backend workloads.
 
 ## Current State
 
@@ -18,7 +22,8 @@ Mesh already ships a broad backend-oriented stack:
 - runtime support for actors, supervision, HTTP, WebSocket, JSON, database access, migrations, files, env, crypto, datetime, and collections
 - a distributed runtime surface with node start/connect/list/monitor, remote spawn/send, continuity, authority, and clustered-app tooling
 - dogfooded applications: `reference-backend/` as the narrow backend proof surface, `mesher/` as the broader pressure test, `tiny-cluster/` as the local route-free clustered proof, and `cluster-proof/` as the packaged route-free clustered proof
-- a real package registry service in `registry/`, a public packages website in `packages-website/`, and editor surfaces including the VS Code extension and repo-owned Neovim pack
+- a real package registry service in `registry/`, a public packages website in `packages-website/`, a docs site in `website/`, and a separate landing site in `mesher/landing/`
+- editor surfaces including the VS Code extension and repo-owned Neovim pack
 
 Recent distributed-runtime state:
 - M039 proved automatic cluster formation, truthful membership, runtime-native internal balancing, and single-cluster degrade/rejoin on a narrow proof app
@@ -27,12 +32,15 @@ Recent distributed-runtime state:
 - M044 productized clustered apps: manifest opt-in, runtime-owned declared-handler execution, built-in read-only operator/CLI surfaces, `meshc init --clustered`, bounded automatic promotion/recovery, and a rewritten `cluster-proof` on the public clustered-app contract
 - M045 simplified the clustered example story around runtime-owned bootstrap, runtime-chosen remote execution, automatic failover, and scaffold-first docs
 - M046 closed the route-free clustered proof wave: `tiny-cluster/`, rebuilt `cluster-proof/`, and `meshc init --clustered` now share one tiny `1 + 1` clustered-work contract, and the authoritative closeout rail is `bash scripts/verify-m046-s06.sh`
+- M047 completed the public cutover to source-first `@cluster`, carried replication counts through runtime truth, shipped `HTTP.clustered(...)`, and updated the Todo scaffold, docs, and closeout rails around that shipped route wrapper
 
-The current clustered declaration surface has now crossed the public cutover line. M047/S01 and S02 landed the source-first `@cluster` / `@cluster(N)` parsing, shared mesh-pkg declaration provenance/count metadata, source-ranged meshc diagnostics, range-accurate mesh-lsp diagnostics, runtime registration keyed by generic declared-handler runtime names, and continuity records that preserve public `replication_count`. M047/S04 then removed the old public compatibility bridge: parser/pkg/compiler flows now reject legacy `clustered(work)` and `[cluster]` with migration guidance, and `bash scripts/verify-m047-s04.sh` remains the authoritative cutover verifier.
-
-M047 is now closed through S08 on the current source-first clustered model. The declared-work wrapper/codegen seam supports ordinary zero-arg `@cluster` functions, `tiny-cluster/`, `cluster-proof/`, and `meshc init --clustered` dogfood ordinary names like `add()`, and `meshc init --template todo-api` generates a SQLite Todo API with CRUD routes, actor-backed write limiting, restart-persistent SQLite state, a route-free clustered `sync_todos()` function, explicit-count `HTTP.clustered(1, ...)` on the selected read routes, and a Dockerfile that packages the binary produced by `meshc build .`. S06 added the dedicated built-package SQLite regression (`cargo test -p meshc --test e2e_sqlite_built_package -- --nocapture`), finished the public docs/migration story, and made `bash scripts/verify-m047-s06.sh` the assembled closeout rail that wraps S05 and owns the retained `.tmp/m047-s06/verify` bundle. S07 then landed the real clustered HTTP route wrapper: `HTTP.clustered(handler)` / `HTTP.clustered(N, handler)` now type-check with wrapper-specific diagnostics, lower to deterministic `__declared_route_<runtime_name>` shims that register through the shared declared-handler seam, execute the route handler itself as the clustered boundary, and surface continuity/runtime truth through the same runtime-name/replication-count fields used by ordinary clustered work. S08 completed the adoption layer by updating the scaffold, docs, and retained closeout rails to prove the Todo starter's selected clustered read routes natively and inside Docker while preserving the route-free `@cluster` surfaces as the canonical public model.
-
-Public docs/readmes now teach the three canonical route-free `@cluster` surfaces first, then layer on the Todo starter as the fuller example with explicit-count `HTTP.clustered(1, ...)` on `GET /todos` and `GET /todos/:id` while pointing default-count/two-node wrapper behavior at the S07 rail. The current closeout proof surface is `cargo test -p meshc --test e2e_m047_s06 -- --nocapture`, `cargo test -p meshc --test e2e_sqlite_built_package -- --nocapture`, and `bash scripts/verify-m047-s06.sh`, with retained status/phase/bundle pointers under `.tmp/m047-s06/verify/`. `HTTP.clustered(...)` lands in compiler/runtime/e2e through the S07 rails (`cargo test -p mesh-typeck m047_s07 -- --nocapture`, `cargo test -p mesh-lsp m047_s07 -- --nocapture`, `cargo test -p mesh-codegen m047_s07 -- --nocapture`, `cargo test -p mesh-rt m047_s07 -- --nocapture`, and `cargo test -p meshc --test e2e_m047_s07 -- --nocapture`), while S05/S06 now adopt the shipped wrapper truthfully through the Todo starter and assembled native/Docker closeout rails (`cargo test -p meshc --test e2e_m047_s05 -- --nocapture` and `bash scripts/verify-m047-s05.sh`).
+Public docs and repo teaching surfaces are still uneven in ways the next wave needs to fix:
+- compiler, discovery, tests, LSP, editor root detection, and package surfaces still hardcode `main.mpl` in several places
+- `meshc` / `meshpkg` do not yet expose explicit binary self-update commands
+- editor syntax and init-time Mesh skills lag the current clustered/runtime model
+- public docs still expose proof-heavy surfaces centered on `reference-backend/`, `tiny-cluster/`, and `cluster-proof/`
+- the landing site still reflects stale product positioning rather than Mesh's actual language story
+- `reference-backend/` still exists even though the next wave is expected to retire it in favor of `mesher/`
 
 ## Architecture / Key Patterns
 
@@ -41,9 +49,9 @@ Public docs/readmes now teach the three canonical route-free `@cluster` surfaces
 - proof-first dogfooding: reproduce a real runtime/platform limitation, fix it at the correct layer, then prove the repaired path end to end
 - explicit honesty boundaries when behavior is genuinely environment-specific; avoid claiming portability or automation that the runtime does not really own
 - assembled closeout verifiers own a fresh `.tmp/<slice>/verify` bundle and retain delegated subrails by copying their verify trees plus bundle pointers, rather than sharing or mutating lower-level `.tmp/.../verify` directories directly
-- current clustered runtime surface lives primarily in `compiler/mesh-rt/src/dist/`, `compiler/mesh-codegen/`, `compiler/mesh-typeck/`, and `compiler/meshc/`, with user-facing docs in `website/docs/docs/distributed/` and the scaffold path in `compiler/mesh-pkg/src/scaffold.rs`
+- current clustered runtime surface lives primarily in `compiler/mesh-rt/src/dist/`, `compiler/mesh-codegen/`, `compiler/mesh-typeck/`, and `compiler/meshc/`, with user-facing docs in `website/docs/docs/distributed/` and scaffold generation in `compiler/mesh-pkg/src/scaffold.rs`
 - clustered HTTP routes now reuse the same declared-handler seam as ordinary clustered work: compiler lowering rewrites `HTTP.clustered(...)` to deterministic `__declared_route_<runtime_name>` bare shims, router registration reverse-maps those shims onto declared-handler runtime metadata, and continuity/operator views stay keyed by the real handler runtime name rather than the shim symbol
-- for the next wave, clustered ergonomics should stay source-first and obvious: one general clustered function model, route-local wrapper sugar for HTTP, and examples that look like starting points rather than proof apps
+- for the next wave, public evaluator-facing surfaces should stay simpler than internal proof rails: scaffold/examples first, Mesher as the deeper real app, and repo verifier detail kept out of the primary docs story
 
 ## Capability Contract
 
@@ -66,5 +74,12 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M045: Language-Owned Clustered Example Simplification — make the primary clustered example tiny, docs-grade, and fully language/runtime-owned instead of proof-app-shaped
 - [x] M046: Language-Owned Tiny Cluster Proofs — make clustered work auto-triggered, decorator-declarable, route-free, and equally proven through `meshc init --clustered`, `tiny-cluster/`, and rebuilt `cluster-proof/`
 - [x] M047: Cluster Declaration Reset & Clustered Route Ergonomics — replace `clustered(work)` with `@cluster`, reset canonical examples/scaffolds to ordinary `@cluster` function names, continue the clustered-route wrapper work honestly, and ship a clear SQLite Todo scaffold with a complete Dockerfile that makes clustering obvious without looking like a proof app
+- [ ] M048: Entrypoint Flexibility & Tooling Truth Reset — make entrypoints configurable, add toolchain self-update, and align editors plus init-time skills with the current language/runtime contract
+- [ ] M049: Scaffold & Example Reset — support SQLite or Postgres scaffolds, generate checked-in examples, and replace proof-app-shaped public teaching surfaces
+- [ ] M050: Public Docs Truth Reset — make docs evaluator-facing, remove proof-maze public material, and re-test commands and code samples one by one
+- [ ] M051: Mesher as the Living Reference App — retire `reference-backend/`, keep `mesher/` healthy, and modernize it as the deeper real reference app
+- [ ] M052: Public Website & Packages Surface Reset — align landing, docs, and packages surfaces into one coherent public Mesh story
+- [ ] M053: Deploy Truth for Scaffolds & Packages Surface — prove the public scaffold and packages surfaces through CI and real Fly-backed deployment behavior
+- [ ] M054: Load Balancing Deep Dive & Runtime Follow-through — explain current balancing honestly and implement follow-through if the existing server-side story is not sufficient
 - [ ] M035: Test Framework Hardening — get Mesh's testing story ready to test `mesher` thoroughly during development
 - [ ] M037: Package Experience & Ecosystem Polish — improve the package manager experience, website-first, once the underlying trust path is proven

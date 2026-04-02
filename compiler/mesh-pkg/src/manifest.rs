@@ -1,9 +1,9 @@
 use mesh_common::{module_graph::ModuleGraph, span::Span};
 use mesh_parser::ast::item::{ClusteredDeclSyntax, Item};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 /// Represents a parsed mesh.toml manifest file.
 #[derive(Debug, Deserialize)]
@@ -26,7 +26,11 @@ pub struct Package {
     pub authors: Vec<String>,
     #[serde(default)]
     pub license: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_entrypoint")]
+    pub entrypoint: Option<PathBuf>,
 }
+
+pub const DEFAULT_ENTRYPOINT: &str = "main.mpl";
 
 /// Clustered-app configuration from the optional [cluster] section.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
@@ -315,6 +319,87 @@ impl Dependency {
     pub fn is_registry(&self) -> bool {
         self.registry_version().is_some()
     }
+}
+
+fn deserialize_entrypoint<'de, D>(deserializer: D) -> Result<Option<PathBuf>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw = Option::<String>::deserialize(deserializer)?;
+    raw.map(|value| normalize_entrypoint(&value).map_err(serde::de::Error::custom))
+        .transpose()
+}
+
+fn normalize_entrypoint(raw: &str) -> Result<PathBuf, String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err("`[package].entrypoint` must not be blank".to_string());
+    }
+
+    let path = Path::new(trimmed);
+    if path.is_absolute() {
+        return Err(format!(
+            "`[package].entrypoint` must be project-root-relative, got absolute path `{trimmed}`"
+        ));
+    }
+
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::Normal(segment) => normalized.push(segment),
+            Component::ParentDir => {
+                return Err(format!(
+                    "`[package].entrypoint` must stay within the project root, got `{trimmed}`"
+                ));
+            }
+            Component::RootDir | Component::Prefix(_) => {
+                return Err(format!(
+                    "`[package].entrypoint` must be project-root-relative, got `{trimmed}`"
+                ));
+            }
+        }
+    }
+
+    if normalized.as_os_str().is_empty() {
+        return Err("`[package].entrypoint` must not be blank".to_string());
+    }
+
+    if normalized.extension().and_then(|ext| ext.to_str()) != Some("mpl") {
+        return Err(format!(
+            "`[package].entrypoint` must end with `.mpl`, got `{trimmed}`"
+        ));
+    }
+
+    Ok(normalized)
+}
+
+pub fn resolve_entrypoint(
+    project_root: &Path,
+    manifest: Option<&Manifest>,
+) -> Result<PathBuf, String> {
+    let entrypoint = manifest
+        .and_then(|manifest| manifest.package.entrypoint.clone())
+        .unwrap_or_else(|| PathBuf::from(DEFAULT_ENTRYPOINT));
+    let entry_full_path = project_root.join(&entrypoint);
+
+    if !entry_full_path.exists() {
+        return Err(format!(
+            "Entrypoint '{}' was not found in project '{}'",
+            entrypoint.display(),
+            project_root.display()
+        ));
+    }
+
+    if !entry_full_path.is_file() {
+        return Err(format!(
+            "Entrypoint '{}' in project '{}' is not a file",
+            entrypoint.display(),
+            project_root.display()
+        ));
+    }
+
+    Ok(entrypoint)
 }
 
 fn legacy_cluster_section_error(source_path: Option<&Path>) -> String {
@@ -797,7 +882,7 @@ fn validate_declaration_shape(declaration: &ClusteredDeclaration) -> Option<Stri
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     use mesh_typeck::{
         ExportedSymbols, ServiceExportInfo, ServiceMethodExport, ServiceMethodExportKind,
@@ -1193,8 +1278,140 @@ version = "0.0.1"
         assert_eq!(manifest.package.version, "0.0.1");
         assert!(manifest.package.description.is_none());
         assert!(manifest.package.authors.is_empty());
+        assert!(manifest.package.entrypoint.is_none());
         assert!(manifest.dependencies.is_empty());
         assert!(manifest.cluster.is_none());
+    }
+
+    #[test]
+    fn parse_manifest_entrypoint_override() {
+        let toml = r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "lib/start.mpl"
+"#;
+
+        let manifest = Manifest::from_str(toml).unwrap();
+
+        assert_eq!(
+            manifest.package.entrypoint,
+            Some(PathBuf::from("lib/start.mpl"))
+        );
+    }
+
+    #[test]
+    fn reject_blank_entrypoint() {
+        let toml = r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "   "
+"#;
+
+        let err = Manifest::from_str(toml).unwrap_err();
+        assert!(err.contains("must not be blank"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn reject_absolute_entrypoint() {
+        let toml = r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "/tmp/start.mpl"
+"#;
+
+        let err = Manifest::from_str(toml).unwrap_err();
+        assert!(
+            err.contains("project-root-relative"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn reject_escaping_entrypoint() {
+        let toml = r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "../escape.mpl"
+"#;
+
+        let err = Manifest::from_str(toml).unwrap_err();
+        assert!(
+            err.contains("stay within the project root"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn reject_non_mpl_entrypoint() {
+        let toml = r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "lib/start.txt"
+"#;
+
+        let err = Manifest::from_str(toml).unwrap_err();
+        assert!(
+            err.contains("must end with `.mpl`"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn resolve_entrypoint_defaults_to_root_main() {
+        let temp = tempfile::tempdir().unwrap();
+        fs::write(temp.path().join("main.mpl"), "fn main() do\n  0\nend\n").unwrap();
+
+        let entrypoint = resolve_entrypoint(temp.path(), None).unwrap();
+
+        assert_eq!(entrypoint, PathBuf::from(DEFAULT_ENTRYPOINT));
+    }
+
+    #[test]
+    fn resolve_entrypoint_prefers_manifest_override_when_both_entry_files_exist() {
+        let temp = tempfile::tempdir().unwrap();
+        fs::create_dir_all(temp.path().join("lib")).unwrap();
+        fs::write(temp.path().join("main.mpl"), "fn main() do\n  0\nend\n").unwrap();
+        fs::write(
+            temp.path().join("lib/start.mpl"),
+            "fn main() do\n  1\nend\n",
+        )
+        .unwrap();
+        let manifest = Manifest::from_str(
+            r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "lib/start.mpl"
+"#,
+        )
+        .unwrap();
+
+        let entrypoint = resolve_entrypoint(temp.path(), Some(&manifest)).unwrap();
+
+        assert_eq!(entrypoint, PathBuf::from("lib/start.mpl"));
+    }
+
+    #[test]
+    fn resolve_entrypoint_rejects_missing_configured_file() {
+        let temp = tempfile::tempdir().unwrap();
+        let manifest = Manifest::from_str(
+            r#"
+[package]
+name = "custom-entry"
+version = "0.1.0"
+entrypoint = "lib/start.mpl"
+"#,
+        )
+        .unwrap();
+
+        let err = resolve_entrypoint(temp.path(), Some(&manifest)).unwrap_err();
+
+        assert!(err.contains("lib/start.mpl"), "unexpected error: {err}");
     }
 
     #[test]

@@ -213,6 +213,138 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: Validated by M047/S06 and fresh `bash scripts/verify-m047-s06.sh`: public docs, README guidance, migration story, and assembled proof rails teach one coherent source-first clustered model.
 - Notes: Migration guidance should be explicit enough that the hard cutover does not feel arbitrary, and docs must stay honest about what the Todo starter proves versus what the dedicated S07 two-node wrapper rail proves.
 
+### R112 — Mesh projects keep `main.mpl` as the default executable entrypoint but may override it in `mesh.toml` with a different path and file name.
+- Class: core-capability
+- Status: active
+- Description: A Mesh project should build, test, analyze, and package from `main.mpl` by default, but allow an optional manifest override such as `lib/start.mpl` when the project wants a different executable entry file.
+- Why it matters: The current hardcoded `main.mpl` rule leaks into compiler, editor, and package surfaces and makes ordinary project layout choices feel artificially constrained.
+- Source: user
+- Primary owning slice: M048/S01
+- Supporting slices: M048/S02
+- Validation: mapped
+- Notes: Keep the simple default. The new contract is default-plus-override, not a second mandatory project layout.
+
+### R113 — `meshc` and `meshpkg` expose explicit binary self-update commands through the existing release/install path.
+- Class: admin/support
+- Status: active
+- Description: The Mesh toolchain should have intentional self-update commands for installed binaries instead of requiring users to rediscover the installer flow manually.
+- Why it matters: Updating the compiler and package manager should be part of the product surface, not tribal knowledge.
+- Source: user
+- Primary owning slice: M048/S03
+- Supporting slices: M048/S05
+- Validation: mapped
+- Notes: This requirement is about binary self-update, not project dependency upgrades.
+
+### R114 — VS Code, Vim, and init-time Mesh skills reflect the current clustered and interpolation syntax truthfully.
+- Class: quality-attribute
+- Status: active
+- Description: Official editor grammars and the Mesh init-time LLM skill bundle should understand `@cluster`, both string interpolation forms, and the current clustered/runtime teaching model.
+- Why it matters: If the language syntax and its teaching surfaces drift apart, new evaluators see a stale or misleading language.
+- Source: user
+- Primary owning slice: M048/S04
+- Supporting slices: M048/S02, M048/S05
+- Validation: mapped
+- Notes: This includes both syntax highlighting parity and clustering-aware skill content.
+
+### R115 — The Todo scaffold supports either SQLite or Postgres and uses current Mesh patterns instead of stale starter conventions.
+- Class: launchability
+- Status: active
+- Description: `meshc init --template todo-api` should let a user choose SQLite or Postgres and generate a starter that uses modern Mesh features such as tests, ORM surfaces, pipes, and the current clustered/runtime contract where they fit honestly.
+- Why it matters: The main starter should feel current and useful enough to begin from, not like a stale proof artifact.
+- Source: user
+- Primary owning slice: M049/S01 (provisional)
+- Supporting slices: M049/S02 (provisional)
+- Validation: mapped
+- Notes: Database choice is part of the public starter contract, not a hidden follow-up edit.
+
+### R116 — Checked-in generated examples replace proof-app-shaped public teaching surfaces.
+- Class: quality-attribute
+- Status: active
+- Description: The repo should ship evaluator-facing generated examples under a stable examples surface instead of teaching from near-duplicate proof apps like `tiny-cluster/` and `cluster-proof/`.
+- Why it matters: The current public clustered/example story feels like a proof-maze instead of a language with approachable starting points.
+- Source: user
+- Primary owning slice: M049/S02 (provisional)
+- Supporting slices: M049/S01 (provisional)
+- Validation: mapped
+- Notes: Internal fixtures may survive, but the public example story should be example-first rather than proof-app-first.
+
+### R117 — Public docs are evaluator-facing, sample-verified, and stop exposing internal proof-maze material as the main docs experience.
+- Class: quality-attribute
+- Status: active
+- Description: Public Mesh docs should focus on user-facing concepts and verified working samples, while internal verifier maps, milestone rails, and repo-specific proof bundles move out of the primary public docs experience.
+- Why it matters: New evaluators should not have to decode milestone rails and proof-app jargon to learn what Mesh actually is.
+- Source: user
+- Primary owning slice: M050/S01 (provisional)
+- Supporting slices: M050/S02 (provisional)
+- Validation: mapped
+- Notes: This is a docs-surface cleanup, not a reduction in internal proof rigor.
+
+### R118 — Cluster guidance has one primary evaluator path, and low-level distributed primitives are clearly separated from clustered-app guidance.
+- Class: launchability
+- Status: active
+- Description: The docs should make it obvious when a reader is learning low-level distributed actors versus the newer clustered-app/runtime-owned path, instead of blending those stories together.
+- Why it matters: The current split between distributed primitives, clustered examples, and distributed proof surfaces is understandable to contributors but confusing to new evaluators.
+- Source: inferred
+- Primary owning slice: M050/S02 (provisional)
+- Supporting slices: M050/S01 (provisional)
+- Validation: mapped
+- Notes: The primary evaluator path should stay scaffold/examples first.
+
+### R119 — `mesher` replaces `reference-backend` as the maintained deeper reference app and keeps working on current Mesh features.
+- Class: integration
+- Status: active
+- Description: The repo should retire `reference-backend/`, keep `mesher/` healthy, and modernize it so the deeper real-app reference surface uses current Mesh features honestly and efficiently.
+- Why it matters: Maintaining both a narrow legacy backend proof app and a broader real product app splits truth and creates redundant teaching and verifier surfaces.
+- Source: user
+- Primary owning slice: M051/S01 (provisional)
+- Supporting slices: M051/S02 (provisional)
+- Validation: mapped
+- Notes: Mesher is the deeper real reference app, not the primary beginner path.
+
+### R120 — Landing page, docs, and packages surfaces present one coherent Mesh story aimed at new evaluators.
+- Class: launchability
+- Status: active
+- Description: The public web surfaces should consistently present Mesh as a general-purpose language whose strongest proof and clearest value are fault-tolerant distributed systems, instead of describing unrelated stale product positioning or underselling the language's distinctive features.
+- Why it matters: Public trust breaks when the site, docs, and package surfaces sound like different products.
+- Source: user
+- Primary owning slice: M052/S01 (provisional)
+- Supporting slices: M050/S01 (provisional), M052/S02 (provisional)
+- Validation: mapped
+- Notes: This includes fixing packages navigation, landing messaging, and evaluator-facing positioning.
+
+### R121 — The packages site is part of the normal CI/deploy contract for the public Mesh surface.
+- Class: operability
+- Status: active
+- Description: The packages website should be verified and deployed as part of the normal public release/deploy story rather than feeling bolted on beside the main docs and site surfaces.
+- Why it matters: A separate packages experience that is not clearly inside the main deploy contract makes the ecosystem look unfinished.
+- Source: user
+- Primary owning slice: M053/S01 (provisional)
+- Supporting slices: M052/S02 (provisional)
+- Validation: mapped
+- Notes: The repo already deploys this surface; the requirement is to make it part of the main public contract and evidence chain.
+
+### R122 — The SQLite scaffold has a truthful two-node Fly proof with explicit single-writer, node-affined storage semantics.
+- Class: integration
+- Status: active
+- Description: The SQLite starter should be proven on Fly in a two-node clustered deployment, but the proof and docs must stay explicit that SQLite durability is node-affined / single-writer truth rather than shared multi-writer storage magic.
+- Why it matters: A fake clustered SQLite durability story would overclaim the platform and weaken the public proof surface.
+- Source: user
+- Primary owning slice: M053/S02 (provisional)
+- Supporting slices: M049/S01 (provisional)
+- Validation: mapped
+- Notes: Fly volumes are one-to-one with Machines; any stronger storage story would require explicit replication work.
+
+### R123 — Mesh explains current load balancing honestly and implements follow-through if the current server-side story is insufficient.
+- Class: operability
+- Status: active
+- Description: Mesh should document how load balancing actually works today across Mesh runtime behavior and Fly routing, then implement runtime/platform follow-through if the current behavior is not enough for the clustered-app story being told publicly.
+- Why it matters: Load balancing is one of the language's distinctive public claims, so the story has to be both accurate and good enough.
+- Source: user
+- Primary owning slice: M054/S01 (provisional)
+- Supporting slices: M053/S02 (provisional)
+- Validation: mapped
+- Notes: The baseline story is Fly Proxy plus server-side routing, not frontend-held node awareness.
+
 ## Validated
 
 ### R085 — Clustered work declaration supports both manifest and source decorator forms.
@@ -955,6 +1087,17 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: unmapped
 - Notes: M047 should prove the wrapper form before designing a bigger route-annotation family.
 
+### R124 — Frontend-aware node-selection adapters are deferred unless the load-balancing deep dive proves server-side/runtime routing is not enough.
+- Class: integration
+- Status: deferred
+- Description: Mesh may later add frontend-aware adapters or client-side node-selection guidance if the current Fly Proxy plus runtime/server-side story proves insufficient for real clustered-app behavior.
+- Why it matters: It is a plausible follow-on, but it should not be assumed or shipped unless the deep dive proves it is needed.
+- Source: inferred
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: unmapped
+- Notes: The current expectation is server-side truth first; client-side awareness is a fallback, not a starting assumption.
+
 ## Out of Scope
 
 ### R030 — The current planning wave is not a frontend-first language push.
@@ -1200,6 +1343,39 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: n/a
 - Notes: The explicit boundary is the clustered function or clustered route handler.
 
+### R125 — Mesh will not pretend that two Fly nodes share one durable SQLite state without an explicit replication layer.
+- Class: constraint
+- Status: out-of-scope
+- Description: The repo will not claim that a two-node SQLite deployment automatically provides shared durable multi-writer state or transparent failover-persistent storage if the underlying deployment still relies on node-local volumes.
+- Why it matters: This is the honesty boundary for the SQLite Fly proof surface.
+- Source: collaborative
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: n/a
+- Notes: Truthful single-writer or node-affined storage semantics are in scope; fake shared durability is not.
+
+### R126 — Public docs will not keep milestone verifier maps and proof-rail pages as part of the main evaluator-facing docs experience.
+- Class: anti-feature
+- Status: out-of-scope
+- Description: Public docs will not keep repo-internal verifier maps, milestone closeout rails, and proof-bundle-oriented pages as the default learning path for Mesh users.
+- Why it matters: This prevents the public docs from staying a proof-maze.
+- Source: user
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: n/a
+- Notes: Internal proof rails can still exist in the repo; they just stop being the public docs experience.
+
+### R127 — `tiny-cluster`, `cluster-proof`, and `reference-backend` will not remain coequal public onboarding surfaces after the reset wave.
+- Class: anti-feature
+- Status: out-of-scope
+- Description: The repo will not keep those older proof-oriented packages as coequal public teaching entrypoints once evaluator-facing examples, scaffolds, and Mesher's deeper reference role are in place.
+- Why it matters: Keeping all of them public at once preserves the exact surface sprawl this wave is meant to remove.
+- Source: user
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: n/a
+- Notes: Public teaching should be scaffold/examples first, Mesher second, and deeper/internal proof rails separate.
+
 ## Traceability
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
@@ -1312,10 +1488,26 @@ This file is the explicit capability and coverage contract for the project.
 | R109 | anti-feature | out-of-scope | none | none | n/a |
 | R110 | anti-feature | out-of-scope | none | none | n/a |
 | R111 | constraint | out-of-scope | none | none | n/a |
+| R112 | core-capability | active | M048/S01 | M048/S02 | mapped |
+| R113 | admin/support | active | M048/S03 | M048/S05 | mapped |
+| R114 | quality-attribute | active | M048/S04 | M048/S02, M048/S05 | mapped |
+| R115 | launchability | active | M049/S01 (provisional) | M049/S02 (provisional) | mapped |
+| R116 | quality-attribute | active | M049/S02 (provisional) | M049/S01 (provisional) | mapped |
+| R117 | quality-attribute | active | M050/S01 (provisional) | M050/S02 (provisional) | mapped |
+| R118 | launchability | active | M050/S02 (provisional) | M050/S01 (provisional) | mapped |
+| R119 | integration | active | M051/S01 (provisional) | M051/S02 (provisional) | mapped |
+| R120 | launchability | active | M052/S01 (provisional) | M050/S01 (provisional), M052/S02 (provisional) | mapped |
+| R121 | operability | active | M053/S01 (provisional) | M052/S02 (provisional) | mapped |
+| R122 | integration | active | M053/S02 (provisional) | M049/S01 (provisional) | mapped |
+| R123 | operability | active | M054/S01 (provisional) | M053/S02 (provisional) | mapped |
+| R124 | integration | deferred | none | none | unmapped |
+| R125 | constraint | out-of-scope | none | none | n/a |
+| R126 | anti-feature | out-of-scope | none | none | n/a |
+| R127 | anti-feature | out-of-scope | none | none | n/a |
 
 ## Coverage Summary
 
-- Active requirements: 14
-- Mapped to slices: 14
-- Validated: 57 (R001, R002, R003, R004, R005, R006, R007, R008, R009, R010, R011, R013, R015, R016, R017, R018, R019, R023, R024, R025, R026, R027, R035, R036, R037, R038, R039, R045, R046, R047, R048, R051, R053, R061, R062, R063, R064, R065, R066, R067, R068, R069, R070, R077, R078, R079, R080, R081, R085, R086, R087, R088, R089, R090, R091, R092, R093)
+- Active requirements: 16
+- Mapped to slices: 16
+- Validated: 67
 - Unmapped active requirements: 0

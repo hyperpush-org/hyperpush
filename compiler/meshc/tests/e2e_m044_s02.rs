@@ -4,7 +4,8 @@ use mesh_codegen::{
 };
 use mesh_pkg::manifest::{
     validate_cluster_declarations, ClusterConfig, ClusteredDeclaration, ClusteredDeclarationKind,
-    ClusteredExecutableSurfaceInfo, ClusteredExecutionMetadata, ClusteredExportSurface,
+    ClusteredDeclarationOrigin, ClusteredExecutableSurfaceInfo, ClusteredExecutionMetadata,
+    ClusteredExportSurface, ClusteredReplicationCount,
 };
 use std::collections::HashMap;
 use std::fs;
@@ -274,18 +275,24 @@ fn m044_s02_metadata_declared_targets_validate_into_execution_metadata() {
                 manifest_target: "Services.Jobs.submit".to_string(),
                 runtime_registration_name: "Services.Jobs.submit".to_string(),
                 executable_symbol: "__service_jobs_call_submit".to_string(),
+                replication_count: ClusteredReplicationCount::defaulted(),
+                origin: ClusteredDeclarationOrigin::Manifest,
             },
             ClusteredExecutionMetadata {
                 kind: ClusteredDeclarationKind::ServiceCast,
                 manifest_target: "Services.Jobs.reset".to_string(),
                 runtime_registration_name: "Services.Jobs.reset".to_string(),
                 executable_symbol: "__service_jobs_cast_reset".to_string(),
+                replication_count: ClusteredReplicationCount::defaulted(),
+                origin: ClusteredDeclarationOrigin::Manifest,
             },
             ClusteredExecutionMetadata {
                 kind: ClusteredDeclarationKind::Work,
                 manifest_target: "Work.handle_submit".to_string(),
                 runtime_registration_name: "Work.handle_submit".to_string(),
                 executable_symbol: "handle_submit".to_string(),
+                replication_count: ClusteredReplicationCount::defaulted(),
+                origin: ClusteredDeclarationOrigin::Manifest,
             },
         ]
     );
@@ -418,11 +425,13 @@ fn m044_s02_service_prepare_declared_handlers_generate_distinct_wrappers() {
                 kind: DeclaredHandlerKind::ServiceCall,
                 runtime_registration_name: "Services.Jobs.submit".to_string(),
                 executable_symbol: "__service_jobs_call_submit".to_string(),
+                replication_count: ClusteredReplicationCount::defaulted().value.into(),
             },
             DeclaredHandlerPlanEntry {
                 kind: DeclaredHandlerKind::ServiceCast,
                 runtime_registration_name: "Services.Jobs.reset".to_string(),
                 executable_symbol: "__service_jobs_cast_reset".to_string(),
+                replication_count: ClusteredReplicationCount::defaulted().value.into(),
             },
         ],
     )

@@ -38,7 +38,7 @@ use mesh_parser::ast::expr::{FieldAccess, NameRef};
 use mesh_parser::ast::AstNode;
 use mesh_parser::syntax_kind::SyntaxKind;
 use mesh_pkg::manifest::{
-    build_clustered_export_surface, collect_source_cluster_declarations,
+    build_clustered_export_surface, collect_source_cluster_declarations, resolve_entrypoint,
     validate_cluster_declarations_with_source, ClusteredDeclarationError,
     ClusteredExecutionMetadata, Manifest,
 };
@@ -57,7 +57,7 @@ struct Cli {
 enum Commands {
     /// Compile a Mesh project to a native binary
     Build {
-        /// Path to the project directory (must contain main.mpl)
+        /// Path to the project directory (must contain the resolved Mesh entrypoint)
         dir: PathBuf,
 
         /// Optimization level (0 = debug, 2 = release)
@@ -416,24 +416,16 @@ pub(crate) fn prepare_project_build(
         return Err(format!("'{}' is not a directory", dir.display()));
     }
 
-    // Find the entry point: main.mpl
-    let main_mesh = dir.join("main.mpl");
-    if !main_mesh.exists() {
-        return Err(format!(
-            "No 'main.mpl' found in '{}'. Mesh projects must have a main.mpl entry point.",
-            dir.display()
-        ));
-    }
-
     let manifest_path = dir.join("mesh.toml");
     let manifest = if manifest_path.exists() {
         Some(Manifest::from_file(&manifest_path)?)
     } else {
         None
     };
+    let entry_relative_path = resolve_entrypoint(dir, manifest.as_ref())?;
 
     // Build the project: discover all files, parse, build module graph
-    let project = discovery::build_project(dir)?;
+    let project = discovery::build_project_with_entrypoint(dir, &entry_relative_path)?;
 
     // Find the entry module
     let entry_id = project
@@ -441,7 +433,12 @@ pub(crate) fn prepare_project_build(
         .iter()
         .copied()
         .find(|id| project.graph.get(*id).is_entry)
-        .ok_or("No entry module found in module graph")?;
+        .ok_or_else(|| {
+            format!(
+                "Resolved entrypoint '{}' was not marked executable in module discovery",
+                entry_relative_path.display()
+            )
+        })?;
 
     // Check parse errors in ALL modules (not just entry)
     let mut has_errors = false;
