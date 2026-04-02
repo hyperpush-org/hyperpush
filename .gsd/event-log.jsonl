@@ -323,3 +323,4 @@
 {"cmd":"complete-task","params":{"milestoneId":"M047","sliceId":"S08","taskId":"T03"},"ts":"2026-04-02T03:06:00.754Z","actor":"agent","hash":"d7dd7a1e3f25ddc3","session_id":"9a0b1880-86bb-41dd-a0ba-c6ae4a112d96"}
 {"cmd":"complete-task","params":{"milestoneId":"M047","sliceId":"S08","taskId":"T04"},"ts":"2026-04-02T03:39:57.206Z","actor":"agent","hash":"189ad00ea64de16a","session_id":"9a0b1880-86bb-41dd-a0ba-c6ae4a112d96"}
 {"cmd":"complete-slice","params":{"milestoneId":"M047","sliceId":"S08"},"ts":"2026-04-02T04:07:22.961Z","actor":"agent","hash":"a414e5b428d1e8b5","session_id":"9a0b1880-86bb-41dd-a0ba-c6ae4a112d96"}
+{"cmd":"complete-milestone","params":{"milestoneId":"M047"},"ts":"2026-04-02T05:32:30.156Z","actor":"agent","hash":"a1163cc46adcb848","session_id":"9a0b1880-86bb-41dd-a0ba-c6ae4a112d96"}

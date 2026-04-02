@@ -1,4 +1,4 @@
-# M047: Cluster Declaration Reset & Clustered Route Ergonomics
+# M047: 
 
 ## Vision
 Replace the narrow `clustered(work)` / manifest-centered clustered authoring model with a source-first `@cluster` declaration and `HTTP.clustered(...)` route wrapper story, then dogfood that reset into the canonical examples and a simple SQLite Todo scaffold with a complete Dockerfile.

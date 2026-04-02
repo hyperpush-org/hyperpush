@@ -105,113 +105,113 @@ This file is the explicit capability and coverage contract for the project.
 
 ### R097 — `@cluster` and `@cluster(N)` replace `clustered(work)` as the public clustered function syntax.
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: Mesh source should declare clustered functions with `@cluster` and `@cluster(N)` instead of the current `clustered(work)` marker.
 - Why it matters: The current syntax makes clustering look like a special proof-only mechanism instead of a normal language feature.
 - Source: user
 - Primary owning slice: M047/S01
 - Supporting slices: M047/S04, M047/S06
-- Validation: mapped
+- Validation: Validated by M047/S01 and M047/S04: source-first parser/compiler/LSP support landed, the hard cutover removed legacy public syntax, and the passed M047 validation + milestone closeout prove `@cluster` / `@cluster(N)` are now the supported public clustered function spellings.
 - Notes: This is a hard cutover requirement, not an additive alias.
 
 ### R098 — Cluster counts mean replication counts, and omitted counts default to `2`.
 - Class: continuity
-- Status: active
+- Status: validated
 - Description: `@cluster(3)` and route-local clustered wrappers should express replication count, and `@cluster` should mean replication count `2` by default.
 - Why it matters: If the numeric argument is ambiguous, the new syntax becomes another folklore surface instead of a clear contract.
 - Source: user
 - Primary owning slice: M047/S02
 - Supporting slices: M047/S03, M047/S04
-- Validation: mapped
+- Validation: Validated by M047/S02: replication counts flow into declared-handler runtime metadata and continuity truth, bare `@cluster` defaults to `2`, explicit counts are preserved, and unsupported higher fanout rejects durably instead of being silently clipped.
 - Notes: The count is about replication, not just execution width.
 
 ### R099 — Clustering remains a general function capability, not an HTTP-only feature.
 - Class: constraint
-- Status: active
+- Status: validated
 - Description: Any supported function boundary Mesh clusters today should remain clusterable through the new source-first syntax; HTTP route clustering is an important consumer of the model, not the only model.
 - Why it matters: Route-only clustering would regress the current runtime-owned startup/background/distributed work story and force non-route work back into awkward side channels.
 - Source: user
 - Primary owning slice: M047/S02
 - Supporting slices: M047/S03, M047/S04
-- Validation: mapped
+- Validation: Validated by M047/S01, S02, S04, and the passed milestone validation: clustering stayed a general function capability while the canonical public examples remained route-free `@cluster` first.
 - Notes: Clustered routes should lower onto the same general clustered function capability.
 
 ### R100 — HTTP routes can opt into clustering with wrapper syntax like `HTTP.clustered(handler)` and `HTTP.clustered(3, handler)`.
 - Class: launchability
-- Status: active
+- Status: validated
 - Description: Router chains should support a route-local clustered wrapper so a single route can opt into clustering without awkward handler indirection or verb-specific API explosion.
 - Why it matters: In a pipe-chained router, clustering has to be obvious where the route is declared or it becomes technically present but not obvious.
 - Source: user
 - Primary owning slice: M047/S03
 - Supporting slices: M047/S05, M047/S06
-- Validation: mapped
+- Validation: Validated by M047/S07 and fresh closeout replay: `HTTP.clustered(handler)` / `HTTP.clustered(N, handler)` typecheck, lower, execute, and pass `cargo test -p meshc --test e2e_m047_s07 -- --nocapture`.
 - Notes: Wrapper style is preferred over adding a separate clustered verb helper for every HTTP method.
 
 ### R101 — For clustered HTTP, the route handler is the distributed boundary and normal downstream function calls run naturally inside that execution.
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: When a route uses the clustered wrapper, Mesh should treat the route handler as the clustered unit of work and execute its normal call graph inside that clustered request execution.
 - Why it matters: This keeps the mental model honest and avoids pretending Mesh infers arbitrary deeper distributed intent from normal code.
 - Source: user
 - Primary owning slice: M047/S03
 - Supporting slices: M047/S05
-- Validation: mapped
+- Validation: Validated by M047/S07: continuity/runtime truth stays keyed to the real route handler runtime name, proving the route handler itself is the clustered boundary.
 - Notes: The first route model should be explicit at the handler boundary rather than fully implicit.
 
 ### R102 — The old `clustered(work)` surface is removed instead of kept as a coequal public syntax.
 - Class: constraint
-- Status: active
+- Status: validated
 - Description: Mesh should migrate examples, docs, generated scaffolds, parser/typechecker messaging, and proof rails onto the new `@cluster` model instead of teaching both syntaxes side by side.
 - Why it matters: Keeping both public models would preserve exactly the clutter and uncertainty this milestone is meant to remove.
 - Source: user
 - Primary owning slice: M047/S04
 - Supporting slices: M047/S06
-- Validation: mapped
+- Validation: Validated by M047/S04: legacy `clustered(work)` / `[cluster]` public surfaces were removed from examples, docs, generated outputs, and authoritative cutover rails.
 - Notes: This is a language-surface reset, not a temporary sugar layer.
 
 ### R103 — Repo-owned clustered examples are dogfooded onto the new model.
 - Class: quality-attribute
-- Status: active
+- Status: validated
 - Description: The repo’s clustered examples and proof surfaces should use plain `@cluster` functions with ordinary user-facing names like `add()` or domain-specific verbs, and should use clustered route wrappers only where that feature is actually shipped, instead of continuing to demonstrate the old clustered-work shape or an `execute_declared_work(...)` special case.
 - Why it matters: Mesh cannot claim the new syntax is the real direction if its own canonical examples keep a proof-shaped function contract.
 - Source: user
 - Primary owning slice: M047/S04
 - Supporting slices: M047/S05, M047/S06
-- Validation: mapped
+- Validation: Validated by M047/S04, S05, and S08: repo-owned clustered examples, scaffold output, proof packages, docs snippets, and verifier expectations now dogfood the new source-first model.
 - Notes: Dogfooding includes proof packages, generated surfaces, docs snippets, and named verifier expectations. `execute_declared_work(...)` is now an explicit drift marker on public example/scaffold surfaces.
 
 ### R104 — `meshc` can scaffold a simple SQLite-backed Todo API that demonstrates ordinary `@cluster` usage, actors, rate limiting, several real routes, and a complete Dockerfile.
 - Class: launchability
-- Status: active
+- Status: validated
 - Description: The new scaffold should generate a simple but real Todo API with SQLite, several HTTP routes, actor-backed work, an obvious plain `@cluster` function surface, and a complete Dockerfile that users can build and run directly.
 - Why it matters: The user wants a starting point, not another tiny proof package or an overbuilt pseudo-product.
 - Source: user
 - Primary owning slice: M047/S05
 - Supporting slices: M047/S06
-- Validation: mapped
-- Notes: SQLite should be used in a simple way; the point is to show syntax and app shape, not maximal infrastructure. If `HTTP.clustered(...)` is still unshipped, the scaffold must stay honest and avoid faking route-local clustering.
+- Validation: Validated by M047/S05 and fresh closeout replay: the Todo scaffold generates a SQLite API with real routes, actor-backed rate limiting, native/Docker proof, and a complete Dockerfile.
+- Notes: SQLite should be used in a simple way; the point is to show syntax and app shape, not maximal infrastructure. The starter now adopts explicit-count clustered read routes only where the shipped runtime truth supports them.
 
 ### R105 — The new scaffold makes clustering obvious, keeps boilerplate low, and feels like a starting point instead of a proof app.
 - Class: differentiator
-- Status: active
+- Status: validated
 - Description: The generated app should make clustering visually obvious through plain `@cluster` function names rather than proof-shaped helpers like `execute_declared_work(...)`, avoid excessive ceremony, and read like something a user could actually begin building from.
 - Why it matters: The user explicitly called out the failure modes to avoid: technically present but not obvious clustering, too much boilerplate, and a proof-app feel.
 - Source: user
 - Primary owning slice: M047/S05
 - Supporting slices: M047/S06
-- Validation: mapped
+- Validation: Validated by M047/S05 and S08: the scaffold uses ordinary `@cluster` function names, low boilerplate, and selected explicit-count clustered read routes while remaining a usable starting point.
 - Notes: If the scaffold proves the runtime but still reads like a verifier harness or keeps a proof-shaped public function contract, this requirement is not met.
 
 ### R106 — Public docs and migration guidance teach one source-first clustered model to both new and existing Mesh users.
 - Class: quality-attribute
-- Status: active
+- Status: validated
 - Description: Public docs, generated README guidance, CLI help, and verifier rails should teach the new source-first clustered model consistently, use plain `@cluster` function names instead of `execute_declared_work(...)` on public example surfaces, and make the migration off `clustered(work)` understandable for existing users.
 - Why it matters: This milestone optimizes for both new Mesh users and existing users, so the new model has to be learnable and migratable at the same time.
 - Source: inferred
 - Primary owning slice: M047/S06
 - Supporting slices: M047/S04, M047/S05
-- Validation: mapped
-- Notes: Migration guidance should be explicit enough that the hard cutover does not feel arbitrary, and docs must stay honest about unshipped `HTTP.clustered(...)` work.
+- Validation: Validated by M047/S06 and fresh `bash scripts/verify-m047-s06.sh`: public docs, README guidance, migration story, and assembled proof rails teach one coherent source-first clustered model.
+- Notes: Migration guidance should be explicit enough that the hard cutover does not feel arbitrary, and docs must stay honest about what the Todo starter proves versus what the dedicated S07 two-node wrapper rail proves.
 
 ## Validated
 
@@ -1297,16 +1297,16 @@ This file is the explicit capability and coverage contract for the project.
 | R095 | anti-feature | out-of-scope | none | none | n/a |
 | R096 | constraint | out-of-scope | none | none | n/a |
 
-| R097 | core-capability | active | M047/S01 | M047/S04, M047/S06 | mapped |
-| R098 | continuity | active | M047/S02 | M047/S03, M047/S04 | mapped |
-| R099 | constraint | active | M047/S02 | M047/S03, M047/S04 | mapped |
-| R100 | launchability | active | M047/S03 | M047/S05, M047/S06 | mapped |
-| R101 | core-capability | active | M047/S03 | M047/S05 | mapped |
-| R102 | constraint | active | M047/S04 | M047/S06 | mapped |
-| R103 | quality-attribute | active | M047/S04 | M047/S06 | mapped |
-| R104 | launchability | active | M047/S05 | M047/S03, M047/S06 | mapped |
-| R105 | differentiator | active | M047/S05 | M047/S06 | mapped |
-| R106 | quality-attribute | active | M047/S06 | M047/S04, M047/S05 | mapped |
+| R097 | core-capability | validated | M047/S01 | M047/S04, M047/S06 | mapped |
+| R098 | continuity | validated | M047/S02 | M047/S03, M047/S04 | mapped |
+| R099 | constraint | validated | M047/S02 | M047/S03, M047/S04 | mapped |
+| R100 | launchability | validated | M047/S03 | M047/S05, M047/S06 | mapped |
+| R101 | core-capability | validated | M047/S03 | M047/S05 | mapped |
+| R102 | constraint | validated | M047/S04 | M047/S06 | mapped |
+| R103 | quality-attribute | validated | M047/S04 | M047/S06 | mapped |
+| R104 | launchability | validated | M047/S05 | M047/S03, M047/S06 | mapped |
+| R105 | differentiator | validated | M047/S05 | M047/S06 | mapped |
+| R106 | quality-attribute | validated | M047/S06 | M047/S04, M047/S05 | mapped |
 | R107 | launchability | deferred | none | none | unmapped |
 | R108 | admin/support | deferred | none | none | unmapped |
 | R109 | anti-feature | out-of-scope | none | none | n/a |
