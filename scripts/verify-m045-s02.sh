@@ -279,32 +279,67 @@ scaffold_local = find_one('scaffold-runtime-completion-local-')
 scaffold_contract = find_one('scaffold-runtime-completion-contract-')
 
 required_remote = [
-    'membership-primary.json',
-    'membership-standby.json',
-    'cluster-status-primary.json',
-    'cluster-continuity-ingress.json',
-    'cluster-continuity-owner.json',
-    'status-ingress.json',
-    'status-owner.json',
-    'submit-duplicate.json',
-    'primary.combined.log',
-    'standby.combined.log',
+    'init.log',
+    'generated-project/mesh.toml',
+    'generated-project/main.mpl',
+    'generated-project/work.mpl',
+    'generated-project/README.md',
+    'package/mesh.toml',
+    'package/main.mpl',
+    'package/work.mpl',
+    'package/README.md',
+    'references/cluster-proof.main.mpl',
+    'references/cluster-proof.README.md',
+    'references/cluster-proof.work.mpl',
+    'references/cluster-proof.work.test.mpl',
 ]
 for name in required_remote:
     if not (remote / name).exists():
         raise SystemExit(f'{remote}: missing required retained file {name}')
 
 required_local = [
+    'init.log',
+    'build.log',
+    'build-meta.json',
+    'bin/clustered-runtime-completion',
+    'generated-project/mesh.toml',
+    'generated-project/main.mpl',
+    'generated-project/work.mpl',
+    'generated-project/README.md',
+    'package/mesh.toml',
+    'package/main.mpl',
+    'package/work.mpl',
+    'package/README.md',
     'cluster-status.log',
-    'cluster-continuity.json',
+    'cluster-status.json',
+    'cluster-continuity-list.log',
+    'cluster-continuity-list.json',
+    'cluster-continuity-completed.log',
+    'cluster-continuity-completed.json',
+    'cluster-diagnostics.log',
+    'cluster-diagnostics.json',
+    'scaffold.stdout.log',
+    'scaffold.stderr.log',
     'scaffold.combined.log',
-    'submit.json',
 ]
 for name in required_local:
     if not (scaffold_local / name).exists():
         raise SystemExit(f'{scaffold_local}: missing required retained file {name}')
 
-required_contract = ['main.mpl', 'work.mpl', 'README.md', 'init.log']
+required_contract = [
+    'init.log',
+    'build.log',
+    'build-meta.json',
+    'bin/clustered-runtime-completion',
+    'generated-project/mesh.toml',
+    'generated-project/main.mpl',
+    'generated-project/work.mpl',
+    'generated-project/README.md',
+    'package/mesh.toml',
+    'package/main.mpl',
+    'package/work.mpl',
+    'package/README.md',
+]
 for name in required_contract:
     if not (scaffold_contract / name).exists():
         raise SystemExit(f'{scaffold_contract}: missing required retained file {name}')

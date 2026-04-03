@@ -206,7 +206,7 @@
   - Files: scripts/lib/clustered_fixture_paths.sh, scripts/verify-m039-s01.sh, scripts/verify-m039-s02.sh, scripts/verify-m039-s03.sh, scripts/verify-m040-s01.sh, scripts/verify-m042-s01.sh, scripts/verify-m043-s01.sh, scripts/verify-m045-s02.sh
   - Verify: - `bash scripts/verify-m039-s01.sh`
 - `bash scripts/verify-m045-s02.sh`
-- [ ] **T06: Update wrapper/closeout rails, delete the root proof-package dirs, and close the slice** — Finish the retirement by updating the wrapper/closeout rails to the fixture-backed/public-story contract, deleting the top-level `tiny-cluster/` and `cluster-proof/` directories, and rerunning the authoritative verifier plus the retained historical clustered Todo subrail.
+- [x] **T06: Update wrapper/closeout rails, delete the root proof-package dirs, and close the slice** — Finish the retirement by updating the wrapper/closeout rails to the fixture-backed/public-story contract, deleting the top-level `tiny-cluster/` and `cluster-proof/` directories, and rerunning the authoritative verifier plus the retained historical clustered Todo subrail.
 
 ## Failure Modes
 
