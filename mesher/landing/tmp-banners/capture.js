@@ -57,6 +57,14 @@ const path = require('path');
   await vsSentry.screenshot({ path: path.join(publicDir, 'vs-sentry-pricing.png') });
   console.log('✓ vs-sentry-pricing.png');
 
+  // 6. Roadmap banner (1000x1800, tall/vertical)
+  console.log('Capturing roadmap banner...');
+  await page.goto(`file://${path.resolve(__dirname, 'roadmap.html')}`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1000); // wait for fonts
+  const roadmap = await page.$('#roadmap-banner');
+  await roadmap.screenshot({ path: path.join(publicDir, 'roadmap-banner.png') });
+  console.log('✓ roadmap-banner.png');
+
   await browser.close();
   console.log('\nDone! All images saved to public/');
 })();

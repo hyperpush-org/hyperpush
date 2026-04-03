@@ -197,7 +197,9 @@ test("public-http retries stale bytes until the shared contract turns green", as
     }
     if (url.pathname === "/search" && url.search === `?q=${scopedQuery}`) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(`<html><body>Results for "${packageName}" ${packageName} ${packageDescription}</body></html>`);
+      res.end(
+        `<html><body><h1>Results for <span>"${packageName}"</span></h1><p>${packageName}</p><p>${packageDescription}</p></body></html>`
+      );
       return;
     }
     if (url.pathname === "/api/v1/packages" && url.search === `?search=${scopedQuery}`) {
@@ -272,7 +274,9 @@ test("public-http fails with the last mismatch reason when the retry budget is e
     }
     if (url.pathname === "/search" && url.search === `?q=${scopedQuery}`) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(`<html><body>Results for "${packageName}" ${packageName} ${packageDescription}</body></html>`);
+      res.end(
+        `<html><body><h1>Results for <span>"${packageName}"</span></h1><p>${packageName}</p><p>${packageDescription}</p></body></html>`
+      );
       return;
     }
     if (url.pathname === "/api/v1/packages" && url.search === `?search=${scopedQuery}`) {

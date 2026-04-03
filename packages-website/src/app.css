@@ -98,6 +98,21 @@
   }
 }
 
+/* Theme-aware logo swap lives in CSS so first paint matches the dark class set in app.html. */
+.themed-logo {
+  display: inline-flex;
+  align-items: center;
+}
+.themed-logo__dark {
+  display: none;
+}
+.dark .themed-logo__light {
+  display: none;
+}
+.dark .themed-logo__dark {
+  display: block;
+}
+
 /* Reveal animations */
 .reveal {
   opacity: 0;

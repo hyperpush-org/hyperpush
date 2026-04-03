@@ -506,11 +506,11 @@ def check_package_search(context: SurfaceContext) -> SurfaceResult:
     if baseline is not None:
         return baseline
 
-    body_text = fetch.body.decode("utf-8", errors="replace")
+    spaced, _compact = spaced_and_compact_text(fetch.body.decode("utf-8", errors="replace"))
     required = [f'Results for "{PACKAGE_NAME}"', PACKAGE_NAME, PACKAGE_DESCRIPTION]
-    missing = [needle for needle in required if needle not in body_text]
+    missing = [needle for needle in required if needle not in spaced]
     if missing:
-        write_text(check_log, "public package search page missing markers:\n" + "\n".join(f"- {item}" for item in missing) + "\n")
+        write_text(check_log, "public package search page missing visible-text markers:\n" + "\n".join(f"- {item}" for item in missing) + "\n")
         return SurfaceResult("public-package-search", False, f"missing markers: {missing}", check_log)
 
     clear_validation_artifacts(check_log)

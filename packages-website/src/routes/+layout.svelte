@@ -2,12 +2,15 @@
   import '../app.css';
   import { Search, Sun, Moon, ExternalLink } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
 
-  let dark = false;
-  onMount(() => {
-    dark = document.documentElement.classList.contains('dark');
-  });
+  const syncDarkFromDocument = () => {
+    dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  };
+
+  let dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
+  onMount(syncDarkFromDocument);
+
   function toggleDark() {
     dark = !dark;
     document.documentElement.classList.toggle('dark', dark);
@@ -19,11 +22,11 @@
   <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 lg:px-6">
     <!-- Logo -->
     <a href="/" class="flex items-center gap-3 shrink-0 no-underline">
-      <img
-        src={dark ? '/logo-white.svg' : '/logo-black.svg'}
-        alt="Mesh"
-        class="h-7 w-auto"
-      />
+      <span class="themed-logo" aria-hidden="true">
+        <img src="/logo-black.svg" alt="" class="themed-logo__light h-7 w-auto" />
+        <img src="/logo-white.svg" alt="" class="themed-logo__dark h-7 w-auto" />
+      </span>
+      <span class="sr-only">Mesh</span>
       <span class="text-muted-foreground/30 text-xl font-light select-none">/</span>
       <span class="text-sm text-muted-foreground">Packages</span>
     </a>
@@ -85,11 +88,11 @@
     <div class="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
       <!-- Logo + tagline -->
       <div class="flex items-center gap-2.5">
-        <img
-          src={dark ? '/logo-white.svg' : '/logo-black.svg'}
-          alt="Mesh"
-          class="h-4 w-auto opacity-40"
-        />
+        <span class="themed-logo opacity-40" aria-hidden="true">
+          <img src="/logo-black.svg" alt="" class="themed-logo__light h-4 w-auto" />
+          <img src="/logo-white.svg" alt="" class="themed-logo__dark h-4 w-auto" />
+        </span>
+        <span class="sr-only">Mesh</span>
         <span class="text-muted-foreground/40 font-light select-none">/</span>
         <span class="text-sm text-muted-foreground">Packages</span>
       </div>

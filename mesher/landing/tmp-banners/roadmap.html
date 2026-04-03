@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0a0a;
+    color: #f5f5f5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .roadmap-banner {
+    width: 1200px;
+    height: 1900px;
+    position: relative;
+    overflow: hidden;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    padding: 80px 96px 72px;
+  }
+
+  /* ——— Background ——— */
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.022) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.022) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  .glow-top {
+    position: absolute;
+    width: 900px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(89,193,132,0.13) 0%, transparent 70%);
+    top: -150px; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .glow-bottom {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(89,193,132,0.07) 0%, transparent 70%);
+    bottom: -150px; right: -80px;
+    pointer-events: none;
+  }
+
+  .top-accent {
+    position: absolute;
+    top: 0; left: 8%; right: 8%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(89,193,132,0.45), transparent);
+  }
+
+  .bottom-accent {
+    position: absolute;
+    bottom: 0; left: 8%; right: 8%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(89,193,132,0.18), transparent);
+  }
+
+  /* ——— Header ——— */
+  .header {
+    position: relative; z-index: 5;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 60px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .logo-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: -0.2px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    border-radius: 100px;
+    border: 1px solid rgba(89,193,132,0.28);
+    background: rgba(89,193,132,0.07);
+    font-size: 13px;
+    color: #59C184;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    width: fit-content;
+  }
+
+  .pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #59C184;
+    box-shadow: 0 0 8px rgba(89,193,132,0.7);
+  }
+
+  .headline {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: -3px;
+    line-height: 1.06;
+    margin-bottom: 20px;
+  }
+
+  .headline .accent { color: #59C184; }
+
+  .subhead {
+    font-size: 20px;
+    color: rgba(255,255,255,0.38);
+    line-height: 1.55;
+    max-width: 680px;
+    font-weight: 400;
+  }
+
+  /* ——— Timeline ——— */
+  .timeline {
+    position: relative; z-index: 5;
+    display: flex;
+    flex-direction: column;
+    padding-left: 52px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 16px;
+    bottom: 16px;
+    width: 2px;
+    background: linear-gradient(
+      to bottom,
+      rgba(89,193,132,0.75) 0%,
+      rgba(89,193,132,0.55) 22%,
+      rgba(89,193,132,0.35) 38%,
+      rgba(255,255,255,0.07) 58%,
+      rgba(255,255,255,0.04) 100%
+    );
+  }
+
+  /* ——— Milestone ——— */
+  .milestone {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .milestone:last-child { margin-bottom: 0; }
+
+  .node {
+    position: absolute;
+    left: -52px;
+    top: 20px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+
+  .node.done {
+    background: #59C184;
+    box-shadow: 0 0 16px rgba(89,193,132,0.5);
+  }
+
+  .node.current {
+    background: #59C184;
+    box-shadow:
+      0 0 0 6px rgba(89,193,132,0.18),
+      0 0 0 12px rgba(89,193,132,0.07),
+      0 0 28px rgba(89,193,132,0.65);
+  }
+
+  .node.upcoming {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.14);
+  }
+
+  /* ——— Card ——— */
+  .card {
+    border-radius: 18px;
+    padding: 28px 32px 28px;
+  }
+
+  .card.done {
+    border: 1px solid rgba(89,193,132,0.16);
+    background: rgba(89,193,132,0.03);
+  }
+
+  .card.current {
+    border: 1px solid rgba(89,193,132,0.42);
+    background: rgba(89,193,132,0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(89,193,132,0.14),
+      0 0 48px rgba(89,193,132,0.07);
+  }
+
+  .card.upcoming {
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .step-num {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  .done    .step-num { color: rgba(89,193,132,0.55); }
+  .current .step-num { color: #59C184; }
+  .upcoming .step-num { color: rgba(255,255,255,0.2); }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .chip-done {
+    background: rgba(89,193,132,0.1);
+    border: 1px solid rgba(89,193,132,0.22);
+    color: #59C184;
+  }
+
+  .chip-now {
+    background: rgba(89,193,132,0.15);
+    border: 1px solid rgba(89,193,132,0.38);
+    color: #59C184;
+  }
+
+  .chip-upcoming {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    color: rgba(255,255,255,0.3);
+  }
+
+  .chip-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .chip-done     .chip-dot { background: #59C184; }
+  .chip-now      .chip-dot { background: #59C184; box-shadow: 0 0 6px rgba(89,193,132,0.9); }
+  .chip-upcoming .chip-dot { background: rgba(255,255,255,0.22); }
+
+  .card-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .done     .card-title { color: rgba(255,255,255,0.88); }
+  .current  .card-title { color: #ffffff; }
+  .upcoming .card-title { color: rgba(255,255,255,0.38); }
+
+  .card-desc {
+    font-size: 17px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .done     .card-desc { color: rgba(255,255,255,0.38); }
+  .current  .card-desc { color: rgba(255,255,255,0.55); }
+  .upcoming .card-desc { color: rgba(255,255,255,0.24); }
+
+  /* ——— Footer ——— */
+  .footer {
+    position: relative; z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 28px;
+    margin-top: 36px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .footer-logo-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .footer-sep {
+    width: 1px; height: 18px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .footer-url {
+    font-size: 15px;
+    color: rgba(89,193,132,0.5);
+    font-weight: 500;
+  }
+
+  .footer-right {
+    font-size: 14px;
+    color: rgba(255,255,255,0.2);
+  }
+</style>
+</head>
+<body>
+
+<div class="roadmap-banner" id="roadmap-banner">
+  <div class="grid-bg"></div>
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+  <div class="top-accent"></div>
+  <div class="bottom-accent"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-row">
+      <svg width="38" height="38" viewBox="0 0 256 256" fill="none">
+        <path d="M58.4637 127.026C49.371 111.277 54.767 91.1387 70.5159 82.0461L122.475 172.041C131.567 187.79 126.171 207.928 110.422 217.021L58.4637 127.026Z" fill="#59C184"/>
+        <path d="M79.1494 77.0625C95.0428 67.8864 115.366 73.3319 124.542 89.2253L152.938 138.409C137.044 147.585 116.722 142.139 107.545 126.246L79.1494 77.0625Z" fill="white"/>
+        <path d="M133.024 83.9788C123.931 68.2299 129.327 48.0919 145.076 38.9992L182.534 103.879C191.627 119.628 186.231 139.766 170.482 148.859L133.024 83.9788Z" fill="#59C184"/>
+      </svg>
+      <span class="logo-name">Mesh Language</span>
+    </div>
+
+    <div class="pill">
+      <span class="dot"></span>
+      Public Roadmap
+    </div>
+
+    <h1 class="headline">
+      Building the future of<br>
+      <span class="accent">open-source infrastructure</span>
+    </h1>
+
+    <p class="subhead">
+      From language to ecosystem — a transparent look at where we've been, where we are, and where we're going.
+    </p>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline">
+
+    <!-- 01: DONE -->
+    <div class="milestone">
+      <div class="node done">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="rgba(0,0,0,0.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2.5,6.5 5.5,9.5 10.5,3"/>
+        </svg>
+      </div>
+      <div class="card done">
+        <div class="card-top">
+          <span class="step-num">01</span>
+          <span class="status-chip chip-done"><span class="chip-dot"></span>Shipped</span>
+        </div>
+        <div class="card-title">Forge the Language</div>
+        <div class="card-desc">Built Mesh from the ground up — a compiled, statically typed language with first-class actor concurrency, a built-in cluster runtime, and a package registry.</div>
+      </div>
+    </div>
+
+    <!-- 02: DONE -->
+    <div class="milestone">
+      <div class="node done">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="rgba(0,0,0,0.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2.5,6.5 5.5,9.5 10.5,3"/>
+        </svg>
+      </div>
+      <div class="card done">
+        <div class="card-top">
+          <span class="step-num">02</span>
+          <span class="status-chip chip-done"><span class="chip-dot"></span>Shipped</span>
+        </div>
+        <div class="card-title">Prove It in Production</div>
+        <div class="card-desc">Started building Hyperpush — an open-source error tracking platform powered by Mesh. If the language can't power its own apps, it's not ready for yours.</div>
+      </div>
+    </div>
+
+    <!-- 03: CURRENT -->
+    <div class="milestone">
+      <div class="node current"></div>
+      <div class="card current">
+        <div class="card-top">
+          <span class="step-num">03</span>
+          <span class="status-chip chip-now"><span class="chip-dot"></span>Now</span>
+        </div>
+        <div class="card-title">Go Public at a Hackathon</div>
+        <div class="card-desc">Applying to major hackathons and officially open-sourcing Mesh under MIT. The full compiler, runtime, toolchain, and package registry — all public.</div>
+      </div>
+    </div>
+
+    <!-- 04: UPCOMING -->
+    <div class="milestone">
+      <div class="node upcoming"></div>
+      <div class="card upcoming">
+        <div class="card-top">
+          <span class="step-num">04</span>
+          <span class="status-chip chip-upcoming"><span class="chip-dot"></span>Upcoming</span>
+        </div>
+        <div class="card-title">The Inaugural Mesh Hackathon</div>
+        <div class="card-desc">Our first community event — build packages, tools, or apps in Mesh and win real prizes. Top submissions earn a permanent Founding Builder badge on the registry.</div>
+      </div>
+    </div>
+
+    <!-- 05: UPCOMING -->
+    <div class="milestone">
+      <div class="node upcoming"></div>
+      <div class="card upcoming">
+        <div class="card-top">
+          <span class="step-num">05</span>
+          <span class="status-chip chip-upcoming"><span class="chip-dot"></span>Upcoming</span>
+        </div>
+        <div class="card-title">Launch Hyperpush 1.0</div>
+        <div class="card-desc">Full public launch — open-source error tracking with AI root-cause analysis, Solana program monitoring, and automated bug bounties paid directly to developers.</div>
+      </div>
+    </div>
+
+    <!-- 06: UPCOMING -->
+    <div class="milestone">
+      <div class="node upcoming"></div>
+      <div class="card upcoming">
+        <div class="card-top">
+          <span class="step-num">06</span>
+          <span class="status-chip chip-upcoming"><span class="chip-dot"></span>Upcoming</span>
+        </div>
+        <div class="card-title">Fund the Builders</div>
+        <div class="card-desc">Launch a recurring sponsorship program for open-source projects building on Mesh. Because great ecosystems don't survive on good intentions alone.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">
+      <svg width="24" height="24" viewBox="0 0 256 256" fill="none">
+        <path d="M58.4637 127.026C49.371 111.277 54.767 91.1387 70.5159 82.0461L122.475 172.041C131.567 187.79 126.171 207.928 110.422 217.021L58.4637 127.026Z" fill="#59C184"/>
+        <path d="M79.1494 77.0625C95.0428 67.8864 115.366 73.3319 124.542 89.2253L152.938 138.409C137.044 147.585 116.722 142.139 107.545 126.246L79.1494 77.0625Z" fill="white"/>
+        <path d="M133.024 83.9788C123.931 68.2299 129.327 48.0919 145.076 38.9992L182.534 103.879C191.627 119.628 186.231 139.766 170.482 148.859L133.024 83.9788Z" fill="#59C184"/>
+      </svg>
+      <span class="footer-logo-name">meshlang.dev</span>
+      <div class="footer-sep"></div>
+      <span class="footer-url">hyperpush.dev</span>
+    </div>
+    <span class="footer-right">2025 — Building in public</span>
+  </div>
+</div>
+
+</body>
+</html>
