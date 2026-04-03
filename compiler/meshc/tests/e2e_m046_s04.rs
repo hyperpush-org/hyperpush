@@ -38,7 +38,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn cluster_proof_dir() -> PathBuf {
-    repo_root().join("cluster-proof")
+    route_free::cluster_proof_fixture_root()
 }
 
 fn artifact_dir(test_name: &str) -> PathBuf {
@@ -204,6 +204,21 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         &sources.readme,
         "meshc cluster diagnostics",
     );
+    assert_contains(
+        "cluster-proof/README.md",
+        &sources.readme,
+        "cargo run -q -p meshc -- build scripts/fixtures/clustered/cluster-proof",
+    );
+    assert_contains(
+        "cluster-proof/README.md",
+        &sources.readme,
+        "cargo run -q -p meshc -- test scripts/fixtures/clustered/cluster-proof/tests",
+    );
+    assert_contains(
+        "cluster-proof/README.md",
+        &sources.readme,
+        "docker build -f scripts/fixtures/clustered/cluster-proof/Dockerfile -t mesh-cluster-proof .",
+    );
     assert_contains("cluster-proof/README.md", &sources.readme, "route-free");
     assert_contains("cluster-proof/README.md", &sources.readme, "`@cluster`");
     assert_contains(
@@ -216,6 +231,16 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         &sources.readme,
         STARTUP_AUTOSTART_GUIDANCE,
     );
+    assert_contains(
+        "cluster-proof/README.md",
+        &sources.readme,
+        "scripts/fixtures/clustered/cluster-proof/Dockerfile",
+    );
+    assert_contains(
+        "cluster-proof/README.md",
+        &sources.readme,
+        "scripts/fixtures/clustered/cluster-proof/fly.toml",
+    );
     for needle in [
         "/work",
         "/membership",
@@ -225,6 +250,9 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         "clustered(work)",
         "docker-entrypoint.sh",
         "http_service",
+        "cargo run -q -p meshc -- build cluster-proof",
+        "cargo run -q -p meshc -- test cluster-proof/tests",
+        "docker build -f cluster-proof/Dockerfile -t mesh-cluster-proof .",
     ] {
         assert_omits("cluster-proof/README.md", &sources.readme, needle);
     }
@@ -237,6 +265,11 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
     assert_contains(
         "cluster-proof/Dockerfile",
         &sources.dockerfile,
+        "./target/debug/meshc build scripts/fixtures/clustered/cluster-proof --output /tmp/cluster-proof --no-color",
+    );
+    assert_contains(
+        "cluster-proof/Dockerfile",
+        &sources.dockerfile,
         "ENTRYPOINT [\"/usr/local/bin/cluster-proof\"]",
     );
     assert_contains(
@@ -244,14 +277,14 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         &sources.dockerfile,
         "EXPOSE 4370",
     );
-    for needle in ["docker-entrypoint.sh", "EXPOSE 8080"] {
+    for needle in ["docker-entrypoint.sh", "EXPOSE 8080", "meshc build cluster-proof --output /tmp/cluster-proof --no-color"] {
         assert_omits("cluster-proof/Dockerfile", &sources.dockerfile, needle);
     }
 
     assert_contains(
         "cluster-proof/fly.toml",
         &sources.fly_toml,
-        "dockerfile = 'cluster-proof/Dockerfile'",
+        "dockerfile = 'scripts/fixtures/clustered/cluster-proof/Dockerfile'",
     );
     assert_contains(
         "cluster-proof/fly.toml",
@@ -263,7 +296,7 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         &sources.fly_toml,
         "MESH_DISCOVERY_SEED = 'mesh-cluster-proof.internal'",
     );
-    for needle in ["http_service", "\n  PORT =", "\nPORT ="] {
+    for needle in ["http_service", "\n  PORT =", "\nPORT =", "dockerfile = 'cluster-proof/Dockerfile'"] {
         assert_omits("cluster-proof/fly.toml", &sources.fly_toml, needle);
     }
 
@@ -276,6 +309,16 @@ fn assert_cluster_proof_source_contract(sources: &ClusterProofSources) {
         "compiler/meshc/tests/support/m046_route_free.rs",
         &sources.support_helper,
         "build_package_binary_to_output(",
+    );
+    assert_contains(
+        "compiler/meshc/tests/support/m046_route_free.rs",
+        &sources.support_helper,
+        "cluster_proof_fixture_root()",
+    );
+    assert_contains(
+        "compiler/meshc/tests/support/m046_route_free.rs",
+        &sources.support_helper,
+        "CLUSTER_PROOF_FIXTURE_DOCKERFILE_RELATIVE",
     );
     assert_contains(
         "compiler/meshc/tests/support/m046_route_free.rs",
@@ -458,6 +501,21 @@ fn m046_s04_cluster_proof_helpers_reject_malformed_build_metadata() {
     let error = route_free::read_required_build_metadata(&artifacts)
         .expect_err("malformed build metadata should fail closed");
     assert!(error.contains("malformed JSON"), "{error}");
+}
+
+#[test]
+fn m046_s04_cluster_proof_helpers_reject_missing_dockerfile() {
+    let artifacts = artifact_dir("cluster-proof-helper-missing-dockerfile");
+    let temp = tempfile::tempdir().expect("create broken cluster-proof fixture tempdir");
+    let broken_fixture_root = temp.path().join("cluster-proof");
+    route_free::archive_directory_tree(&cluster_proof_dir(), &broken_fixture_root);
+    fs::remove_file(broken_fixture_root.join("Dockerfile"))
+        .expect("remove cluster-proof Dockerfile from broken fixture copy");
+
+    let error = route_free::validate_cluster_proof_fixture_root(&broken_fixture_root)
+        .expect_err("missing fixture Dockerfile should fail closed");
+    route_free::write_artifact(&artifacts.join("fixture-validation.error.txt"), &error);
+    assert!(error.contains("missing required files: Dockerfile"), "{error}");
 }
 
 #[test]

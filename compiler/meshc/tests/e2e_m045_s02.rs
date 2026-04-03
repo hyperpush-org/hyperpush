@@ -11,10 +11,6 @@ const STARTUP_SOURCE_DECLARATION: &str = route_free::STARTUP_SOURCE_DECLARATION;
 const STARTUP_RUNTIME_NAME_GUIDANCE: &str = route_free::STARTUP_RUNTIME_NAME_GUIDANCE;
 const STARTUP_AUTOSTART_GUIDANCE: &str = route_free::STARTUP_AUTOSTART_GUIDANCE;
 
-fn repo_root() -> PathBuf {
-    route_free::repo_root()
-}
-
 fn artifact_dir(test_name: &str) -> PathBuf {
     route_free::artifact_dir("m045-s02", test_name)
 }
@@ -316,23 +312,21 @@ fn m045_s02_declared_work_remote_spawn_reaches_completed_on_owner_and_ingress() 
         route_free::init_clustered_project(temp.path(), "clustered-runtime-completion", &artifacts);
     let (_, _, scaffold_work, scaffold_readme) = load_scaffold_sources(&project_dir, &artifacts);
 
+    let cluster_proof_dir = route_free::cluster_proof_fixture_root();
     let cluster_proof_work = route_free::read_and_archive(
-        &repo_root().join("cluster-proof").join("work.mpl"),
+        &cluster_proof_dir.join("work.mpl"),
         &artifacts.join("references").join("cluster-proof.work.mpl"),
     );
     let cluster_proof_main = route_free::read_and_archive(
-        &repo_root().join("cluster-proof").join("main.mpl"),
+        &cluster_proof_dir.join("main.mpl"),
         &artifacts.join("references").join("cluster-proof.main.mpl"),
     );
     let cluster_proof_readme = route_free::read_and_archive(
-        &repo_root().join("cluster-proof").join("README.md"),
+        &cluster_proof_dir.join("README.md"),
         &artifacts.join("references").join("cluster-proof.README.md"),
     );
     let cluster_proof_work_test = route_free::read_and_archive(
-        &repo_root()
-            .join("cluster-proof")
-            .join("tests")
-            .join("work.test.mpl"),
+        &cluster_proof_dir.join("tests").join("work.test.mpl"),
         &artifacts
             .join("references")
             .join("cluster-proof.work.test.mpl"),

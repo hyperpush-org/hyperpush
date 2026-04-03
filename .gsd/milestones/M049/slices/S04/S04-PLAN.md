@@ -43,7 +43,7 @@
   - Verify: - `cargo run -q -p meshc -- test scripts/fixtures/clustered/tiny-cluster/tests`
 - `cargo run -q -p meshc -- build scripts/fixtures/clustered/tiny-cluster`
 - `cargo test -p meshc --test e2e_m046_s03 -- --nocapture`
-- [ ] **T02: Relocate `cluster-proof` and retarget its package-build consumers** — Move `cluster-proof` into `scripts/fixtures/clustered/cluster-proof`, preserve its package identity plus Docker/Fly packaging contract, and retarget the main package-build/test rails plus the Todo Linux builder dependency so retained cluster-proof consumers point at the new internal fixture instead of the repo root.
+- [x] **T02: Relocated `cluster-proof` into `scripts/fixtures/clustered/cluster-proof` and retargeted the route-free package, scaffold, and Todo Docker consumers.** — Move `cluster-proof` into `scripts/fixtures/clustered/cluster-proof`, preserve its package identity plus Docker/Fly packaging contract, and retarget the main package-build/test rails plus the Todo Linux builder dependency so retained cluster-proof consumers point at the new internal fixture instead of the repo root.
 
 ## Failure Modes
 

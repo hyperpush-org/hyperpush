@@ -778,7 +778,7 @@ fn ensure_docker_query_helper_image(artifacts: &Path) {
         "--target",
         "builder",
         "-f",
-        "cluster-proof/Dockerfile",
+        route_free::CLUSTER_PROOF_FIXTURE_DOCKERFILE_RELATIVE,
         "-t",
         TODO_DOCKER_BUILDER_IMAGE_TAG,
         ".",

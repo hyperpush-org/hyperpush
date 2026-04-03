@@ -31,6 +31,20 @@ pub const TINY_CLUSTER_FIXTURE_REQUIRED_FILES: &[&str] = &[
     "README.md",
     "tests/work.test.mpl",
 ];
+pub const CLUSTER_PROOF_FIXTURE_ROOT_RELATIVE: &str =
+    "scripts/fixtures/clustered/cluster-proof";
+pub const CLUSTER_PROOF_FIXTURE_DOCKERFILE_RELATIVE: &str =
+    "scripts/fixtures/clustered/cluster-proof/Dockerfile";
+pub const CLUSTER_PROOF_FIXTURE_PACKAGE_NAME: &str = "cluster-proof";
+pub const CLUSTER_PROOF_FIXTURE_REQUIRED_FILES: &[&str] = &[
+    "mesh.toml",
+    "main.mpl",
+    "work.mpl",
+    "README.md",
+    "Dockerfile",
+    "fly.toml",
+    "tests/work.test.mpl",
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BuildOutputMetadata {
@@ -121,6 +135,22 @@ pub fn validate_tiny_cluster_fixture_root(root: &Path) -> Result<(), String> {
 pub fn tiny_cluster_fixture_root() -> PathBuf {
     let root = repo_root().join(TINY_CLUSTER_FIXTURE_ROOT_RELATIVE);
     validate_tiny_cluster_fixture_root(&root).unwrap_or_else(|message| panic!("{message}"));
+    root
+}
+
+pub fn validate_cluster_proof_fixture_root(root: &Path) -> Result<(), String> {
+    validate_required_fixture_root(
+        "cluster-proof",
+        CLUSTER_PROOF_FIXTURE_ROOT_RELATIVE,
+        root,
+        CLUSTER_PROOF_FIXTURE_PACKAGE_NAME,
+        CLUSTER_PROOF_FIXTURE_REQUIRED_FILES,
+    )
+}
+
+pub fn cluster_proof_fixture_root() -> PathBuf {
+    let root = repo_root().join(CLUSTER_PROOF_FIXTURE_ROOT_RELATIVE);
+    validate_cluster_proof_fixture_root(&root).unwrap_or_else(|message| panic!("{message}"));
     root
 }
 
