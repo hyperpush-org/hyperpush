@@ -43,7 +43,7 @@
   - Verify: - `cargo test -p mesh-pkg m049_s02_sqlite_scaffold_ -- --nocapture`
 - `cargo test -p meshc --test tooling_e2e test_init_todo_template_db_sqlite_ -- --nocapture`
 - `node --test scripts/tests/verify-m049-s03-materialize-examples.test.mjs`
-- [ ] **T02: Check in the generated SQLite and Postgres example trees** — Use the T01 materializer to create the tracked example apps as generated outputs, not hand-edited showcase projects. This task owns the committed trees only: `examples/todo-sqlite` and `examples/todo-postgres` should be generated with those exact project names, stay free of build artifacts, and stop at example content. It must not rewrite repo docs or retire proof apps; that boundary remains S04 work.
+- [x] **T02: Checked in generator-owned `todo-sqlite` and `todo-postgres` example trees under `examples/` using the public materializer seam.** — Use the T01 materializer to create the tracked example apps as generated outputs, not hand-edited showcase projects. This task owns the committed trees only: `examples/todo-sqlite` and `examples/todo-postgres` should be generated with those exact project names, stay free of build artifacts, and stop at example content. It must not rewrite repo docs or retire proof apps; that boundary remains S04 work.
 
 ## Failure Modes
 
