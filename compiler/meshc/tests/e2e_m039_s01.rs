@@ -211,7 +211,9 @@ fn e2e_m039_s01_membership_updates_after_node_loss() {
             std::slice::from_ref(&primary_node),
             "primary",
             0,
-            &["local_only"],
+            // After standby loss, membership should converge to a single primary node,
+            // but authority health now reflects the retained startup continuity state.
+            &["unavailable", "degraded"],
             SHARED_COOKIE,
         );
     }));

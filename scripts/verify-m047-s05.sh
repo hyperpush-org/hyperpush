@@ -233,7 +233,18 @@ run_expect_success m047-s05-tooling m047-s05-tooling yes 2400 \
 SNAPSHOT_BEFORE_E2E="$ARTIFACT_DIR/m047-s05-before.snapshot"
 capture_snapshot "$ARTIFACT_ROOT" "$SNAPSHOT_BEFORE_E2E"
 
+OLD_RUST_TEST_THREADS="${RUST_TEST_THREADS-}"
+OLD_RUST_TEST_THREADS_SET=0
+if [[ "${RUST_TEST_THREADS+x}" == x ]]; then
+  OLD_RUST_TEST_THREADS_SET=1
+fi
+export RUST_TEST_THREADS=1
 run_expect_success m047-s05-e2e m047-s05-e2e yes 3600 cargo test -p meshc --test e2e_m047_s05 -- --nocapture
+if [[ $OLD_RUST_TEST_THREADS_SET -eq 1 ]]; then
+  export RUST_TEST_THREADS="$OLD_RUST_TEST_THREADS"
+else
+  unset RUST_TEST_THREADS
+fi
 run_expect_success m047-s05-docs-build m047-s05-docs-build no 2400 npm --prefix website run build
 
 record_phase retain-m047-s05-artifacts started

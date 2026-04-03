@@ -83,6 +83,8 @@ fn m049_s05_wrapper_replays_the_named_scaffold_and_example_stack() {
             "current-phase.txt",
             "phase-report.txt",
             "full-contract.log",
+            "todos-unmigrated.http",
+            "todos-unmigrated.json",
         ],
     );
 }
@@ -104,6 +106,7 @@ fn m049_s05_wrapper_avoids_inline_secret_echoes_and_old_proof_app_replays() {
             "cat .env",
             "echo \"$DATABASE_URL\"",
             "printf \"%s\\n\" \"$DATABASE_URL\"",
+            "todos-unmigrated.response.json",
         ],
     );
 }

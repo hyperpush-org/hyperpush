@@ -96,6 +96,16 @@ When you need the retained repo-root proof for installer-backed updates, optiona
 bash scripts/verify-m048-s05.sh
 ```
 
+## Assembled scaffold/example verifier
+
+When you need the repo-root proof that the public Todo onboarding story still stays scaffold/examples-first — SQLite remains the honest local starter, Postgres remains the serious shared/deployable path, and the retained M048/tooling guardrails stay green underneath that split — run:
+
+```bash
+bash scripts/verify-m049-s05.sh
+```
+
+This assembled verifier replays the dual-db scaffold rails, the direct `/examples` parity check, the retained clustered proof wrappers, and the retained M048 tooling verifier, then publishes one retained bundle under `.tmp/m049-s05/verify/` for diagnosis.
+
 ## Formatter
 
 The Mesh formatter canonically formats your source code, enforcing a consistent style across your project:
