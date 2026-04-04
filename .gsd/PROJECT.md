@@ -85,7 +85,6 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M049: Scaffold & Example Reset — support SQLite-local and Postgres-clustered scaffolds, generate checked-in examples, and replace proof-app-shaped public teaching surfaces
 - [x] M050: Public Docs Truth Reset — make docs evaluator-facing, remove proof-maze public material, and re-test commands and code samples one by one
 - [ ] M051: Mesher as the Living Reference App — active on S05; retire `reference-backend/`, keep `mesher/` healthy, and modernize it as the deeper real reference app
-- [ ] M052: Public Website & Packages Surface Reset — align landing, docs, and packages surfaces into one coherent public Mesh story
 - [ ] M053: Deploy Truth for Scaffolds & Packages Surface — prove the Postgres starter and packages surfaces through CI and real deployment evidence while keeping the public contract platform-agnostic
 - [ ] M054: Load Balancing Deep Dive & Runtime Follow-through — explain current balancing honestly and implement follow-through if the existing server-side story is not sufficient
 - [ ] M035: Test Framework Hardening — get Mesh's testing story ready to test `mesher` thoroughly during development
