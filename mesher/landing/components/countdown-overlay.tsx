@@ -10,11 +10,11 @@ import { Separator } from "@/components/ui/separator"
 
 const STORAGE_KEY = "hp_signal_v1"
 
-// 6 PM EST = UTC−5 → 23:00 UTC
+// 5 PM EST = UTC−5 → 22:00 UTC
 function getTargetTime(): Date {
   const now = new Date()
   const t = new Date(now)
-  t.setUTCHours(23, 0, 0, 0)
+  t.setUTCHours(22, 0, 0, 0)
   if (t.getTime() <= now.getTime()) {
     t.setUTCDate(t.getUTCDate() + 1)
   }
@@ -294,7 +294,7 @@ export function CountdownOverlay() {
                       <span>
                         T−{pad(remaining.hours)}:{pad(remaining.minutes)}:{pad(remaining.seconds)}
                       </span>
-                      <span className="text-accent/60">18:00 EST</span>
+                      <span className="text-accent/60">17:00 EST</span>
                     </div>
                   </div>
                 )}

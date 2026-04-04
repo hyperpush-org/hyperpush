@@ -21,7 +21,7 @@ This page only names the deeper maintainer surfaces behind that public story: Me
 - [`mesher/README.md`](https://github.com/snowdamiz/mesh-lang/blob/main/mesher/README.md) — deeper maintained app runbook for repo maintainers
 - `bash scripts/verify-m051-s01.sh` — maintainer verifier for the shipped Mesher app surface
 - `bash scripts/verify-m051-s02.sh` — maintainer verifier for the retained backend-only proof replay
-- `bash reference-backend/scripts/verify-production-proof-surface.sh` — compatibility verifier that keeps this public proof page truthful
+- `bash scripts/verify-production-proof-surface.sh` — compatibility verifier that keeps this public proof page truthful
 
 ## Named maintainer verifiers
 
@@ -30,7 +30,7 @@ These are the named commands behind the current deeper backend-maintainer story:
 ```bash
 bash scripts/verify-m051-s01.sh
 bash scripts/verify-m051-s02.sh
-bash reference-backend/scripts/verify-production-proof-surface.sh
+bash scripts/verify-production-proof-surface.sh
 ```
 
 Use `bash scripts/verify-m051-s01.sh` when you are verifying the maintained deeper app that repo maintainers actually work on. Use `bash scripts/verify-m051-s02.sh` when you need the retained backend-only proof replay without turning its internal fixture layout into public teaching.
@@ -59,7 +59,7 @@ Use this page when you need the handoff from the public starter/examples-first r
 
 If a maintainer proof fails, rerun the smallest named surface that matches the drift:
 
-- **Public proof-page contract:** `bash reference-backend/scripts/verify-production-proof-surface.sh`
+- **Public proof-page contract:** `bash scripts/verify-production-proof-surface.sh`
 - **Maintained deeper app:** [`mesher/README.md`](https://github.com/snowdamiz/mesh-lang/blob/main/mesher/README.md) and `bash scripts/verify-m051-s01.sh`
 - **Retained backend-only proof:** `bash scripts/verify-m051-s02.sh`
 

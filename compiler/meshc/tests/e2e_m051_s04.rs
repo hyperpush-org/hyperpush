@@ -208,7 +208,7 @@ fn m051_s04_public_docs_scaffold_and_skill_stay_examples_first() {
             "mesher/README.md",
             "bash scripts/verify-m051-s01.sh",
             "bash scripts/verify-m051-s02.sh",
-            "bash reference-backend/scripts/verify-production-proof-surface.sh",
+            "bash scripts/verify-production-proof-surface.sh",
         ],
     );
     assert_omits(
@@ -334,6 +334,6 @@ fn m051_s04_verifier_replays_wrapper_stack_and_retains_bundle_markers() {
     assert_contains(
         PRODUCTION_BACKEND_PROOF_PATH,
         &production_backend_proof,
-        "bash reference-backend/scripts/verify-production-proof-surface.sh",
+        "bash scripts/verify-production-proof-surface.sh",
     );
 }

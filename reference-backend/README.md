@@ -214,7 +214,7 @@ DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} PORT=18080 JOB_POLL_MS=500 bash r
 
 ## Supervision and recovery
 
-The public recovery contract for `reference-backend/` is not implied by the generic backend guides. It is the named S07 proof set below, and the public proof page plus `reference-backend/scripts/verify-production-proof-surface.sh` are expected to stay aligned with this exact command list.
+The public recovery contract for `reference-backend/` is not implied by the generic backend guides. It is the named S07 proof set below, and the public proof page plus `scripts/verify-production-proof-surface.sh` are expected to stay aligned with this exact command list.
 
 ```bash
 cargo run -p meshc -- build reference-backend
@@ -225,7 +225,7 @@ DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc --test e2e_re
 DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc --test e2e_reference_backend e2e_reference_backend_worker_crash_recovers_job -- --ignored --nocapture
 DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc --test e2e_reference_backend e2e_reference_backend_worker_restart_is_visible_in_health -- --ignored --nocapture
 DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} cargo test -p meshc --test e2e_reference_backend e2e_reference_backend_process_restart_recovers_inflight_job -- --ignored --nocapture
-bash reference-backend/scripts/verify-production-proof-surface.sh
+bash scripts/verify-production-proof-surface.sh
 ```
 
 Run the ignored database-backed proofs serially against one `DATABASE_URL`. They reset and migrate shared state and are not safe to run in parallel against the same database.
@@ -248,4 +248,4 @@ A degraded recovery window should therefore read as `status: "degraded"` with wo
 - **Restart visibility proof** — `e2e_reference_backend_worker_restart_is_visible_in_health` proves the degraded `/health` window is visible instead of skipped. Expect a new `boot_id` / `started_at`, `recovery_active=true`, and populated `last_recovery_*` fields before the backend settles back to healthy.
 - **Process restart proof** — `e2e_reference_backend_process_restart_recovers_inflight_job` kills the whole backend while a job is still `processing`, starts a fresh process, and requires boot recovery to requeue that abandoned row. Expect a new `boot_id` / `started_at`, `recovered_jobs=1`, `recovery_active=true` during recovery, and `last_exit_reason=null` because this path is a process restart, not a worker-supervisor restart.
 
-If the migration and deploy proofs pass but one of the restart proofs fails, treat that as a real recovery regression. If the runtime proofs stay green but `bash reference-backend/scripts/verify-production-proof-surface.sh` fails, treat that as proof-surface drift in the docs rather than a backend runtime failure.
+If the migration and deploy proofs pass but one of the restart proofs fails, treat that as a real recovery regression. If the runtime proofs stay green but `bash scripts/verify-production-proof-surface.sh` fails, treat that as proof-surface drift in the docs rather than a backend runtime failure.

@@ -152,4 +152,4 @@ Follow `.tmp/m051-s02/verify/latest-proof-bundle.txt` into the copied runtime ar
 
 ## Compatibility boundary
 
-Do not delete or retarget the repo-root compatibility path in this slice. `reference-backend/README.md` and `reference-backend/scripts/verify-production-proof-surface.sh` remain available for later M051 slices that still need the public compatibility surface while this retained fixture becomes the maintainer authority for backend-only proof.
+Do not delete or retarget the repo-root compatibility path in this slice. `reference-backend/README.md` and `scripts/verify-production-proof-surface.sh` remain available for later M051 slices that still need the public compatibility surface while this retained fixture becomes the maintainer authority for backend-only proof.

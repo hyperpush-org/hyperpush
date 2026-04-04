@@ -13,7 +13,7 @@ const M047_S05_DOCS_COMMAND: &str = "cargo test -p meshc --test e2e_m047_s05 m04
 const M047_S06_DOCS_COMMAND: &str =
     "cargo test -p meshc --test e2e_m047_s06 m047_s06_ -- --nocapture";
 const PRODUCTION_PROOF_SURFACE_COMMAND: &str =
-    "bash reference-backend/scripts/verify-production-proof-surface.sh";
+    "bash scripts/verify-production-proof-surface.sh";
 const DOCS_BUILD_COMMAND: &str = "npm --prefix website run build";
 
 fn repo_root() -> PathBuf {
@@ -124,7 +124,7 @@ fn load_verifier_source(artifacts: &Path) -> String {
         &contract_artifacts.join("e2e_m047_s06.rs"),
     );
     let _ = route_free::read_and_archive(
-        &repo_root().join("reference-backend/scripts/verify-production-proof-surface.sh"),
+        &repo_root().join("scripts/verify-production-proof-surface.sh"),
         &contract_artifacts.join("verify-production-proof-surface.sh"),
     );
     let _ = route_free::read_and_archive(
@@ -181,10 +181,11 @@ fn validate_verifier_contract(source: &str) -> Vec<String> {
             "$BUILT_HTML_DIR/production-backend-proof.index.html",
             "Clustered proof surfaces:",
             "This is the only public-secondary docs page that carries the named clustered verifier rails.",
-            "This is the compact public-secondary handoff for Mesh's real backend proof surface.",
+            "This is the compact public-secondary handoff for Mesh's backend proof story.",
             "Public surfaces and verifier rails",
             "Operator workflow across the public clustered surfaces",
-            "Recovery signals to inspect",
+            "Retained backend-only recovery signals",
+            "When to use this page vs the generic guides",
             "Failure inspection map",
             "/docs/getting-started/clustered-example/",
             "/docs/distributed-proof/",
@@ -194,7 +195,7 @@ fn validate_verifier_contract(source: &str) -> Vec<String> {
             "/docs/testing/",
             "/docs/concurrency/",
             "/docs/tooling/",
-            "https://github.com/snowdamiz/mesh-lang/blob/main/reference-backend/README.md",
+            "https://github.com/snowdamiz/mesh-lang/blob/main/mesher/README.md",
             "https://github.com/snowdamiz/mesh-lang/blob/main/examples/todo-sqlite/README.md",
             "https://github.com/snowdamiz/mesh-lang/blob/main/examples/todo-postgres/README.md",
             "bash scripts/verify-m047-s04.sh",
@@ -205,8 +206,8 @@ fn validate_verifier_contract(source: &str) -> Vec<String> {
             "meshc init --clustered",
             "meshc init --template todo-api --db sqlite",
             "meshc init --template todo-api --db postgres",
-            "cargo run -p meshc -- build reference-backend",
-            "bash reference-backend/scripts/verify-production-proof-surface.sh",
+            "When to use this page vs the generic guides",
+            "bash scripts/verify-production-proof-surface.sh",
             "restart_count",
             "recovery_active",
         ],

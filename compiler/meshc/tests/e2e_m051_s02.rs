@@ -254,7 +254,7 @@ fn m051_s02_retained_backend_readme_is_the_canonical_maintainer_runbook() {
             "recovery_active",
             "bash scripts/verify-m051-s02.sh",
             "reference-backend/README.md",
-            "reference-backend/scripts/verify-production-proof-surface.sh",
+            "scripts/verify-production-proof-surface.sh",
         ],
     );
 
@@ -371,7 +371,7 @@ fn m051_s02_retained_backend_verifier_replays_backend_rails_and_retains_bundle_m
             "retained-fixture-smoke",
             "retained-contract-artifacts",
             "fixture.README.md",
-            "reference-backend.compat.verify-production-proof-surface.sh",
+            "scripts.verify-production-proof-surface.sh",
             "verify-m051-s02: ok",
         ],
     );

@@ -457,7 +457,7 @@ require_substrings(
         'Retained backend-only recovery signals',
         'When to use this page vs the generic guides',
         'Failure inspection map',
-        'bash reference-backend/scripts/verify-production-proof-surface.sh',
+        'bash scripts/verify-production-proof-surface.sh',
         'restart_count',
         'recovery_active',
     ],
@@ -611,7 +611,7 @@ require_command init cargo "cargo is required for the retained docs-contract Rus
 require_command init python3 "python3 is required for built HTML assertions" "$BUILT_HTML_DIR"
 require_command init rg "rg is required for final phase-marker checks" "$PHASE_REPORT_PATH"
 require_file init "$ROOT_DIR/scripts/tests/verify-m050-s03-secondary-surfaces.test.mjs" "M050 S03 secondary-surface source contract" "scripts/tests/verify-m050-s03-secondary-surfaces.test.mjs"
-require_file init "$ROOT_DIR/reference-backend/scripts/verify-production-proof-surface.sh" "production proof-surface verifier" "reference-backend/scripts/verify-production-proof-surface.sh"
+require_file init "$ROOT_DIR/scripts/verify-production-proof-surface.sh" "production proof-surface verifier" "scripts/verify-production-proof-surface.sh"
 record_phase init passed
 
 run_expect_success secondary-surfaces-contract secondary-surfaces-contract no 300 "scripts/tests/verify-m050-s03-secondary-surfaces.test.mjs" \
@@ -622,8 +622,8 @@ run_expect_success m047-s05-docs-contract m047-s05-docs-contract yes 1800 "compi
   cargo test -p meshc --test e2e_m047_s05 m047_s05_public_clustered_surfaces_use_source_first_names_and_todo_template -- --nocapture
 run_expect_success m047-s06-docs-contract m047-s06-docs-contract yes 1800 "compiler/meshc/tests/e2e_m047_s06.rs" \
   cargo test -p meshc --test e2e_m047_s06 m047_s06_ -- --nocapture
-run_expect_success production-proof-surface production-proof-surface no 300 "reference-backend/scripts/verify-production-proof-surface.sh" \
-  bash reference-backend/scripts/verify-production-proof-surface.sh
+run_expect_success production-proof-surface production-proof-surface no 300 "scripts/verify-production-proof-surface.sh" \
+  bash scripts/verify-production-proof-surface.sh
 run_expect_success docs-build docs-build no 1800 "website/docs/.vitepress/dist/docs" \
   npm --prefix website run build
 

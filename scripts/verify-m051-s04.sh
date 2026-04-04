@@ -452,7 +452,7 @@ checks = {
             'mesher/README.md',
             'bash scripts/verify-m051-s01.sh',
             'bash scripts/verify-m051-s02.sh',
-            'bash reference-backend/scripts/verify-production-proof-surface.sh',
+            'bash scripts/verify-production-proof-surface.sh',
         ],
         'omits': ['reference-backend/README.md'],
     },

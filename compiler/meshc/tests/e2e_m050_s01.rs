@@ -10,7 +10,7 @@ const GRAPH_TEST_COMMAND: &str =
 const M047_S04_COMMAND: &str = "cargo test -p meshc --test e2e_m047_s04 -- --nocapture";
 const M047_S06_COMMAND: &str = "cargo test -p meshc --test e2e_m047_s06 m047_s06_ -- --nocapture";
 const PRODUCTION_PROOF_COMMAND: &str =
-    "bash reference-backend/scripts/verify-production-proof-surface.sh";
+    "bash scripts/verify-production-proof-surface.sh";
 const DOCS_BUILD_COMMAND: &str = "npm --prefix website run build";
 
 fn repo_root() -> PathBuf {
@@ -110,7 +110,7 @@ fn load_verifier_source(artifacts: &Path) -> String {
         &contract_artifacts.join("e2e_m047_s06.rs"),
     );
     let _ = route_free::read_and_archive(
-        &repo_root().join("reference-backend/scripts/verify-production-proof-surface.sh"),
+        &repo_root().join("scripts/verify-production-proof-surface.sh"),
         &contract_artifacts.join("verify-production-proof-surface.sh"),
     );
     let _ = route_free::read_and_archive(

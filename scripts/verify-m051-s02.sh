@@ -24,7 +24,7 @@ FIXTURE_SMOKE_DIR="$ROOT_DIR/.tmp/m051-s02/fixture-smoke"
 E2E_CONTRACT_FILE="compiler/meshc/tests/e2e_m051_s02.rs"
 E2E_RUNTIME_FILE="compiler/meshc/tests/e2e_reference_backend.rs"
 COMPAT_RUNBOOK="reference-backend/README.md"
-COMPAT_PROOF_SCRIPT="reference-backend/scripts/verify-production-proof-surface.sh"
+COMPAT_PROOF_SCRIPT="scripts/verify-production-proof-surface.sh"
 DB_TEST_TARGET="cargo test -p meshc --test e2e_reference_backend"
 
 repo_rel() {
@@ -393,7 +393,7 @@ e2e_contract = root / 'compiler/meshc/tests/e2e_m051_s02.rs'
 e2e_runtime = root / 'compiler/meshc/tests/e2e_reference_backend.rs'
 verifier = root / 'scripts/verify-m051-s02.sh'
 compat_runbook = root / 'reference-backend/README.md'
-compat_verifier = root / 'reference-backend/scripts/verify-production-proof-surface.sh'
+compat_verifier = root / 'scripts/verify-production-proof-surface.sh'
 
 texts = {
     'runbook': runbook.read_text(errors='replace'),
@@ -455,7 +455,7 @@ for needle in [
     'recovery_active',
     'bash scripts/verify-m051-s02.sh',
     'reference-backend/README.md',
-    'reference-backend/scripts/verify-production-proof-surface.sh',
+    'scripts/verify-production-proof-surface.sh',
 ]:
     require_contains('runbook', needle, 'retained runbook contract')
 
@@ -532,7 +532,7 @@ for needle in [
     'latest-proof-bundle.txt',
     'retained-reference-backend-runtime',
     'retained-fixture-smoke',
-    'reference-backend.compat.verify-production-proof-surface.sh',
+    'scripts.verify-production-proof-surface.sh',
 ]:
     require_contains('e2e_contract', needle, 'slice contract target marker')
 
@@ -632,7 +632,7 @@ for relative in [
     'verify-m051-s02.sh',
     'e2e_m051_s02.rs',
     'reference-backend.compat.README.md',
-    'reference-backend.compat.verify-production-proof-surface.sh',
+    'scripts.verify-production-proof-surface.sh',
 ]:
     if not (bundle_root / relative).exists():
         raise SystemExit(f"{bundle_root}: missing required retained file {relative}")
@@ -803,7 +803,7 @@ cp "$ROOT_DIR/$FIXTURE_RUNBOOK" "$RETAINED_PROOF_BUNDLE_DIR/fixture.README.md"
 cp "$ROOT_DIR/$E2E_CONTRACT_FILE" "$RETAINED_PROOF_BUNDLE_DIR/e2e_m051_s02.rs"
 cp "$ROOT_DIR/scripts/verify-m051-s02.sh" "$RETAINED_PROOF_BUNDLE_DIR/verify-m051-s02.sh"
 cp "$ROOT_DIR/$COMPAT_RUNBOOK" "$RETAINED_PROOF_BUNDLE_DIR/reference-backend.compat.README.md"
-cp "$ROOT_DIR/$COMPAT_PROOF_SCRIPT" "$RETAINED_PROOF_BUNDLE_DIR/reference-backend.compat.verify-production-proof-surface.sh"
+cp "$ROOT_DIR/$COMPAT_PROOF_SCRIPT" "$RETAINED_PROOF_BUNDLE_DIR/scripts.verify-production-proof-surface.sh"
 bundle_root_resolved="$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' "$RETAINED_PROOF_BUNDLE_DIR")"
 printf '%s\n' "$bundle_root_resolved" >"$LATEST_PROOF_BUNDLE_PATH"
 assert_retained_bundle_shape \
