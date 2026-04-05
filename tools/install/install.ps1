@@ -105,18 +105,7 @@ function Get-RequestHeaders {
 # --- Platform detection ---
 
 function Detect-Architecture {
-    # Detect architecture from environment variable
-    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "AMD64") {
-        "x86_64"
-    }
-    elseif ($env:PROCESSOR_ARCHITECTURE -eq "x86") {
-        "x86"
-    }
-    else {
-        $env:PROCESSOR_ARCHITECTURE
-    }
-
-    # Check if supported
+    $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
     switch ($arch) {
         "X64" { return "x86_64" }
         default {
