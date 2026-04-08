@@ -1,144 +1,30 @@
-<div align="center">
+# Hyperpush Mono
 
-# Mesh Language
+This repo is the product-owned extraction root for Hyperpush in the blessed two-repo workspace. It owns Mesher, the landing app, and the repo-root maintainer surfaces that belong with them.
 
-![Version](https://img.shields.io/badge/version-v12.0-blue.svg?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
-![Build](https://img.shields.io/badge/build-passing-success.svg?style=flat-square)
+## Blessed sibling workspace
 
-**Expressive, readable concurrency.**
-*Elixir-style syntax. Static type inference. Native single binaries.*
-
-[Get Started](https://meshlang.dev/docs/getting-started/) • [Documentation](https://meshlang.dev) • [Contributing](CONTRIBUTING.md)
-
-</div>
-
----
-
-## Getting Started
-
-### 1. Install Mesh
-
-**macOS and Linux**
-
-```bash
-curl -sSf https://meshlang.dev/install.sh | sh
+```text
+<workspace>/
+  mesh-lang/
+  hyperpush-mono/
+    mesher/
+    mesher/landing/
 ```
 
-**Windows (PowerShell)**
+The blessed extracted package root is `hyperpush-mono/mesher/...`.
+Do not flatten the product package to `<workspace>/mesher`.
 
-```powershell
-irm https://meshlang.dev/install.ps1 | iex
-```
+## Repo-root maintainer surfaces
 
-Installer URLs:
+- `mesher/README.md` — Mesher maintainer runbook
+- `bash mesher/scripts/verify-maintainer-surface.sh` — product-owned Mesher proof replay from the product repo root
+- `bash scripts/verify-landing-surface.sh` — product-owned landing/root-surface verifier from the product repo root
+- `.github/workflows/deploy-landing.yml` — landing build/deploy workflow contract
+- `.github/dependabot.yml` — product-owned dependency update contract
 
-- https://meshlang.dev/install.sh
-- https://meshlang.dev/install.ps1
+## Product repo identity
 
-### 2. Verify the install
+Canonical product repo URL: https://github.com/hyperpush-org/hyperpush-mono
 
-```bash
-meshc --version
-meshpkg --version
-```
-
-Refresh an installed toolchain in place with either binary:
-
-```bash
-meshc update
-meshpkg update
-```
-
-### 3. Start with hello world
-
-```bash
-meshc init hello_mesh
-cd hello_mesh
-```
-
-Open `main.mpl` and replace its contents with:
-
-```mesh
-fn main() do
-  println("Hello, World!")
-end
-```
-
-Compile and run it:
-
-```bash
-meshc build .
-./hello_mesh
-```
-
-`main.mpl` remains the default executable entrypoint. If you need a different startup file later, use the optional `[package].entrypoint = "lib/start.mpl"` setting in `mesh.toml`.
-
-### 4. Choose your next starter
-
-Once hello-world runs, pick the starter that matches your next job:
-
-- `meshc init --clustered hello_cluster` — the minimal clustered starter. The generated example uses `@cluster pub fn add()` and the runtime-owned handler name `Work.add`.
-- `meshc init --template todo-api --db sqlite todo_api` — the **honest local-only starter** and the **honest local single-node SQLite starter**. It stays local-only, keeps SQLite single-node only, and includes actor-backed write rate limiting. See `examples/todo-sqlite/README.md`.
-- `meshc init --template todo-api --db postgres shared_todo` — the **shared/deployable** starter and the **serious shared/deployable PostgreSQL starter**. It uses `HTTP.clustered(1, ...)` for `GET /todos` and `GET /todos/:id`, while `GET /health` and mutating routes stay local. It is the generated starter that owns the staged deploy + failover proof chain and the same hosted packages/public-surface contract once you step onto the proof pages. See `examples/todo-postgres/README.md`.
-
-Then follow the generated project README, or go straight to the docs:
-
-- https://meshlang.dev/docs/getting-started/
-- https://meshlang.dev/docs/tooling/
-
-## Where to go next
-
-Keep the public ladder starter/examples-first: the scaffold and `/examples` stay ahead of maintainer proof surfaces.
-
-- **Main getting started guide:** https://meshlang.dev/docs/getting-started/
-- **Clustered walkthrough:** use `meshc init --clustered` and then follow https://meshlang.dev/docs/getting-started/clustered-example/
-- **SQLite Todo starter:** https://github.com/snowdamiz/mesh-lang/blob/main/examples/todo-sqlite/README.md — the honest local-only, single-node-only starter.
-- **PostgreSQL Todo starter:** https://github.com/snowdamiz/mesh-lang/blob/main/examples/todo-postgres/README.md — the serious shared/deployable starter and the handoff into the staged deploy + failover proof chain plus the same hosted packages/public-surface contract.
-- **Production Backend Proof:** https://meshlang.dev/docs/production-backend-proof/ — only after the starter/examples-first ladder when you need the maintainer-facing proof pages for that PostgreSQL staged deploy + failover chain plus the same hosted packages/public-surface checks.
-- **Tooling docs:** https://meshlang.dev/docs/tooling/
-
-## Maintainers / public release proof
-
-If you are working on Mesh itself rather than just using it, start the deeper app/backend proof path at https://meshlang.dev/docs/production-backend-proof/ and then continue with `mesher/README.md` plus the named maintainer verifier commands surfaced from that proof page. Keep that path maintainer-facing; the public starter ladder above stays on scaffold output and `/examples`.
-
-Canonical assembled proof command:
-
-```bash
-set -a && source .env && set +a && bash scripts/verify-m034-s05.sh
-```
-
-Release candidate tags stay split:
-
-- binary candidate: `v<Cargo version>`
-- extension candidate: `ext-v<extension version>`
-
-Hosted workflow evidence is expected from:
-
-- `deploy.yml`
-- `deploy-services.yml`
-- `authoritative-verification.yml`
-- `release.yml`
-- `extension-release-proof.yml`
-- `publish-extension.yml`
-
-Public surfaces checked by that proof include:
-
-- https://meshlang.dev/docs/getting-started/
-- https://meshlang.dev/docs/tooling/
-- https://packages.meshlang.dev/packages/snowdamiz/mesh-registry-proof
-- https://packages.meshlang.dev/search?q=snowdamiz%2Fmesh-registry-proof
-- https://api.packages.meshlang.dev/api/v1/packages?search=snowdamiz%2Fmesh-registry-proof
-
-Inspect these retained artifacts after a run:
-
-- `.tmp/m034-s05/verify/candidate-tags.json`
-- `.tmp/m034-s05/verify/remote-runs.json`
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+The landing app keeps its public GitHub links pointed at that product repo through `mesher/landing/lib/external-links.ts`.
