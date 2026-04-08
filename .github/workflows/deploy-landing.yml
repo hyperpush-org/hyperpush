@@ -1,0 +1,49 @@
+name: Deploy landing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - '.github/dependabot.yml'
+      - '.github/workflows/deploy-landing.yml'
+      - 'scripts/verify-landing-surface.sh'
+      - 'mesher/README.md'
+      - 'mesher/landing/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-landing-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-landing:
+    name: Build landing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mesher/landing/package-lock.json
+
+      - name: Verify landing surface contract
+        shell: bash
+        run: bash scripts/verify-landing-surface.sh
+
+      - name: Install landing dependencies
+        run: npm --prefix mesher/landing ci
+
+      - name: Build landing
+        env:
+          NEXT_PUBLIC_SITE_URL: https://hyperpush.dev
+          NEXT_PUBLIC_DISCORD_URL: https://discord.gg/6SRhbZw7ZG
+        run: npm --prefix mesher/landing run build
