@@ -1,43 +1,26 @@
-# Rust build artifacts
+# Product / Mesher build artifacts
 /target
 
-# Insta snapshot review files
-*.snap.new
-
-tools/editors/vscode-mesh/node_modules/
-tools/editors/vscode-mesh/*.vsix
-tools/editors/vscode-mesh/.vscode-test/
-tools/editors/vscode-mesh/out/
-
-# Root
-/node_modules/
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-packages-website/.svelte-kit/
-
-# Website
-website/node_modules/
-website/docs/.vitepress/dist/
-website/docs/.vitepress/cache/
-
-# Compiled Mesh binaries (native LLVM output)
+# Product app outputs
 mesher/mesher
-benchmarks/*/benchmark
-cluster-proof/cluster-proof
-tiny-cluster/tiny-cluster
-tiny-cluster-prefered/tiny-cluster
+mesher/output
+mesher/frontend-exp/node_modules/
+mesher/frontend-exp/.next/
+mesher/frontend-exp/out/
+mesher/landing/node_modules/
+mesher/landing/.next/
+mesher/landing/test-results/
+mesher/landing/tmp-banners/
+mesher/landing/tsconfig.tsbuildinfo
 
-# Temp probe/scratch directories (created during debugging)
+# Root-local scratch
 /.tmp/
 .tmp_*/
-.tmp_fmt_probe*/
 
-# Background shell state
-.bg-shell/
-
-# GSD runtime/state (system-managed)
+# Local env and runtime state
+.env
+.env.*
+!.env.example
 /.gsd/STATE.md
 /.gsd/activity/
 /.gsd/runtime/
@@ -52,7 +35,7 @@ tiny-cluster-prefered/tiny-cluster
 /.gsd/completed-units.json
 /.gsd/reports/
 
-# ── GSD baseline (auto-generated) ──
+# Generic noise
 .DS_Store
 Thumbs.db
 *.swp
@@ -61,20 +44,13 @@ Thumbs.db
 .idea/
 .vscode/
 *.code-workspace
-.env
-.env.*
-!.env.example
 node_modules/
-.next/
 dist/
-!compiler/mesh-rt/src/dist/
-!compiler/mesh-rt/src/dist/*.rs
 build/
 __pycache__/
 *.pyc
 .venv/
 venv/
-target/
 vendor/
 *.log
 coverage/

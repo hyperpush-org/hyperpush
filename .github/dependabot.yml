@@ -6,7 +6,7 @@ updates:
       interval: weekly
     labels:
       - dependencies
-      - area: release
+      - area: ci
     commit-message:
       prefix: "ci"
 
@@ -19,3 +19,13 @@ updates:
       - area: landing
     commit-message:
       prefix: "landing"
+
+  - package-ecosystem: npm
+    directory: "/mesher/frontend-exp"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - area: frontend-exp
+    commit-message:
+      prefix: "frontend-exp"

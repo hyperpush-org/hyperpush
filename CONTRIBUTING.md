@@ -1,106 +1,95 @@
-# Contributing to Mesh
+# Contributing to Hyperpush Mono
 
 Thanks for contributing.
 
-This repository contains the Mesh language, compiler/runtime/tooling crates, starter templates, examples, docs, and release verification scripts. Good changes here are usually small, explicit, and backed by the smallest truthful verification command.
+This repository contains the product-owned Hyperpush surfaces only:
+
+- `mesher/`
+- `mesher/landing/`
+- `mesher/frontend-exp/`
+- root product CI/docs/verifier files that belong with those surfaces
+
+It does **not** contain the Mesh compiler/runtime/docs/registry tree anymore. Language and toolchain changes belong in the sibling `mesh-lang` repo.
 
 ## Before you start
 
 - Search existing issues and pull requests first.
-- For larger changes, behavior changes, or design changes, open an issue before writing a large PR.
-- Keep changes scoped. Separate refactors from behavior changes unless they are inseparable.
-- If you change public behavior, update the relevant docs, examples, starter templates, or release surfaces in the same PR.
-- Follow the expectations in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+- Keep changes scoped.
+- If you change maintainer commands, update the affected README/verifier/workflow in the same PR.
 - For security issues, do **not** open a public issue. See [SECURITY.md](SECURITY.md).
 
 ## Development setup
 
 ### Required
 
-- Rust toolchain
 - Git
+- Node.js and npm for `mesher/landing/` and `mesher/frontend-exp/`
+- Docker for Mesher smoke verification
+- PostgreSQL client tools (`psql`) for the Mesher maintainer verifier
+- access to `meshc` via one of:
+  - sibling `mesh-lang/target/debug/meshc`
+  - explicit `MESHER_MESHC_BIN` + `MESHER_MESHC_SOURCE`
+  - `meshc` on `PATH`
 
-### Commonly needed
+## Blessed sibling workspace
 
-- Node.js and npm for `website/` and `packages-website/`
-- Docker for starter, Postgres, and clustered/container verification flows
-
-### Recommended repo hook setup
-
-Install the repo-owned pre-commit hook once per clone:
-
-```bash
-bash scripts/install-git-hooks.sh
+```text
+<workspace>/
+  mesh-lang/
+  hyperpush-mono/
 ```
 
-That hook runs `scripts/verify-whitespace.sh --staged --fix` before each commit. It trims safe staged trailing whitespace automatically, then fails closed if whitespace errors remain.
-
-Git cannot force local hooks from a clone, so GitHub enforcement also lives in CI. Pull requests and `main` pushes run the same whitespace guard on the incoming diff.
+Mesher lives under `hyperpush-mono/mesher/`. Do not flatten it to `<workspace>/mesher`.
 
 ## Common commands
 
-Use the lightest command that truthfully proves your change.
-
-### Rust workspace
+### Product-root verification
 
 ```bash
-cargo build
-cargo test -p <crate>
+bash scripts/verify-m051-s01.sh
+bash scripts/verify-landing-surface.sh
 ```
 
-Examples:
+### Mesher package workflow
 
 ```bash
-cargo test -p meshc -- --nocapture
-cargo test -p mesh-lsp -- --nocapture
-cargo test -p mesh-rt -- --nocapture
+bash mesher/scripts/test.sh
+DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh status
+DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh up
+bash mesher/scripts/build.sh .tmp/mesher-build
+bash mesher/scripts/verify-maintainer-surface.sh
 ```
 
-### Docs site
+### Landing
 
 ```bash
-npm --prefix website ci
-npm --prefix website run build
+npm --prefix mesher/landing ci
+npm --prefix mesher/landing run build
 ```
 
-### Packages website
+### Frontend experiment
 
 ```bash
-npm --prefix packages-website ci
-npm --prefix packages-website run build
+npm --prefix mesher/frontend-exp ci
+npm --prefix mesher/frontend-exp run build
 ```
 
-### Repo-owned verification scripts
+## Verification expectations
 
-This repo also carries many targeted verification rails under `scripts/verify-*.sh` and `scripts/verify-*.ps1`.
+Use the smallest truthful command that proves the change:
 
-If your change touches a retained proof surface, starter template, editor integration, or release workflow, rerun the relevant verifier instead of relying only on broad workspace tests.
+- Mesher maintainer/runbook changes → `bash scripts/verify-m051-s01.sh`
+- landing/root surface changes → `bash scripts/verify-landing-surface.sh`
+- `frontend-exp` UI changes → `npm --prefix mesher/frontend-exp run build`
+- Mesher package script changes → rerun the affected `mesher/scripts/*.sh` command plus the root wrapper if the public maintainer surface changed
 
-## Pull request guidelines
+## Pull requests
 
-A good PR usually includes:
+A good PR includes:
 
-- a clear summary of what changed and why
-- a linked issue when the change is non-trivial
-- the exact verification commands that were run
-- docs/example/template updates when public behavior changed
-- focused diffs without unrelated churn
-
-Use the pull request template and paste the exact commands you ran.
-
-## Code and docs expectations
-
-- Follow the surrounding style of the crate, package, or docs area you are editing.
-- Prefer targeted tests over broad incidental rewrites.
-- Keep starter and docs workflows honest: do not document a command path that the repo does not actually verify.
-- Do not commit secrets, local `.env` files, generated release artifacts, or transient `.tmp/` output.
-
-## Where to file what
-
-- Reproducible defects: use the **Bug report** issue form.
-- New capabilities or workflow improvements: use the **Feature request** issue form.
-- Docs problems: use the **Documentation issue** form.
-- Security reports: use the private path described in [SECURITY.md](SECURITY.md).
+- a clear summary
+- the exact verification commands you ran
+- notes about cross-repo fallout when a product change also requires a `mesh-lang` follow-up
 
 ## License
 

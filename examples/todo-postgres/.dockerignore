@@ -1,7 +1,0 @@
-.git
-.gitignore
-target
-.mesh
-.tmp
-.env
-.env.local

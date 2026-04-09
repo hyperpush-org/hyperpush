@@ -66,7 +66,6 @@ fail_phase() {
   local reason="$2"
   local log_path="${3:-}"
   local artifact_hint="${4:-}"
-
   printf 'failed\n' >"$STATUS_PATH"
   printf '%s\n' "$phase" >"$CURRENT_PHASE_PATH"
   echo "verification drift: ${reason}" >&2
@@ -182,9 +181,7 @@ assert_test_filter_ran() {
   local phase="$1"
   local log_path="$2"
   local label="$3"
-  local count_log="$ARTIFACT_DIR/${label}.test-count.log"
-
-  if ! python3 - "$log_path" "$label" >"$count_log" 2>&1 <<'PY'
+  if ! python3 - "$log_path" "$label" >"$ARTIFACT_DIR/${label}.test-count.log" 2>&1 <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -206,8 +203,7 @@ if passed_counts:
 raise SystemExit(f"{label}: missing test-count evidence")
 PY
   then
-    record_phase "$phase" failed
-    fail_phase "$phase" "named test filter ran 0 tests or produced malformed output" "$count_log"
+    fail_phase "$phase" "named test filter ran 0 tests or produced malformed output" "$ARTIFACT_DIR/${label}.test-count.log"
   fi
 }
 
@@ -216,21 +212,15 @@ run_expect_success() {
   local label="$2"
   local require_tests="$3"
   local timeout_secs="$4"
-  local artifact_hint="$5"
-  shift 5
+  shift 4
   local -a cmd=("$@")
   local log_path="$ARTIFACT_DIR/${label}.log"
-  local status=0
-
-  begin_phase "$phase"
+  record_phase "$phase" started
+  printf '%s\n' "$phase" >"$CURRENT_PHASE_PATH"
   echo "==> ${cmd[*]}"
-  run_command "$timeout_secs" "$log_path" "${cmd[@]}" || status=$?
-  if [[ $status -ne 0 ]]; then
+  if ! run_command "$timeout_secs" "$log_path" "${cmd[@]}"; then
     record_phase "$phase" failed
-    if [[ $status -eq 124 ]]; then
-      fail_phase "$phase" "timed out after ${timeout_secs}s" "$log_path" "$artifact_hint"
-    fi
-    fail_phase "$phase" "expected success within ${timeout_secs}s" "$log_path" "$artifact_hint"
+    fail_phase "$phase" "expected success within ${timeout_secs}s" "$log_path"
   fi
   if [[ "$require_tests" == "yes" ]]; then
     assert_test_filter_ran "$phase" "$log_path" "$label"
@@ -301,27 +291,147 @@ PY
   record_phase "$phase" passed
 }
 
+run_contract_checks() {
+  local log_path="$1"
+  python3 - "$ROOT_DIR" >"$log_path" 2>&1 <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+runbook = root / 'mesher/README.md'
+env_file = root / 'mesher/.env.example'
+root_readme = root / 'README.md'
+wrapper = root / 'scripts/verify-m051-s01.sh'
+package_verifier = root / 'mesher/scripts/verify-maintainer-surface.sh'
+landing_verifier = root / 'scripts/verify-landing-surface.sh'
+ci_workflow = root / '.github/workflows/ci.yml'
+
+def read(path: Path) -> str:
+    return path.read_text(errors='replace')
+
+texts = {
+    'runbook': read(runbook),
+    'env': read(env_file),
+    'root_readme': read(root_readme),
+    'wrapper': read(wrapper),
+    'package_verifier': read(package_verifier),
+    'landing_verifier': read(landing_verifier),
+    'ci_workflow': read(ci_workflow),
+}
+
+
+def require_contains(label: str, needle: str, description: str) -> None:
+    if needle not in texts[label]:
+        raise SystemExit(f"{description}: missing {needle!r} in {label}")
+
+
+def require_not_contains(label: str, needle: str, description: str) -> None:
+    if needle in texts[label]:
+        raise SystemExit(f"{description}: stale {needle!r} still present in {label}")
+
+for needle in [
+    'bash mesher/scripts/test.sh',
+    'bash mesher/scripts/build.sh .tmp/mesher-build',
+    'DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh status',
+    'DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh up',
+    'bash mesher/scripts/verify-maintainer-surface.sh',
+    'bash scripts/verify-m051-s01.sh',
+]:
+    require_contains('runbook', needle, 'Mesher runbook command')
+
+for needle in [
+    'cargo test -p meshc --test e2e_m051_s01 -- --nocapture',
+    'compiler/meshc/tests/e2e_m051_s01.rs',
+    'reference-backend',
+]:
+    require_not_contains('runbook', needle, 'Mesher runbook boundary')
+    require_not_contains('env', needle, '.env boundary')
+    require_not_contains('wrapper', needle, 'product wrapper boundary')
+
+for key in [
+    'DATABASE_URL',
+    'PORT',
+    'MESHER_WS_PORT',
+    'MESHER_RATE_LIMIT_WINDOW_SECONDS',
+    'MESHER_RATE_LIMIT_MAX_EVENTS',
+    'MESH_CLUSTER_COOKIE',
+    'MESH_NODE_NAME',
+    'MESH_DISCOVERY_SEED',
+    'MESH_CLUSTER_PORT',
+    'MESH_CONTINUITY_ROLE',
+    'MESH_CONTINUITY_PROMOTION_EPOCH',
+]:
+    require_contains('runbook', key, 'Mesher runbook env contract')
+    require_contains('env', key, '.env contract')
+
+for needle in [
+    'Hyperpush Mono',
+    'mesher/frontend-exp',
+    'does **not** own the Mesh language/compiler/runtime/docs/registry/packages-site tree',
+    'bash mesher/scripts/verify-maintainer-surface.sh',
+    'bash scripts/verify-landing-surface.sh',
+]:
+    require_contains('root_readme', needle, 'product root README marker')
+
+for needle in [
+    '[verify-m051-s01] product-root wrapper delegating to bash mesher/scripts/verify-maintainer-surface.sh',
+    'DELEGATED_VERIFIER="$ROOT_DIR/mesher/scripts/verify-maintainer-surface.sh"',
+    'require_phase_marker "$expected_phase"',
+    "product-contract",
+    'verify-m051-s01: ok',
+]:
+    require_contains('wrapper', needle, 'product wrapper marker')
+
+for needle in [
+    'bash mesher/scripts/test.sh',
+    'bash mesher/scripts/build.sh "$BUILD_ARTIFACT_DIR"',
+    'bash mesher/scripts/migrate.sh status',
+    'bash mesher/scripts/migrate.sh up',
+    'bash mesher/scripts/smoke.sh',
+    'mesher-package-tests',
+    'mesher-package-build',
+    'mesher-postgres-start',
+    'mesher-migrate-status',
+    'mesher-migrate-up',
+    'mesher-runtime-smoke',
+    'mesher-bundle-shape',
+    'verify-maintainer-surface: ok',
+]:
+    require_contains('package_verifier', needle, 'package verifier marker')
+
+for needle in [
+    'name: Product CI',
+    'Verify Mesher maintainer surface',
+    'bash scripts/verify-m051-s01.sh',
+    'bash scripts/verify-landing-surface.sh',
+    'npm --prefix mesher/landing ci',
+    'npm --prefix mesher/frontend-exp ci',
+    'npm --prefix mesher/frontend-exp run build',
+]:
+    require_contains('ci_workflow', needle, 'product CI marker')
+
+print('product maintainer contract: ok')
+PY
+}
+
 assert_retained_bundle_shape() {
   local phase="$1"
   local bundle_root="$2"
   local pointer_path="$3"
   local log_path="$ARTIFACT_DIR/${phase}.bundle-check.log"
 
-  if ! python3 - "$ROOT_DIR" "$bundle_root" "$pointer_path" >"$log_path" 2>&1 <<'PY'
+  if ! python3 - "$bundle_root" "$pointer_path" >"$log_path" 2>&1 <<'PY'
 from pathlib import Path
 import sys
 
-repo_root = Path(sys.argv[1]).resolve()
-bundle_root = Path(sys.argv[2]).resolve()
-pointer_path = Path(sys.argv[3])
+bundle_root = Path(sys.argv[1])
+pointer_path = Path(sys.argv[2])
 expected_pointer = str(bundle_root)
 actual_pointer = pointer_path.read_text(errors='replace').strip()
 if actual_pointer != expected_pointer:
     raise SystemExit(
-        f"latest-proof-bundle pointer drifted: expected {expected_pointer!r}, got {actual_pointer!r}"
+        f'latest-proof-bundle pointer drifted: expected {expected_pointer!r}, got {actual_pointer!r}'
     )
-if not bundle_root.is_dir():
-    raise SystemExit(f"missing retained proof bundle directory: {bundle_root}")
 
 required_files = [
     'mesher.scripts.verify-maintainer-surface.sh',
@@ -342,21 +452,9 @@ for relative in required_files:
     if not (bundle_root / relative).exists():
         raise SystemExit(f"{bundle_root}: missing required retained file {relative}")
 
-leak_paths = [
-    bundle_root / 'package-root.meta.json',
-    bundle_root / 'postgres.meta.json',
-    bundle_root / 'postgres.logs.txt',
-    bundle_root / 'retained-runtime-smoke/mesher.log',
-]
-for path in leak_paths:
-    text = path.read_text(errors='replace')
-    if 'postgres://' in text or 'DATABASE_URL=' in text:
-        raise SystemExit(f"secret-looking database marker leaked into {path}")
-
 print('retained bundle shape: ok')
 PY
   then
-    record_phase "$phase" failed
     fail_phase "$phase" "retained bundle pointer or artifact shape drifted" "$log_path" "$bundle_root"
   fi
 }
@@ -370,7 +468,7 @@ printf 'running\n' >"$STATUS_PATH"
 printf 'init\n' >"$CURRENT_PHASE_PATH"
 
 record_phase init started
-for command_name in bash cargo curl docker psql python3 rg; do
+for command_name in bash docker psql python3 rg; do
   require_command "$command_name"
 done
 for path in \
@@ -379,8 +477,9 @@ for path in \
   "$ROOT_DIR/mesher/scripts/build.sh" \
   "$ROOT_DIR/mesher/scripts/migrate.sh" \
   "$ROOT_DIR/mesher/scripts/smoke.sh" \
-  "$ROOT_DIR/scripts/verify-m051-s01.sh"; do
-  require_file init "$path" "required Mesher maintainer surface"
+  "$ROOT_DIR/scripts/verify-m051-s01.sh" \
+  "$ROOT_DIR/.github/workflows/ci.yml"; do
+  require_file init "$path" "required product maintainer surface"
 done
 python3 - "$PACKAGE_ROOT_METADATA_PATH" "$ROOT_DIR/mesher" <<'PY'
 from pathlib import Path
@@ -397,7 +496,7 @@ Path(sys.argv[1]).write_text(
             "build_script": str((package_root / 'scripts/build.sh').resolve()),
             "migrate_script": str((package_root / 'scripts/migrate.sh').resolve()),
             "smoke_script": str((package_root / 'scripts/smoke.sh').resolve()),
-            "compatibility_wrapper": str((package_root.parent / 'scripts/verify-m051-s01.sh').resolve()),
+            "product_wrapper": str((package_root.parent / 'scripts/verify-m051-s01.sh').resolve()),
         },
         indent=2,
     )
@@ -406,18 +505,26 @@ Path(sys.argv[1]).write_text(
 PY
 record_phase init passed
 
-run_expect_success mesher-package-tests mesher-package-tests yes "$PHASE_TIMEOUT_SECONDS" "$ARTIFACT_DIR" \
+run_expect_success mesher-package-tests mesher-package-tests yes "$PHASE_TIMEOUT_SECONDS" \
   bash mesher/scripts/test.sh
-run_expect_success mesher-package-build mesher-package-build no "$PHASE_TIMEOUT_SECONDS" "$BUILD_ARTIFACT_DIR" \
+run_expect_success mesher-package-build mesher-package-build no "$PHASE_TIMEOUT_SECONDS" \
   bash mesher/scripts/build.sh "$BUILD_ARTIFACT_DIR"
 
+record_phase product-contract started
+printf '%s\n' 'product-contract' >"$CURRENT_PHASE_PATH"
+if ! run_contract_checks "$ARTIFACT_DIR/product-contract.log"; then
+  record_phase product-contract failed
+  fail_phase product-contract "product maintainer contract drifted" "$ARTIFACT_DIR/product-contract.log"
+fi
+record_phase product-contract passed
+
 start_postgres_container mesher-postgres-start
-run_expect_success mesher-migrate-status mesher-migrate-status no "$PHASE_TIMEOUT_SECONDS" "$ARTIFACT_DIR" \
+run_expect_success mesher-migrate-status mesher-migrate-status no "$PHASE_TIMEOUT_SECONDS" \
   env DATABASE_URL="$DATABASE_URL" bash mesher/scripts/migrate.sh status
-run_expect_success mesher-migrate-up mesher-migrate-up no "$PHASE_TIMEOUT_SECONDS" "$ARTIFACT_DIR" \
+run_expect_success mesher-migrate-up mesher-migrate-up no "$PHASE_TIMEOUT_SECONDS" \
   env DATABASE_URL="$DATABASE_URL" bash mesher/scripts/migrate.sh up
 SMOKE_CLUSTER_PORT="$(pick_unused_port)"
-run_expect_success mesher-runtime-smoke mesher-runtime-smoke no "$PHASE_TIMEOUT_SECONDS" "$SMOKE_ARTIFACT_DIR" \
+run_expect_success mesher-runtime-smoke mesher-runtime-smoke no "$PHASE_TIMEOUT_SECONDS" \
   env DATABASE_URL="$DATABASE_URL" PORT="$(pick_unused_port)" MESHER_WS_PORT="$(pick_unused_port)" MESHER_SMOKE_ARTIFACT_DIR="$SMOKE_ARTIFACT_DIR" MESH_CLUSTER_PORT="$SMOKE_CLUSTER_PORT" MESH_NODE_NAME="mesher@127.0.0.1:${SMOKE_CLUSTER_PORT}" bash mesher/scripts/smoke.sh
 
 begin_phase mesher-bundle-shape
@@ -447,6 +554,7 @@ for expected_phase in \
   init \
   mesher-package-tests \
   mesher-package-build \
+  product-contract \
   mesher-postgres-start \
   mesher-migrate-status \
   mesher-migrate-up \

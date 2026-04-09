@@ -1,5 +1,5 @@
 name: Documentation issue
-description: Report missing, outdated, confusing, or incorrect documentation.
+description: Report missing, outdated, confusing, or incorrect product documentation.
 title: "[Docs]: "
 labels:
   - documentation
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form for docs problems on the website, in starter/example READMEs, or in contributor-facing repo docs.
+        Use this form for docs problems in the product repo, Mesher runbook, landing docs, or product maintainer instructions.
   - type: checkboxes
     id: checks
     attributes:
@@ -21,8 +21,7 @@ body:
     id: page
     attributes:
       label: Affected page or file
-      description: Paste the URL or repo path.
-      placeholder: https://meshlang.dev/docs/getting-started/ or README.md
+      placeholder: README.md / mesher/README.md / mesher/frontend-exp/README.md
     validations:
       required: true
   - type: dropdown
@@ -43,17 +42,13 @@ body:
     id: problem
     attributes:
       label: What is wrong today?
-      placeholder: Describe the mismatch, omission, or confusing part.
     validations:
       required: true
   - type: textarea
     id: fix
     attributes:
       label: Suggested fix
-      description: If you know how the page should read, describe it here.
-      placeholder: Explain the change, updated command, corrected link, or missing context.
   - type: textarea
     id: context
     attributes:
       label: Additional context
-      description: Screenshots, exact commands, related pages, or follow-up notes.

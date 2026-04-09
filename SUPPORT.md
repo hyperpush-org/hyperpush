@@ -2,32 +2,29 @@
 
 ## Start here
 
-Before opening an issue, check the public docs and starter examples:
+Before opening an issue, check the nearest maintainer surface first:
 
-- Getting Started: https://meshlang.dev/docs/getting-started/
-- Tooling docs: https://meshlang.dev/docs/tooling/
-- SQLite Todo starter: `examples/todo-sqlite/README.md`
-- PostgreSQL Todo starter: `examples/todo-postgres/README.md`
+- Mesher maintainer runbook: [`mesher/README.md`](mesher/README.md)
+- product-root Mesher verifier: `bash scripts/verify-m051-s01.sh`
+- landing/root-surface verifier: `bash scripts/verify-landing-surface.sh`
+- Mesh language/tooling docs: https://meshlang.dev/docs/getting-started/ and https://meshlang.dev/docs/tooling/
 
 ## When to open an issue
 
-Use the issue templates for:
+Use issues for:
 
-- reproducible bugs
-- feature requests
-- documentation problems
+- reproducible Mesher defects
+- landing/frontend-exp bugs
+- product repo CI/deploy problems
+- product docs/runbook drift
 
-When you open an issue, include:
+Include:
 
-- `meshc --version` and `meshpkg --version` output, or the commit SHA you tested
-- operating system
+- commit SHA
 - the smallest truthful reproduction
-- logs, diagnostics, or screenshots when relevant
+- logs, screenshots, or verifier output when relevant
+- whether the failure happened in `mesher/`, `mesher/landing/`, or `mesher/frontend-exp/`
 
 ## Security issues
 
 Do not report security vulnerabilities in public issues. See [SECURITY.md](SECURITY.md).
-
-## Contributing
-
-If you want to contribute a fix directly, see [CONTRIBUTING.md](CONTRIBUTING.md).

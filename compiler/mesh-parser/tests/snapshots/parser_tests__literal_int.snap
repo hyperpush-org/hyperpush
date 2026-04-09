@@ -1,8 +1,0 @@
----
-source: crates/mesh-parser/tests/parser_tests.rs
-expression: "parse_and_debug(\"42\")"
----
-SOURCE_FILE@0..2
-  LITERAL@0..2
-    INT_LITERAL@0..2 "42"
-  EOF@2..2 ""

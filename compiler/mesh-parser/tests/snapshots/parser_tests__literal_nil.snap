@@ -1,8 +1,0 @@
----
-source: crates/mesh-parser/tests/parser_tests.rs
-expression: "parse_and_debug(\"nil\")"
----
-SOURCE_FILE@0..3
-  LITERAL@0..3
-    NIL_KW@0..3 "nil"
-  EOF@3..3 ""

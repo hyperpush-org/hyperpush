@@ -1,7 +1,0 @@
-[package]
-name = "reference-backend"
-version = "0.1.0"
-description = "Canonical Postgres-first Mesh backend reference package"
-license = "MIT"
-
-[dependencies]

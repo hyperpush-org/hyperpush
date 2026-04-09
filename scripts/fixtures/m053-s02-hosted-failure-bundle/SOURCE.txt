@@ -1,1 +1,0 @@
-Derived from .tmp/m053-s05/remote-auth-24014506220/artifacts/authoritative-starter-failover-proof-diagnostics/staged-postgres-failover-runtime-truth-1775437858534365102 for the retained hosted-red regression in compiler/meshc/tests/e2e_m053_s02.rs.

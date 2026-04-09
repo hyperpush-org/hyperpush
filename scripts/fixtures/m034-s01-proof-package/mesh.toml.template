@@ -1,7 +1,0 @@
-[package]
-name = "__PACKAGE_NAME__"
-version = "__VERSION__"
-description = "Real registry publish/install proof fixture for M034 S01"
-license = "MIT"
-
-[dependencies]

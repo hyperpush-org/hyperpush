@@ -1,6 +1,0 @@
-.git
-.gitignore
-target
-.mesh
-.tmp
-*.sqlite3

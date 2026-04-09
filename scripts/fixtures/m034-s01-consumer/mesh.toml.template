@@ -1,8 +1,0 @@
-[package]
-name = "m034-s01-consumer"
-version = "0.1.0"
-description = "Consumes the real registry proof package for M034 S01"
-license = "MIT"
-
-[dependencies]
-"__PACKAGE_NAME__" = "__VERSION__"

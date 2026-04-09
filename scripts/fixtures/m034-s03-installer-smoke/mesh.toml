@@ -1,7 +1,0 @@
-[package]
-name = "m034-s03-installer-smoke"
-version = "0.1.0"
-description = "Known-good installer smoke fixture for M034 S03"
-license = "MIT"
-
-[dependencies]

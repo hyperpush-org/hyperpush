@@ -1,9 +1,0 @@
-# Cargo build configuration for the Snow compiler.
-#
-# LLVM 21 configuration for Phase 5 (codegen).
-# Tells llvm-sys (inkwell's transitive dependency) where to find LLVM.
-
-[env]
-# Homebrew LLVM 21 on Apple Silicon macOS.
-# Change to /usr/local/opt/llvm on Intel Macs.
-LLVM_SYS_211_PREFIX = "/opt/homebrew/opt/llvm"

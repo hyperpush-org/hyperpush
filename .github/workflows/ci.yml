@@ -1,0 +1,85 @@
+name: Product CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'SUPPORT.md'
+      - '.github/**'
+      - 'scripts/verify-landing-surface.sh'
+      - 'scripts/verify-m051-s01.sh'
+      - 'mesher/**'
+
+permissions:
+  contents: read
+
+jobs:
+  mesher-maintainer-surface:
+    name: Mesher maintainer surface
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout product repo
+        uses: actions/checkout@v4
+
+      - name: Checkout mesh-lang toolchain repo
+        uses: actions/checkout@v4
+        with:
+          repository: hyperpush-org/mesh-lang
+          path: mesh-lang
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build meshc from sibling toolchain repo
+        working-directory: mesh-lang
+        run: cargo build -p meshc
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Verify Mesher maintainer surface
+        env:
+          MESHER_MESHC_BIN: ${{ github.workspace }}/mesh-lang/target/debug/meshc
+          MESHER_MESHC_SOURCE: ci-mesh-lang-checkout
+          CARGO_TARGET_DIR: ${{ github.workspace }}/mesh-lang/target
+        run: bash scripts/verify-m051-s01.sh
+
+  landing-and-frontend:
+    name: Landing and frontend-exp build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            mesher/landing/package-lock.json
+            mesher/frontend-exp/package-lock.json
+
+      - name: Verify landing surface contract
+        run: bash scripts/verify-landing-surface.sh
+
+      - name: Install landing dependencies
+        run: npm --prefix mesher/landing ci
+
+      - name: Build landing
+        env:
+          NEXT_PUBLIC_SITE_URL: https://hyperpush.dev
+          NEXT_PUBLIC_DISCORD_URL: https://discord.gg/6SRhbZw7ZG
+        run: npm --prefix mesher/landing run build
+
+      - name: Install frontend-exp dependencies
+        run: npm --prefix mesher/frontend-exp ci
+
+      - name: Build frontend-exp
+        run: npm --prefix mesher/frontend-exp run build

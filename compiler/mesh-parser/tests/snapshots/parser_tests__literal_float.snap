@@ -1,8 +1,0 @@
----
-source: crates/mesh-parser/tests/parser_tests.rs
-expression: "parse_and_debug(\"3.14\")"
----
-SOURCE_FILE@0..4
-  LITERAL@0..4
-    FLOAT_LITERAL@0..4 "3.14"
-  EOF@4..4 ""

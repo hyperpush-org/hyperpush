@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible defect in Mesh, its tooling, starter templates, or docs.
+description: Report a reproducible defect in Mesher, landing, frontend-exp, or product repo CI/docs.
 title: "[Bug]: "
 labels:
   - bug
@@ -9,15 +9,15 @@ body:
       value: |
         Thanks for taking the time to file a bug report.
 
-        Please use this form for reproducible defects in Mesh itself, its compiler/runtime/tooling, starter templates, examples, installers, or documentation.
+        Please use this form for reproducible defects in the product-owned Hyperpush surfaces.
   - type: checkboxes
     id: checks
     attributes:
       label: Before you submit
       options:
-        - label: I searched existing issues and checked the relevant docs/examples first.
+        - label: I searched existing issues and checked the nearest maintainer docs first.
           required: true
-        - label: I can reproduce this with a current build, the latest public release, or a specific commit I list below.
+        - label: I can reproduce this with the current main branch or a specific commit I list below.
           required: true
     validations:
       required: true
@@ -25,24 +25,21 @@ body:
     id: area
     attributes:
       label: Affected area
-      description: Pick the closest match.
       options:
-        - compiler / meshc
-        - package manager / meshpkg
-        - runtime / mesh-rt
-        - LSP / editor integration
-        - starter templates / examples
-        - installers / release tooling
-        - documentation / website
+        - Mesher runtime / API
+        - Mesher maintainer scripts
+        - landing app
+        - frontend-exp
+        - product CI / deploy
+        - product docs / runbooks
         - other
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Version / commit
-      description: Paste the output of `meshc --version`, `meshpkg --version`, or the commit SHA you tested.
-      placeholder: meshc 12.0.0 / meshpkg 12.0.0 / abc1234
+      label: Commit / version tested
+      placeholder: a9ad114 / local branch / release tag
     validations:
       required: true
   - type: dropdown
@@ -57,16 +54,15 @@ body:
     validations:
       required: true
   - type: input
-    id: setup
+    id: path
     attributes:
-      label: Project / starter / path (if relevant)
+      label: Product path
       description: Tell us what you were running.
-      placeholder: examples/todo-postgres, meshc init --clustered, website/docs/docs/getting-started/index.md
+      placeholder: mesher/, mesher/landing/, mesher/frontend-exp/
   - type: textarea
     id: steps
     attributes:
       label: Reproduction steps
-      description: Give the smallest truthful sequence that reproduces the problem.
       placeholder: |
         1. Run ...
         2. Open ...
@@ -77,24 +73,16 @@ body:
     id: expected
     attributes:
       label: Expected behavior
-      placeholder: What should have happened?
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
       label: Actual behavior
-      placeholder: What happened instead?
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
       label: Logs, errors, or screenshots
-      description: Paste terminal output, stack traces, diagnostics, or screenshots if they help.
       render: shell
-  - type: textarea
-    id: context
-    attributes:
-      label: Additional context
-      description: Include workarounds, frequency, regression range, or anything else useful.

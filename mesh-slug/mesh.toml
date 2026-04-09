@@ -1,7 +1,0 @@
-[package]
-name = "snowdamiz/mesh-slug"
-version = "1.0.0"
-description = "URL-safe slug generation for Mesh programs"
-license = "MIT"
-
-[dependencies]

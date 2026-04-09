@@ -1,7 +1,0 @@
-[package]
-name = "cluster-proof"
-version = "0.1.0"
-description = "Smallest packaged route-free clustered proof package"
-license = "MIT"
-
-[dependencies]

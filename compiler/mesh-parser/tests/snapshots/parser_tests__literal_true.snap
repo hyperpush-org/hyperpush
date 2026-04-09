@@ -1,8 +1,0 @@
----
-source: crates/mesh-parser/tests/parser_tests.rs
-expression: "parse_and_debug(\"true\")"
----
-SOURCE_FILE@0..4
-  LITERAL@0..4
-    TRUE_KW@0..4 "true"
-  EOF@4..4 ""

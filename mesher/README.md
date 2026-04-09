@@ -1,6 +1,6 @@
 # Mesher
 
-This README is the canonical maintainer runbook for Mesher's current PostgreSQL + runtime contract. It is intentionally maintainer-facing: deeper Mesher work should start here, while public first-contact docs stay untouched until the later docs slice.
+This README is the canonical maintainer runbook for Mesher's current PostgreSQL + runtime contract inside the product-only Hyperpush repo.
 
 ## Startup contract
 
@@ -30,22 +30,38 @@ These stay on the runtime-owned contract that `Node.start_from_env()` expects:
 
 `mesher/.env.example` carries the current local-development values for that full set.
 
+## Toolchain boundary
+
+Mesher scripts need `meshc`.
+
+Supported resolution paths:
+
+1. blessed sibling `mesh-lang/target/debug/meshc`
+2. explicit `MESHER_MESHC_BIN` + `MESHER_MESHC_SOURCE`
+3. `meshc` on `PATH`
+
+If you are working in the blessed sibling workspace, keep:
+
+```text
+<workspace>/
+  mesh-lang/
+  hyperpush-mono/
+```
+
 ## Seeded development data
 
-`mesher/migrations/20260226000000_seed_default_org.mpl` inserts the local smoke data that this runbook and the S01 e2e rail prove:
+`mesher/migrations/20260226000000_seed_default_org.mpl` inserts the local smoke data this runbook proves:
 
 - organization slug: `default`
 - project slug: `default`
 - dev API key label: `dev-default`
 - dev API key: `mshr_devdefaultapikey000000000000000000000000000`
 
-That seed is idempotent, so a maintainer can rerun migrations and keep using the same default project + API key when working locally.
-
-## Repo-root maintainer loop
+## Maintainer loop
 
 ### 1. Load local env
 
-From the repo root:
+From the product repo root:
 
 ```bash
 cp mesher/.env.example .env.mesher
@@ -71,7 +87,7 @@ DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh st
 DATABASE_URL=${DATABASE_URL:?set DATABASE_URL} bash mesher/scripts/migrate.sh up
 ```
 
-### 5. Build Mesher from the repo root
+### 5. Build Mesher
 
 ```bash
 bash mesher/scripts/build.sh .tmp/mesher-build
@@ -96,27 +112,13 @@ MESH_CONTINUITY_PROMOTION_EPOCH=${MESH_CONTINUITY_PROMOTION_EPOCH:-0} \
 .tmp/mesher-build/mesher
 ```
 
-On a healthy boot, Mesher should log:
-
-- `Config loaded ...`
-- `Connecting to PostgreSQL pool...`
-- `PostgreSQL pool ready`
-- `runtime bootstrap mode=...`
-- `Foundation ready`
-- `Runtime ready http_port=... ws_port=... db_backend=postgres ...`
-- `HTTP server starting on :8080`
-
 ## Live seed-event smoke
-
-Use the seeded default project and dev API key against the real Mesher HTTP surface.
 
 ### Readiness check
 
 ```bash
 curl -sSf http://127.0.0.1:8080/api/v1/projects/default/settings
 ```
-
-Expected shape: JSON with `retention_days` and `sample_rate`.
 
 ### Event ingest smoke
 
@@ -129,15 +131,11 @@ curl -sSf \
   -d '{"message":"README smoke event","level":"error"}'
 ```
 
-Expected shape: `{"status":"accepted"}`.
-
-### Read back the seeded project issues
+### Read back seeded project issues
 
 ```bash
 curl -sSf 'http://127.0.0.1:8080/api/v1/projects/default/issues?status=unresolved'
 ```
-
-The returned `data` array should include the newly ingested `README smoke event` row.
 
 ### Optional storage readback
 
@@ -145,11 +143,9 @@ The returned `data` array should include the newly ingested `README smoke event`
 curl -sSf http://127.0.0.1:8080/api/v1/projects/default/storage
 ```
 
-That surface exposes the current `event_count` and `estimated_bytes` for the seeded default project.
-
 ## Runtime inspection
 
-When you boot Mesher with the clustered env above, inspect runtime-owned state through Mesh CLI surfaces instead of package-owned control routes:
+When you boot Mesher with clustered env, inspect runtime-owned state through Mesh CLI surfaces instead of package-owned control routes:
 
 ```bash
 meshc cluster status <node-name@host:port> --json
@@ -158,21 +154,18 @@ meshc cluster continuity <node-name@host:port> <request-key> --json
 meshc cluster diagnostics <node-name@host:port> --json
 ```
 
-Use the continuity list form first if you need to discover runtime-owned records.
+## Authoritative proof rails
 
-## Authoritative proof rail
+Package-owned maintainer replay:
 
-The repo-owned verifier for this maintainer surface is:
+```bash
+bash mesher/scripts/verify-maintainer-surface.sh
+```
+
+Product-root wrapper:
 
 ```bash
 bash scripts/verify-m051-s01.sh
 ```
 
-That wrapper replays:
-
-- `bash mesher/scripts/test.sh`
-- `bash mesher/scripts/build.sh .tmp/mesher-build`
-- `cargo test -p meshc --test e2e_m051_s01 -- --nocapture`
-- fail-closed README contract checks for commands, env keys, route names, header names, and seeded smoke values
-
-If the runtime stays green but `bash scripts/verify-m051-s01.sh` fails, treat that as maintainer-runbook drift instead of silently updating commands from memory.
+The package-owned verifier is the authoritative Mesher maintainer rail. The root wrapper exists so product-root CI and repo-boundary callers can invoke the same proof surface from the repo root without depending on a local `mesh-lang` layout hack.

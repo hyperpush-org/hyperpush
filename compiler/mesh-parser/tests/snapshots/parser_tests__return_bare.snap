@@ -1,9 +1,0 @@
----
-source: crates/mesh-parser/tests/parser_tests.rs
-expression: "block_and_debug(\"return\")"
----
-SOURCE_FILE@0..6
-  BLOCK@0..6
-    RETURN_EXPR@0..6
-      RETURN_KW@0..6 "return"
-  EOF@6..6 ""
