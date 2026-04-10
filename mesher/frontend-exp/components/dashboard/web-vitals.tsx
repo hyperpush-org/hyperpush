@@ -67,7 +67,7 @@ export function WebVitalsBar({ compact = false }: WebVitalsBarProps) {
           {MOCK_WEB_VITALS.filter(v => v.rating === "good").length}/{MOCK_WEB_VITALS.length} passing
         </span>
       </div>
-      <div className={cn("flex", compact && "grid grid-cols-3")}>
+      <div className={cn(compact ? "grid grid-cols-3" : "grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))]")}>
         {vitals.map((v) => (
           <VitalCard key={v.abbrev} vital={v} compact={compact} />
         ))}

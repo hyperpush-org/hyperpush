@@ -1,7 +1,7 @@
 "use client"
 
-import { MOCK_STATS } from "@/lib/mock-data"
-import { AlertTriangle, Users, Clock, Activity, Zap, TrendingUp } from "lucide-react"
+import { MOCK_RELEASE_STATS } from "@/lib/mock-data"
+import { GitBranch, Rocket, AlertTriangle, Clock, Zap, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface StatCardProps {
@@ -9,12 +9,13 @@ interface StatCardProps {
   value: string | number
   sub?: string
   icon: React.ElementType
-  accent?: "green" | "red" | "default"
+  accent?: "green" | "red" | "default" | "purple"
 }
 
 function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCardProps) {
   const isGreen = accent === "green"
   const isRed = accent === "red"
+  const isPurple = accent === "purple"
 
   return (
     <div className={cn(
@@ -32,7 +33,8 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
             "shrink-0 ml-1",
             isGreen && "text-[var(--green)]",
             isRed && "text-[var(--red)]",
-            !isGreen && !isRed && "text-[var(--text-faint)]"
+            isPurple && "text-[var(--purple)]",
+            !isGreen && !isRed && !isPurple && "text-[var(--text-faint)]"
           )}
         />
       </div>
@@ -41,7 +43,8 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
           "text-[20px] font-bold leading-none tracking-tight tabular-nums",
           isGreen && "text-[var(--green)]",
           isRed && "text-[var(--red)]",
-          !isGreen && !isRed && "text-[var(--text-primary)]"
+          isPurple && "text-[var(--purple)]",
+          !isGreen && !isRed && !isPurple && "text-[var(--text-primary)]"
         )}>
           {value}
         </span>
@@ -51,11 +54,11 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
   )
 }
 
-interface StatsBarProps {
+interface ReleaseStatsProps {
   compact?: boolean
 }
 
-export function StatsBar({ compact = false }: StatsBarProps) {
+export function ReleaseStats({ compact = false }: ReleaseStatsProps) {
   return (
     <div
       className={cn(
@@ -66,13 +69,13 @@ export function StatsBar({ compact = false }: StatsBarProps) {
       )}
       style={{ boxShadow: "var(--shadow-inset-subtle)" }}
     >
-      <StatCard label="Total Events" value={MOCK_STATS.totalEvents.toLocaleString()} sub="last 24h" icon={Activity} />
-      <StatCard label="Affected Users" value={MOCK_STATS.affectedUsers.toLocaleString()} sub="unique" icon={Users} />
-      <StatCard label="Critical Issues" value={MOCK_STATS.criticalIssues} icon={AlertTriangle} accent="red" />
-      <StatCard label="Open Issues" value={MOCK_STATS.openIssues} icon={TrendingUp} />
-      <StatCard label="MTTR" value={MOCK_STATS.mttr} icon={Clock} />
-      <StatCard label="Events/min" value={MOCK_STATS.eventsPerMin} sub="live" icon={Zap} accent="green" />
-      <StatCard label="Crash-Free" value={MOCK_STATS.crashFreeSessions} icon={Activity} accent="green" />
+      <StatCard label="Total Releases" value={MOCK_RELEASE_STATS.totalReleases} icon={GitBranch} />
+      <StatCard label="Successful" value={MOCK_RELEASE_STATS.successfulDeployments} sub="deployments" icon={CheckCircle2} accent="green" />
+      <StatCard label="Failed" value={MOCK_RELEASE_STATS.failedDeployments} icon={AlertTriangle} accent="red" />
+      <StatCard label="Rollback Rate" value={MOCK_RELEASE_STATS.rollbackRate} icon={Rocket} />
+      <StatCard label="Avg Deploy Time" value={MOCK_RELEASE_STATS.avgDeploymentTime} icon={Clock} />
+      <StatCard label="Active Releases" value={MOCK_RELEASE_STATS.activeReleases} icon={Zap} />
+      <StatCard label="Contract Deploys" value={MOCK_RELEASE_STATS.smartContractDeploys} icon={GitBranch} accent="purple" />
     </div>
   )
 }

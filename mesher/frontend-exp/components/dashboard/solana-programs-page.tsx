@@ -9,9 +9,6 @@ import {
   MOCK_CU_SERIES,
   MOCK_INSTRUCTION_VOLUME_SERIES,
   MOCK_LOG_EVENTS,
-  MOCK_ACCOUNT_WATCHERS,
-  MOCK_PROGRAM_ERRORS,
-  MOCK_DEPLOY_HISTORY,
   type ParsedLogEvent,
   type InstructionType,
 } from "@/lib/solana-mock-data"
@@ -30,25 +27,14 @@ import {
 import {
   Cpu,
   Radio,
-  Eye,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
-  Check,
   X,
-  ChevronRight,
   Copy,
   ExternalLink,
-  Shield,
-  Database,
-  Zap,
-  Hash,
-  Users,
   Layers,
-  Clock,
-  RotateCw,
   Terminal,
-  Box,
   Minus,
 } from "lucide-react"
 
@@ -75,7 +61,7 @@ function ChartTooltip({ active, payload, label, suffix }: any) {
 }
 
 /* ═══════════════════════════════════════════════════
-   Program identity strip — the "who" at the top
+   Program identity strip - the "who" at the top
    ═══════════════════════════════════════════════════ */
 function ProgramStrip() {
   const p = MOCK_PROGRAM
@@ -89,47 +75,40 @@ function ProgramStrip() {
   const hc = healthColor[p.health]
 
   return (
-    <div className="border-b border-[var(--line)] bg-[var(--surface)] px-6 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Program identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--surface-3)] ring-1 ring-inset ring-[var(--line)] flex items-center justify-center">
-              <Box size={14} className="text-[var(--purple)]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-[var(--text-primary)]">{p.label}</span>
-                <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-[2px] rounded leading-none ring-1 ring-inset uppercase tracking-[0.04em]"
-                  style={{ color: hc, backgroundColor: `color-mix(in srgb, ${hc} 12%, transparent)`, boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${hc} 20%, transparent)` }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hc }} />
-                  {p.health}
-                </span>
-                {p.upgradeStatus === "live" && (
-                  <span className="text-[9px] font-medium text-[var(--text-faint)] bg-[var(--surface-2)] px-1.5 py-[2px] rounded ring-1 ring-inset ring-[var(--line)]">
-                    <Shield size={8} className="inline -mt-px mr-0.5" />immutable-ready
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{p.programId}</span>
-                <button className="text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"><Copy size={9} /></button>
-                <button className="text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"><ExternalLink size={9} /></button>
-              </div>
-            </div>
+    <div className="border-b border-[var(--line)] bg-[var(--surface)] px-4 sm:px-6 py-3">
+
+      {/* min-[1360px]+: single row. below: identity row + stats row */}
+      <div className="flex flex-col min-[1360px]:flex-row min-[1360px]:items-center min-[1360px]:justify-between min-[1360px]:gap-3">
+
+        {/* Identity block — name/badge + address/slot */}
+        <div className="min-w-0">
+          {/* Row 1: name + health badge */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="text-[13px] font-semibold text-[var(--text-primary)] leading-tight">{p.label}</span>
+            <span
+              className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-[2px] rounded leading-none ring-1 ring-inset uppercase tracking-[0.04em] shrink-0"
+              style={{ color: hc, backgroundColor: `color-mix(in srgb, ${hc} 12%, transparent)`, boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${hc} 20%, transparent)` }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hc }} />
+              {p.health}
+            </span>
           </div>
 
-          <div className="w-px h-8 bg-[var(--line)] mx-2" />
-
-          {/* Indexer status */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <Radio size={10} className={s.indexLag <= 10 ? "text-[var(--green)]" : "text-[var(--yellow)]"} />
-              <span className="text-[10px] text-[var(--text-secondary)]">
+          {/* Row 2: address · slot */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{p.programId}</span>
+              <button className="text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"><Copy size={9} /></button>
+              <button className="text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"><ExternalLink size={9} /></button>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[var(--line)] select-none">·</span>
+              <Radio size={9} className={s.indexLag <= 10 ? "text-[var(--green)]" : "text-[var(--yellow)]"} />
+              <span className="text-[10px] text-[var(--text-secondary)] whitespace-nowrap">
                 Slot <span className="font-mono text-[var(--text-primary)]">{s.lastIndexedSlot.toLocaleString()}</span>
               </span>
               <span className={cn(
-                "text-[9px] font-mono px-1 py-[1px] rounded",
+                "text-[9px] font-mono px-1 py-[1px] rounded whitespace-nowrap",
                 s.indexLag <= 10
                   ? "text-[var(--green)] bg-[var(--green)]/[0.08]"
                   : "text-[var(--yellow)] bg-[var(--yellow)]/[0.08]"
@@ -140,23 +119,31 @@ function ProgramStrip() {
           </div>
         </div>
 
-        {/* Right: quick metrics */}
-        <div className="flex items-center gap-6">
+        {/* Stats row — second row on <lg, right-aligned on lg+ */}
+        <div className={cn(
+          "flex items-center gap-4 sm:gap-6 min-[1360px]:shrink-0",
+          // on small screens: new row with top border as separator
+          "mt-2.5 pt-2.5 border-t border-[var(--line-subtle)]",
+          // on min-[1360px]+: inline, no border/padding
+          "min-[1360px]:mt-0 min-[1360px]:pt-0 min-[1360px]:border-t-0"
+        )}>
           <QuickStat label="24h Ixns" value={s.totalInstructions24h.toLocaleString()} />
           <QuickStat label="Success" value={`${s.successRate}%`} color={s.successRate >= 97 ? "var(--green)" : s.successRate >= 94 ? "var(--yellow)" : "var(--red)"} />
           <QuickStat label="Avg CU" value={s.avgComputeUnits.toLocaleString()} />
           <QuickStat label="Signers" value={s.uniqueSigners24h.toLocaleString()} />
         </div>
+
       </div>
+
     </div>
   )
 }
 
 function QuickStat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="text-right">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)] mb-0.5">{label}</p>
-      <p className="text-[14px] font-bold tabular-nums leading-none tracking-tight" style={{ color: color || "var(--text-primary)" }}>{value}</p>
+    <div>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.07em] text-[var(--text-faint)] mb-0.5 whitespace-nowrap">{label}</p>
+      <p className="text-[13px] font-bold tabular-nums leading-none tracking-tight" style={{ color: color || "var(--text-primary)" }}>{value}</p>
     </div>
   )
 }
@@ -254,7 +241,7 @@ function InstructionVolumeChart() {
    ═══════════════════════════════════════════════════ */
 function InstructionTable({ onSelect }: { onSelect: (ix: InstructionType) => void }) {
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div>
       <div className="px-5 pt-3 pb-1">
         <div className="flex items-center gap-2 mb-2">
           <Terminal size={11} className="text-[var(--text-tertiary)]" />
@@ -306,54 +293,130 @@ function InstructionTable({ onSelect }: { onSelect: (ix: InstructionType) => voi
 /* ═══════════════════════════════════════════════════
    Log event feed (parsed program logs)
    ═══════════════════════════════════════════════════ */
+
+const logStatusAccent: Record<string, string> = {
+  success: "var(--green)",
+  failed: "var(--red)",
+}
+
+const logStatusTextClass: Record<string, string> = {
+  success: "text-[var(--green)]",
+  failed: "text-[var(--red)]",
+}
+
+function LogEventRow({ event: ev, onClick }: { event: ParsedLogEvent; onClick: () => void }) {
+  const accent = logStatusAccent[ev.status] || "var(--text-faint)"
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "group relative w-full text-left",
+        "border-b border-[var(--line)]",
+        "transition-colors duration-100",
+        "hover:bg-[var(--surface-2)]/60"
+      )}
+    >
+      {/* Full-height left status stripe */}
+      <div
+        className="absolute left-0 inset-y-0 w-[3px]"
+        style={{ backgroundColor: accent, opacity: ev.status === "success" ? 0.5 : 1 }}
+      />
+
+      <div className="pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5">
+        <div className="flex items-start gap-3 sm:gap-5">
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+
+            {/* Instruction name */}
+            <p className="text-[13.5px] sm:text-sm font-semibold font-mono text-[var(--text-primary)] leading-snug">
+              {ev.instruction}
+            </p>
+
+            {/* Meta row: status · error code · signature · signer */}
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <span className={cn("text-[11px] font-semibold uppercase tracking-[0.05em] leading-none", logStatusTextClass[ev.status])}>
+                {ev.status}
+              </span>
+              {ev.errorCode && (
+                <>
+                  <span className="text-[var(--line)]">·</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-[var(--red)] bg-[var(--red)]/[0.10] px-1.5 py-[2px] rounded-[4px] leading-none ring-1 ring-inset ring-[var(--red)]/20">
+                    {ev.errorCode}
+                  </span>
+                </>
+              )}
+              <span className="text-[var(--line)]">·</span>
+              <span className="text-[11px] font-mono text-[var(--text-faint)]">{ev.signature}</span>
+              <span className="text-[var(--line)]">·</span>
+              <span className="text-[11px] font-mono text-[var(--text-faint)]">{ev.signerKey}</span>
+            </div>
+
+            {/* Bottom row: slot · error preview */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[11px] text-[var(--text-faint)] tabular-nums">
+                slot <span className="font-mono text-[var(--text-secondary)]">{ev.slot.toLocaleString()}</span>
+              </span>
+              {ev.errorMessage && (
+                <>
+                  <span className="text-[var(--line)] opacity-60">·</span>
+                  <span className="text-[11px] text-[var(--red)]/70 truncate max-w-[20rem]">{ev.errorMessage}</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right: key stats — widths mirror column headers */}
+          <div className="flex-shrink-0 flex items-start gap-2 sm:gap-3 pt-0.5">
+            <div className="text-right w-[52px] sm:w-[60px]">
+              <p className="text-sm font-bold text-[var(--text-primary)] leading-none tabular-nums">
+                {ev.computeUnits.toLocaleString()}
+              </p>
+              <p className="text-[10px] text-[var(--text-tertiary)] mt-1">CU</p>
+            </div>
+            <div className="text-right w-[52px] sm:w-[60px]">
+              <p className="text-[12px] font-medium text-[var(--text-primary)] leading-none">{ev.timestamp}</p>
+              <p className="text-[10px] text-[var(--text-faint)] mt-1">ago</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </button>
+  )
+}
+
 function LogEventFeed({ events, onSelect }: { events: ParsedLogEvent[]; onSelect: (e: ParsedLogEvent) => void }) {
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-5 pt-3 pb-1 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Radio size={11} className="text-[var(--green)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Parsed Logs</span>
-          <span className="text-[10px] text-[var(--text-faint)]">· live</span>
+    <div>
+      {/* Combined header: count + live indicator on left, column headers on right */}
+      <div className="flex flex-wrap items-center pl-4 sm:pl-5 pr-3 sm:pr-4 py-2 gap-y-1.5 border-b border-[var(--line)] bg-[var(--surface)]">
+        {/* Left: log count + live badge + ingested */}
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-[11px] text-[var(--text-secondary)] whitespace-nowrap">
+            <span className="text-[var(--text-primary)] font-semibold tabular-nums">{events.length}</span> logs
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--green)] bg-[var(--green)]/[0.08] px-1.5 py-[2px] rounded-[4px] leading-none ring-1 ring-inset ring-[var(--green)]/15">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" style={{ animationDuration: "2s" }} />
+            live
+          </span>
+          <span className="text-[10px] text-[var(--text-faint)] tabular-nums">
+            {MOCK_PROGRAM_STATS.logEventsIngested.toLocaleString()} ingested
+          </span>
         </div>
-        <span className="text-[9px] text-[var(--text-faint)] tabular-nums">{MOCK_PROGRAM_STATS.logEventsIngested.toLocaleString()} ingested</span>
-      </div>
-      <div className="space-y-px px-3 py-2">
-        {events.map((ev) => (
-          <button
-            key={ev.id}
-            onClick={() => onSelect(ev)}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[var(--surface-2)] transition-colors group text-left active:scale-[0.998]"
-          >
-            {/* Status dot */}
-            <div className={cn(
-              "w-2 h-2 rounded-full shrink-0",
-              ev.status === "success" ? "bg-[var(--green)]" : "bg-[var(--red)]"
-            )} />
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono font-medium text-[var(--text-primary)]">{ev.instruction}</span>
-                {ev.errorCode && (
-                  <span className="text-[9px] font-mono text-[var(--red)] bg-[var(--red)]/[0.08] px-1 py-[1px] rounded ring-1 ring-inset ring-[var(--red)]/15">{ev.errorCode}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] font-mono text-[var(--text-faint)]">{ev.signature}</span>
-                <span className="text-[9px] text-[var(--text-faint)]">·</span>
-                <span className="text-[9px] text-[var(--text-faint)]">{ev.signerKey}</span>
-              </div>
-            </div>
-
-            {/* Right side */}
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-[10px] tabular-nums text-[var(--text-tertiary)]">{ev.computeUnits.toLocaleString()} CU</span>
-              <span className="text-[10px] text-[var(--text-faint)]">{ev.timestamp}</span>
-              <ChevronRight size={12} className="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </button>
-        ))}
+        {/* Right: column headers — pushed to far right */}
+        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-faint)] w-[52px] sm:w-[60px] text-right">CU</span>
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-faint)] w-[52px] sm:w-[60px] text-right">Time</span>
+        </div>
       </div>
+
+      {/* Rows */}
+      {events.map((ev) => (
+        <LogEventRow key={ev.id} event={ev} onClick={() => onSelect(ev)} />
+      ))}
     </div>
   )
 }
@@ -457,120 +520,6 @@ function MetaCell({ label, value, mono, status }: { label: string; value: string
   )
 }
 
-/* ═══════════════════════════════════════════════════
-   Right sidebar — Account watchers + Errors + Deploys
-   ═══════════════════════════════════════════════════ */
-function RightSidebar() {
-  return (
-    <div className="w-[300px] shrink-0 border-l border-[var(--line)] bg-[var(--surface)] overflow-y-auto flex flex-col">
-      {/* Account watchers */}
-      <div className="px-4 pt-4 pb-3 border-b border-[var(--line)]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Eye size={11} className="text-[var(--text-tertiary)]" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Account Watchers</span>
-          </div>
-          <span className="text-[9px] text-[var(--text-faint)]">{MOCK_ACCOUNT_WATCHERS.filter(w => w.status === "watching").length} active</span>
-        </div>
-        <div className="space-y-1.5">
-          {MOCK_ACCOUNT_WATCHERS.map((w) => (
-            <div key={w.id} className="rounded-md bg-[var(--surface-2)] ring-1 ring-inset ring-[var(--line)] px-3 py-2 hover:ring-[var(--text-faint)]/20 transition-all cursor-pointer group">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    w.status === "watching" ? "bg-[var(--green)]" : w.status === "stale" ? "bg-[var(--yellow)]" : "bg-[var(--text-faint)]"
-                  )} />
-                  <span className="text-[11px] font-medium text-[var(--text-primary)]">{w.label}</span>
-                </div>
-                <span className="text-[9px] font-mono text-[var(--text-faint)]">{w.address}</span>
-              </div>
-              <div className="flex items-center justify-between mt-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-[var(--text-faint)]">{w.dataSize}B</span>
-                  <span className="text-[9px] text-[var(--text-faint)]">·</span>
-                  <span className="text-[9px] text-[var(--text-faint)]">{(w.lamports / 1e9).toFixed(2)} SOL</span>
-                </div>
-                <span className="text-[9px] tabular-nums text-[var(--text-secondary)]">{w.changesDetected24h.toLocaleString()} Δ</span>
-              </div>
-              {/* Watch fields */}
-              <div className="flex flex-wrap gap-1 mt-1.5">
-                {w.watchFields.map((f) => (
-                  <span key={f} className="text-[8px] font-mono text-[var(--text-faint)] bg-[var(--surface)] px-1 py-[1px] rounded ring-1 ring-inset ring-[var(--line)]">{f}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Error breakdown */}
-      <div className="px-4 pt-4 pb-3 border-b border-[var(--line)]">
-        <div className="flex items-center gap-1.5 mb-3">
-          <AlertTriangle size={11} className="text-[var(--red)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Error Codes</span>
-        </div>
-        <div className="space-y-1">
-          {MOCK_PROGRAM_ERRORS.map((err) => (
-            <div key={err.code} className="flex items-center gap-2 py-1.5 group cursor-pointer hover:bg-[var(--surface-2)] -mx-1 px-1 rounded transition-colors">
-              <span className="text-[10px] font-mono text-[var(--red)] bg-[var(--red)]/[0.08] px-1.5 py-[2px] rounded ring-1 ring-inset ring-[var(--red)]/15 shrink-0">{err.hexCode}</span>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-medium text-[var(--text-primary)] block truncate">{err.name}</span>
-                <span className="text-[8px] text-[var(--text-faint)] font-mono">{err.affectedInstruction}</span>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">{err.count24h}</span>
-                <span className={cn(
-                  "text-[8px] font-medium tabular-nums flex items-center justify-end gap-0.5 mt-0.5",
-                  err.trend > 10 ? "text-[var(--red)]" : err.trend < -5 ? "text-[var(--green)]" : "text-[var(--text-faint)]"
-                )}>
-                  {err.trend > 0 ? "+" : ""}{err.trend}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Deploy history */}
-      <div className="px-4 pt-4 pb-3 flex-1">
-        <div className="flex items-center gap-1.5 mb-3">
-          <RotateCw size={11} className="text-[var(--text-tertiary)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Deploy History</span>
-        </div>
-        <div className="space-y-0">
-          {MOCK_DEPLOY_HISTORY.map((d, i) => (
-            <div key={d.slot} className="relative pl-5 pb-4 group">
-              {/* Timeline line */}
-              {i < MOCK_DEPLOY_HISTORY.length - 1 && (
-                <div className="absolute left-[7px] top-3 bottom-0 w-px bg-[var(--line)]" />
-              )}
-              {/* Timeline dot */}
-              <div className={cn(
-                "absolute left-0 top-[3px] w-[15px] h-[15px] rounded-full flex items-center justify-center ring-2 ring-[var(--surface)]",
-                d.type === "deploy" ? "bg-[var(--purple)]" : d.type === "upgrade" ? "bg-[var(--blue)]" : "bg-[var(--yellow)]"
-              )}>
-                {d.type === "deploy" ? <Zap size={8} className="text-white" /> : d.type === "upgrade" ? <ArrowUpRight size={8} className="text-white" /> : <Shield size={8} className="text-white" />}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-medium text-[var(--text-primary)] capitalize">{d.type}</span>
-                  <span className="text-[9px] text-[var(--text-faint)]">{d.timestamp}</span>
-                </div>
-                {d.note && <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{d.note}</p>}
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[8px] font-mono text-[var(--text-faint)]">slot {d.slot.toLocaleString()}</span>
-                  <span className="text-[8px] text-[var(--text-faint)]">·</span>
-                  <span className="text-[8px] font-mono text-[var(--text-faint)]">{(d.executableSize / 1024).toFixed(0)}KB</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 /* ═══════════════════════════════════════════════════
    Main page composition
@@ -603,23 +552,21 @@ export function SolanaProgramsPage() {
   const hasPanel = selectedLog !== null
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      {/* Main content area — three-column: content + right sidebar */}
-      <div className="flex flex-1 min-w-0 overflow-hidden">
-        {/* Center content */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+    <>
+      {/* Scroll parent — one scroll context for content column + sidebar together */}
+      <div className="flex items-start flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden transition-all duration-200 ease-out">
+
+        {/* Main content column — no own scroll */}
+        <div className="flex flex-col flex-1 min-w-0">
           {/* Program identity strip */}
           <ProgramStrip />
 
-          {/* Charts row — side by side */}
-          <div className={cn(
-            "grid border-b border-[var(--line)] bg-[var(--surface)]",
-            hasPanel ? "grid-cols-1" : "grid-cols-2"
-          )}>
-            <div className={!hasPanel ? "border-r border-[var(--line)]" : ""}>
+          {/* Charts row */}
+          <div className="grid border-b border-[var(--line)] bg-[var(--surface)] grid-cols-1 lg:grid-cols-2">
+            <div className="border-b border-[var(--line)] lg:border-b-0 lg:border-r">
               <ComputeUnitChart />
             </div>
-            {!hasPanel && <InstructionVolumeChart />}
+            <InstructionVolumeChart />
           </div>
 
           {/* Tab switcher */}
@@ -655,26 +602,22 @@ export function SolanaProgramsPage() {
             <LogEventFeed events={MOCK_LOG_EVENTS} onSelect={openLog} />
           ) : (
             <InstructionTable onSelect={(ix) => {
-              // For now just switch back to logs filtered to that instruction type
               setActiveTab("logs")
             }} />
           )}
         </div>
-
-        {/* Right sidebar — always visible unless detail panel is open */}
-        {!hasPanel && <RightSidebar />}
       </div>
 
       {/* Detail panel */}
       {hasPanel && (
         <div
           ref={panelRef}
-          className={`flex flex-col w-[440px] shrink-0 overflow-hidden bg-[var(--surface)] ${animating ? "panel-exit" : "panel-enter"}`}
+          className={`flex flex-col w-[440px] md:w-[380px] sm:w-[320px] shrink-0 overflow-hidden relative z-10 ${animating ? "panel-exit" : "panel-enter"}`}
           style={{ boxShadow: "var(--shadow-panel)" }}
         >
           <LogDetailPanel event={selectedLog!} onClose={closePanel} />
         </div>
       )}
-    </div>
+    </>
   )
 }

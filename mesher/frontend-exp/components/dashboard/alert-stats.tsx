@@ -1,7 +1,7 @@
 "use client"
 
-import { MOCK_PERF_STATS } from "@/lib/mock-data"
-import { Activity, Clock, Gauge, TrendingDown, AlertTriangle, Zap, Hash } from "lucide-react"
+import { MOCK_ALERT_STATS } from "@/lib/mock-data"
+import { Bell, BellOff, CheckCircle2, Clock, Zap, AlertTriangle, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface StatCardProps {
@@ -9,22 +9,27 @@ interface StatCardProps {
   value: string | number
   sub?: string
   icon: React.ElementType
-  accent?: "green" | "red" | "yellow" | "default"
+  accent?: "green" | "red" | "yellow" | "purple" | "default"
 }
 
 function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCardProps) {
   const isGreen = accent === "green"
   const isRed = accent === "red"
   const isYellow = accent === "yellow"
+  const isPurple = accent === "purple"
 
   return (
     <div className={cn(
       "flex-1 px-4 py-3 relative",
       isRed && "bg-[var(--red)]/[0.03]",
-      isYellow && "bg-[var(--yellow)]/[0.02]"
+      isYellow && "bg-[var(--yellow)]/[0.02]",
+      isPurple && "bg-[var(--purple)]/[0.02]"
     )}>
       {isRed && (
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[var(--red)]/30 to-transparent" />
+      )}
+      {isPurple && (
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[var(--purple)]/20 to-transparent" />
       )}
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] truncate">{label}</span>
@@ -35,7 +40,8 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
             isGreen && "text-[var(--green)]",
             isRed && "text-[var(--red)]",
             isYellow && "text-[var(--yellow)]",
-            !isGreen && !isRed && !isYellow && "text-[var(--text-faint)]"
+            isPurple && "text-[var(--purple)]",
+            !isGreen && !isRed && !isYellow && !isPurple && "text-[var(--text-faint)]"
           )}
         />
       </div>
@@ -45,7 +51,8 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
           isGreen && "text-[var(--green)]",
           isRed && "text-[var(--red)]",
           isYellow && "text-[var(--yellow)]",
-          !isGreen && !isRed && !isYellow && "text-[var(--text-primary)]"
+          isPurple && "text-[var(--purple)]",
+          !isGreen && !isRed && !isYellow && !isPurple && "text-[var(--text-primary)]"
         )}>
           {value}
         </span>
@@ -55,13 +62,12 @@ function StatCard({ label, value, sub, icon: Icon, accent = "default" }: StatCar
   )
 }
 
-interface PerformanceStatsBarProps {
+interface AlertStatsBarProps {
   compact?: boolean
 }
 
-export function PerformanceStatsBar({ compact = false }: PerformanceStatsBarProps) {
-  const s = MOCK_PERF_STATS
-  const apdexAccent = s.apdex >= 0.9 ? "green" as const : s.apdex >= 0.75 ? "yellow" as const : "red" as const
+export function AlertStatsBar({ compact = false }: AlertStatsBarProps) {
+  const s = MOCK_ALERT_STATS
 
   return (
     <div
@@ -71,13 +77,13 @@ export function PerformanceStatsBar({ compact = false }: PerformanceStatsBarProp
       )}
       style={{ boxShadow: "var(--shadow-inset-subtle)" }}
     >
-      <StatCard label="Apdex" value={s.apdex.toFixed(2)} icon={Gauge} accent={apdexAccent} />
-      <StatCard label="Throughput" value={`${s.tpm}`} sub="/min" icon={Activity} accent="green" />
-      <StatCard label="P50 Latency" value={`${s.p50}`} sub="ms" icon={Clock} />
-      <StatCard label="P95 Latency" value={`${s.p95}`} sub="ms" icon={Clock} accent={s.p95 > 500 ? "yellow" : "default"} />
-      {!compact && <StatCard label="Failure Rate" value={`${s.failureRate}%`} icon={AlertTriangle} accent={s.failureRate > 3 ? "red" : s.failureRate > 1 ? "yellow" : "default"} />}
-      {!compact && <StatCard label="Slow Txns" value={s.slowTransactions.toLocaleString()} sub=">1s" icon={TrendingDown} accent="yellow" />}
-      {!compact && <StatCard label="Total Txns" value={(s.totalTransactions / 1000).toFixed(0) + "k"} sub="24h" icon={Hash} />}
+      <StatCard label="Firing" value={s.firing} icon={Bell} accent="red" />
+      <StatCard label="Silenced" value={s.silenced} icon={BellOff} accent="yellow" />
+      <StatCard label="Resolved Today" value={s.resolvedToday} icon={CheckCircle2} accent="green" />
+      <StatCard label="MTTA" value={s.mtta} icon={Zap} />
+      {!compact && <StatCard label="Avg Resolution" value={s.avgResolutionTime} icon={Clock} />}
+      {!compact && <StatCard label="Avg Firing" value={s.avgFiringDuration} icon={TrendingUp} />}
+      {!compact && <StatCard label="False Positive" value={s.falsePositiveRate} icon={AlertTriangle} accent="yellow" />}
     </div>
   )
 }
