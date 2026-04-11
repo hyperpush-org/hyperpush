@@ -8,8 +8,8 @@ It is not the Mesh language repo.
 This repo owns:
 
 - `mesher/`
-- `mesher/landing/`
-- `mesher/frontend-exp/`
+- the dashboard package at `mesher/client/`
+- the Next.js landing app at `mesher/landing/`
 - product-root CI/docs/verifier surfaces
 
 Language/toolchain changes belong in the sibling `mesh-lang` repo.

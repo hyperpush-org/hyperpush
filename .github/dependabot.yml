@@ -21,11 +21,11 @@ updates:
       prefix: "landing"
 
   - package-ecosystem: npm
-    directory: "/mesher/frontend-exp"
+    directory: "/mesher/client"
     schedule:
       interval: weekly
     labels:
       - dependencies
-      - area: frontend-exp
+      - area: client
     commit-message:
-      prefix: "frontend-exp"
+      prefix: "client"

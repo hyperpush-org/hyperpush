@@ -72,8 +72,8 @@ jobs:
           CARGO_TARGET_DIR: ${{ github.workspace }}/mesh-lang/target
         run: bash scripts/verify-m051-s01.sh
 
-  landing-and-frontend:
-    name: Landing and frontend-exp build
+  landing-and-client:
+    name: Landing and client build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -87,7 +87,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             mesher/landing/package-lock.json
-            mesher/frontend-exp/package-lock.json
+            mesher/client/package-lock.json
 
       - name: Verify landing surface contract
         run: bash scripts/verify-landing-surface.sh
@@ -101,8 +101,8 @@ jobs:
           NEXT_PUBLIC_DISCORD_URL: https://discord.gg/6SRhbZw7ZG
         run: npm --prefix mesher/landing run build
 
-      - name: Install frontend-exp dependencies
-        run: npm --prefix mesher/frontend-exp ci
+      - name: Install client dependencies
+        run: npm --prefix mesher/client ci
 
-      - name: Build frontend-exp
-        run: npm --prefix mesher/frontend-exp run build
+      - name: Build client
+        run: npm --prefix mesher/client run build

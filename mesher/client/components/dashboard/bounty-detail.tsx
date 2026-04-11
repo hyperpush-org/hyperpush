@@ -1,6 +1,6 @@
 "use client"
 
-import { type BountyClaim, BountyClaimStatus } from "@/lib/mock-data"
+import { type BountyClaim, type BountyClaimStatus } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { X, CheckCircle2, Clock, AlertCircle, XCircle, ExternalLink, Copy, GitPullRequest, ChevronRight, DollarSign, ThumbsUp, ThumbsDown } from "lucide-react"
 import { Button } from "@/components/ui/button"

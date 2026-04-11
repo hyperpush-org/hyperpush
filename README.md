@@ -6,7 +6,7 @@ It owns:
 
 - `mesher/` — the Mesher app/runtime package
 - `mesher/landing/` — the landing site
-- `mesher/frontend-exp/` — the product-owned frontend experiment/dashboard surface
+- `mesher/client/` — the canonical product-owned TanStack dashboard surface
 - product-root CI, docs, and maintainer verifiers that belong with those surfaces
 
 It does **not** own the Mesh language/compiler/runtime/docs/registry/packages-site tree. That stays in the sibling `mesh-lang` repo.
@@ -19,7 +19,7 @@ It does **not** own the Mesh language/compiler/runtime/docs/registry/packages-si
   hyperpush-mono/
     mesher/
     mesher/landing/
-    mesher/frontend-exp/
+    mesher/client/
 ```
 
 The blessed product package root remains `hyperpush-mono/mesher/...`.
@@ -30,7 +30,7 @@ Do not flatten the product package to `<workspace>/mesher`.
 - `mesher/README.md` — Mesher maintainer runbook
 - `bash mesher/scripts/verify-maintainer-surface.sh` — package-owned Mesher maintainer replay
 - `bash scripts/verify-landing-surface.sh` — landing/root-surface verifier
-- `.github/workflows/ci.yml` — product CI for Mesher + landing + `frontend-exp`
+- `.github/workflows/ci.yml` — product CI for Mesher + landing + `client`
 - `.github/workflows/deploy-landing.yml` — landing deploy/build workflow
 - `.github/dependabot.yml` — product-owned dependency update scope
 
@@ -56,7 +56,7 @@ If you are working in the blessed sibling workspace, the normal path is:
 
 Canonical product repo URL: https://github.com/hyperpush-org/hyperpush-mono
 
-The landing app and `frontend-exp` stay product-owned here.
+The landing app and `client` stay product-owned here. `mesher/landing` remains the intentional Next.js runtime surface; `mesher/client` is the mock-data TanStack dashboard.
 
 ## Working rules
 
@@ -87,3 +87,4 @@ bash scripts/install-git-hooks.sh
 The product repo `pre-push` hook blocks accidental partial pushes whenever the sibling `mesh-lang` repo is present and still dirty.
 In a standalone product clone, the same tracked hook stays active but skips the cross-repo dirty-check because there is no sibling repo to inspect.
 If you intentionally need a one-sided push, override the guard for that command only with `M055_ALLOW_PARTIAL_PUSH=1 git push ...`.
+

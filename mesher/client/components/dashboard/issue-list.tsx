@@ -73,6 +73,7 @@ function IssueRow({ issue, isSelected, onClick }: IssueRowProps) {
   return (
     <button
       onClick={onClick}
+      data-testid={`issue-row-${issue.id}`}
       className={cn(
         "group relative w-full text-left",
         "border-b border-[var(--line)]",

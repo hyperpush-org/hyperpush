@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a product improvement for Mesher, landing, frontend-exp, or product operations.
+description: Propose a product improvement for Mesher, mesher/client, landing, or product operations.
 title: "[Feature]: "
 labels:
   - enhancement
@@ -26,8 +26,8 @@ body:
       options:
         - Mesher runtime / API
         - Mesher maintainer workflow
+        - dashboard client (`mesher/client`)
         - landing app
-        - frontend-exp
         - product CI / deploy
         - product docs / runbooks
         - other

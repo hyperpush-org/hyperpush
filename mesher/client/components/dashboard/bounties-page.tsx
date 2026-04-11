@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { MOCK_BOUNTY_CLAIMS, MOCK_BOUNTY_STATS, type BountyClaim, BountyClaimStatus, type Severity } from "@/lib/mock-data"
+import { MOCK_BOUNTY_CLAIMS, MOCK_BOUNTY_STATS, type BountyClaim, type BountyClaimStatus, type Severity } from "@/lib/mock-data"
 import { BountyStatsBar } from "./bounty-stats"
 import { BountyList } from "./bounty-list"
 import { BountyDetail } from "./bounty-detail"

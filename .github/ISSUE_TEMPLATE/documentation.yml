@@ -21,7 +21,7 @@ body:
     id: page
     attributes:
       label: Affected page or file
-      placeholder: README.md / mesher/README.md / mesher/frontend-exp/README.md
+      placeholder: README.md / mesher/README.md / mesher/client/README.md
     validations:
       required: true
   - type: dropdown

@@ -328,6 +328,7 @@ export function FilterBar({
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search issues…"
+          data-testid="issues-search-input"
           className="w-full pl-8 pr-3 py-1 bg-transparent text-xs text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:outline-none transition-all duration-150"
         />
       </div>
@@ -339,6 +340,7 @@ export function FilterBar({
             <button
               key={s}
               onClick={() => onStatusFilter(s)}
+              data-testid={`issues-status-filter-${s}`}
               className={cn(
                 "px-1.5 sm:px-2 py-1 rounded-md text-[11px] font-medium capitalize transition-all duration-150 active:scale-[0.96]",
                 statusFilter === s
@@ -366,6 +368,7 @@ export function FilterBar({
               <button
                 key={s}
                 onClick={() => onSeverityFilter(s === severityFilter ? "all" : s)}
+                data-testid={`issues-severity-filter-${s}`}
                 className={cn(
                   "px-1.5 sm:px-2 py-1 rounded-md text-[11px] font-medium capitalize transition-all duration-150 active:scale-[0.96]",
                   colorMap[s] || "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)]"

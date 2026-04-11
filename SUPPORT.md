@@ -14,7 +14,7 @@ Before opening an issue, check the nearest maintainer surface first:
 Use issues for:
 
 - reproducible Mesher defects
-- landing/frontend-exp bugs
+- dashboard client or landing-app bugs
 - product repo CI/deploy problems
 - product docs/runbook drift
 
@@ -23,7 +23,7 @@ Include:
 - commit SHA
 - the smallest truthful reproduction
 - logs, screenshots, or verifier output when relevant
-- whether the failure happened in `mesher/`, `mesher/landing/`, or `mesher/frontend-exp/`
+- whether the failure happened in `mesher/`, `mesher/client/`, or `mesher/landing/`
 
 ## Security issues
 

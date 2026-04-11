@@ -75,9 +75,30 @@ export function EventsChart() {
             <XAxis dataKey="time" tick={false} axisLine={false} tickLine={false} height={0} />
             <YAxis width={32} tick={{ fontSize: 9, fill: "var(--text-faint)" }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--line)", strokeWidth: 1 }} />
-            <Area type="monotone" dataKey="medium" stroke="var(--blue)" strokeWidth={1} fill="url(#gradMed)" animationDuration={800} animationBegin={200} />
-            <Area type="monotone" dataKey="high" stroke="var(--yellow)" strokeWidth={1.5} fill="url(#gradHigh)" animationDuration={800} animationBegin={100} />
-            <Area type="monotone" dataKey="critical" stroke="var(--red)" strokeWidth={1.5} fill="url(#gradCrit)" animationDuration={800} animationBegin={0} />
+            <Area
+              type="monotone"
+              dataKey="medium"
+              stroke="var(--blue)"
+              strokeWidth={1}
+              fill="url(#gradMed)"
+              isAnimationActive={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="high"
+              stroke="var(--yellow)"
+              strokeWidth={1.5}
+              fill="url(#gradHigh)"
+              isAnimationActive={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="critical"
+              stroke="var(--red)"
+              strokeWidth={1.5}
+              fill="url(#gradCrit)"
+              isAnimationActive={false}
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>

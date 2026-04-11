@@ -5,8 +5,8 @@ Thanks for contributing.
 This repository contains the product-owned Hyperpush surfaces only:
 
 - `mesher/`
-- `mesher/landing/`
-- `mesher/frontend-exp/`
+- the dashboard package at `mesher/client/`
+- the Next.js landing app at `mesher/landing/`
 - root product CI/docs/verifier files that belong with those surfaces
 
 It does **not** contain the Mesh compiler/runtime/docs/registry tree anymore. Language and toolchain changes belong in the sibling `mesh-lang` repo.
@@ -23,7 +23,7 @@ It does **not** contain the Mesh compiler/runtime/docs/registry tree anymore. La
 ### Required
 
 - Git
-- Node.js and npm for `mesher/landing/` and `mesher/frontend-exp/`
+- Node.js and npm for `mesher/client/` and `mesher/landing/`
 - Docker for Mesher smoke verification
 - PostgreSQL client tools (`psql`) for the Mesher maintainer verifier
 - access to `meshc` via one of:
@@ -91,11 +91,11 @@ npm --prefix mesher/landing ci
 npm --prefix mesher/landing run build
 ```
 
-### Frontend experiment
+### Dashboard client
 
 ```bash
-npm --prefix mesher/frontend-exp ci
-npm --prefix mesher/frontend-exp run build
+npm --prefix mesher/client ci
+npm --prefix mesher/client run build
 ```
 
 ## Verification expectations
@@ -104,7 +104,7 @@ Use the smallest truthful command that proves the change:
 
 - Mesher maintainer/runbook changes → `bash scripts/verify-m051-s01.sh`
 - landing/root surface changes → `bash scripts/verify-landing-surface.sh`
-- `frontend-exp` UI changes → `npm --prefix mesher/frontend-exp run build`
+- `mesher/client` dashboard changes → `npm --prefix mesher/client run build`
 - Mesher package script changes → rerun the affected `mesher/scripts/*.sh` command plus the root wrapper if the public maintainer surface changed
 
 ## Pull requests
@@ -118,3 +118,4 @@ A good PR includes:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project license in [LICENSE](LICENSE).
+ICENSE).

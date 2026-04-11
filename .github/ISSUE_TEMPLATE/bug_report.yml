@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible defect in Mesher, landing, frontend-exp, or product repo CI/docs.
+description: Report a reproducible defect in Mesher, mesher/client, landing, or product repo CI/docs.
 title: "[Bug]: "
 labels:
   - bug
@@ -28,8 +28,8 @@ body:
       options:
         - Mesher runtime / API
         - Mesher maintainer scripts
+        - dashboard client (`mesher/client`)
         - landing app
-        - frontend-exp
         - product CI / deploy
         - product docs / runbooks
         - other
@@ -58,7 +58,7 @@ body:
     attributes:
       label: Product path
       description: Tell us what you were running.
-      placeholder: mesher/, mesher/landing/, mesher/frontend-exp/
+      placeholder: mesher/, mesher/client/, mesher/landing/
   - type: textarea
     id: steps
     attributes:

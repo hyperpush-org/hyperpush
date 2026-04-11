@@ -105,6 +105,8 @@ export function IssueDetail({ issue, onClose, onOpenAI }: IssueDetailProps) {
           </span>
         </div>
         <button
+          aria-label="Close issue details"
+          data-testid="issue-detail-close"
           onClick={onClose}
           className="p-1.5 -mr-1 rounded-md hover:bg-[var(--surface-2)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all duration-150 active:scale-[0.92] shrink-0"
         >

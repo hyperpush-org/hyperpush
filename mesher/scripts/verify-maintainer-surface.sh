@@ -366,7 +366,7 @@ for key in [
 
 for needle in [
     'Hyperpush Mono',
-    'mesher/frontend-exp',
+    'mesher/client',
     'does **not** own the Mesh language/compiler/runtime/docs/registry/packages-site tree',
     'bash mesher/scripts/verify-maintainer-surface.sh',
     'bash scripts/verify-landing-surface.sh',
@@ -405,8 +405,8 @@ for needle in [
     'bash scripts/verify-m051-s01.sh',
     'bash scripts/verify-landing-surface.sh',
     'npm --prefix mesher/landing ci',
-    'npm --prefix mesher/frontend-exp ci',
-    'npm --prefix mesher/frontend-exp run build',
+    'npm --prefix mesher/client ci',
+    'npm --prefix mesher/client run build',
 ]:
     require_contains('ci_workflow', needle, 'product CI marker')
 
@@ -568,3 +568,4 @@ done
 echo "verify-maintainer-surface: ok"
 echo "artifacts: $(repo_rel "$ARTIFACT_DIR")"
 echo "proof bundle: $(repo_rel "$RETAINED_PROOF_BUNDLE_DIR")"
+IR")"
