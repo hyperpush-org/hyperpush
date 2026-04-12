@@ -1,0 +1,16 @@
+# Dependency and build output directories
+node_modules
+.next
+dist
+coverage
+
+# Test and tooling artifacts
+test-results
+playwright-report
+
+# VCS and local config
+.git
+.gitignore
+*.log
+.env
+.env.*
