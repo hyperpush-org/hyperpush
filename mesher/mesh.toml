@@ -3,6 +3,7 @@ name = "mesher"
 version = "1.0.0"
 description = "Mesher monitoring platform — production-grade issue tracker written in Mesh"
 license = "MIT"
+repository = "https://github.com/hyperpush-org/hyperpush"
 
 [dependencies]
 # No external mesh package dependencies — uses Mesh stdlib only

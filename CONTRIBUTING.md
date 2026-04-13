@@ -1,4 +1,4 @@
-# Contributing to Hyperpush Mono
+# Contributing to Hyperpush
 
 Thanks for contributing.
 
@@ -118,4 +118,3 @@ A good PR includes:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project license in [LICENSE](LICENSE).
-ICENSE).

@@ -365,7 +365,7 @@ for key in [
     require_contains('env', key, '.env contract')
 
 for needle in [
-    'Hyperpush Mono',
+    'Hyperpush',
     'mesher/client',
     'does **not** own the Mesh language/compiler/runtime/docs/registry/packages-site tree',
     'bash mesher/scripts/verify-maintainer-surface.sh',

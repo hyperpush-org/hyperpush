@@ -142,7 +142,7 @@ mesher_resolve_toolchain() {
     if [[ ! -x "$candidate" ]]; then
       mesher_toolchain_fail "toolchain contract drift: source=${source_name} root=${source_root} expected executable meshc at ${candidate}"
     fi
-  elif [[ "$(basename "$product_root")" == 'hyperpush-mono' ]]; then
+  elif [[ "$(basename "$product_root")" == 'hyperpush-mono' || "$(basename "$product_root")" == 'hyperpush' ]]; then
     source_name='sibling-workspace'
     source_root="$(mesher_find_nested_workspace_mesh_lang_root "$product_root")"
     candidate="$source_root/target/debug/meshc"
@@ -153,7 +153,7 @@ mesher_resolve_toolchain() {
     source_name='PATH'
     candidate="$(mesher_abs_path "$(command -v meshc)")"
   else
-    mesher_toolchain_fail 'toolchain contract missing: no enclosing-source mesh-lang checkout, no sibling-workspace mesh-lang checkout for nested hyperpush-mono/mesher, and no meshc on PATH fallback'
+    mesher_toolchain_fail 'toolchain contract missing: no enclosing-source mesh-lang checkout, no sibling-workspace mesh-lang checkout for nested hyperpush-mono/mesher or hyperpush/mesher, and no meshc on PATH fallback'
   fi
 
   MESHER_MESHC_SOURCE="$source_name"

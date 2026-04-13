@@ -1,4 +1,4 @@
-# Hyperpush Mono
+# Hyperpush
 
 This repo is the product-only root for Hyperpush in the blessed two-repo workspace.
 
@@ -56,7 +56,7 @@ If you are working in the blessed sibling workspace, the normal path is:
 
 ## Product repo identity
 
-Canonical product repo URL: https://github.com/hyperpush-org/hyperpush-mono
+Canonical product repo URL: https://github.com/hyperpush-org/hyperpush
 
 The landing app and `client` stay product-owned here. `mesher/landing` remains the intentional Next.js runtime surface; `mesher/client` owns the canonical Mesher dashboard route inventory, backend gap map, and maintainer handoff for later backend expansion slices.
 
